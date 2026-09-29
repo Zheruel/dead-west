@@ -1,0 +1,12 @@
+{
+ "dynamite_placed": {
+  "file": "sprites/dynamite_placed.png",
+  "frameWidth": 64,
+  "frameHeight": 64,
+  "frames": 3,
+  "mode": "strip",
+  "anchor": "bottom",
+  "scale": 0.0932,
+  "names": []
+ }
+}

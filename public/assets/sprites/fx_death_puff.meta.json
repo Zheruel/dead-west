@@ -1,0 +1,12 @@
+{
+ "fx_death_puff": {
+  "file": "sprites/fx_death_puff.png",
+  "frameWidth": 128,
+  "frameHeight": 128,
+  "frames": 5,
+  "mode": "strip",
+  "anchor": "center",
+  "scale": 0.2655,
+  "names": []
+ }
+}

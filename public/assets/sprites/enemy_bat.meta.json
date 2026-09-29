@@ -1,0 +1,12 @@
+{
+ "enemy_bat": {
+  "file": "sprites/enemy_bat.png",
+  "frameWidth": 96,
+  "frameHeight": 96,
+  "frames": 6,
+  "mode": "strip",
+  "anchor": "bottom",
+  "scale": 0.2335,
+  "names": []
+ }
+}

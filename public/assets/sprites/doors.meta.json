@@ -1,0 +1,19 @@
+{
+ "doors": {
+  "file": "sprites/doors.png",
+  "frameWidth": 192,
+  "frameHeight": 128,
+  "frames": 6,
+  "mode": "grid",
+  "anchor": "bottom",
+  "scale": 0.3203,
+  "names": [
+   "door_open",
+   "door_closed",
+   "door_treasure_open",
+   "door_treasure_locked",
+   "door_boss_open",
+   "door_boss_closed"
+  ]
+ }
+}

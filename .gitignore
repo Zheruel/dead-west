@@ -1,0 +1,20 @@
+# dependencies / build output
+node_modules/
+dist/
+*.zip
+.venv-art/
+
+# python + OS noise
+__pycache__/
+*.pyc
+.DS_Store
+
+# throw-away QA output and scratch (curated screenshots live in art/screens/)
+art/qa/
+art/raw/tmp/
+scratch/
+tmp/
+*.log.tmp
+
+# raw GPT-image generations (~240 MB, regenerable from art/prompts; kept locally only)
+art/raw/

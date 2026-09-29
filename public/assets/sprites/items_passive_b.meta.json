@@ -1,0 +1,21 @@
+{
+ "items_passive_b": {
+  "file": "sprites/items_passive_b.png",
+  "frameWidth": 96,
+  "frameHeight": 96,
+  "frames": 8,
+  "mode": "grid",
+  "anchor": "center",
+  "scale": 0.2239,
+  "names": [
+   "bandolier",
+   "snake_oil",
+   "tin_star",
+   "liquid_courage",
+   "cursed_coin",
+   "rattler_fang",
+   "silver_bullets",
+   "dynamite_vest"
+  ]
+ }
+}

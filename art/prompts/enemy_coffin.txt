@@ -1,0 +1,13 @@
+Use: 2D game enemy sprite animation strip, 6 frames, for a dark occult western top-down shooter (Floor 3, a dark mine and crypt with near-black rock, so the sprite must be bright and readable: warm rust-orange and sepia wood planks with pale bone-coloured hands, strong green glow accents).
+Input images: Image 1: STYLE REFERENCE (match its ink outline weight, cross-hatch shading, muted palette, big-head cartoon proportions exactly; do not copy its layout or characters unless told).
+Style: dark ink-cartoon woodcut game art, thick black outlines, cross-hatch shading, flat muted colours with grain, macabre wanted-poster feel, Binding-of-Isaac-like readability. Top-down 3/4 game camera, subject facing the camera. Light from top-left.
+Avoid: cast shadow, ground plane, ground line, floor, background, text, watermark, logos, photorealism, thin outlines, gradients that blur the outline.
+Subject: ONE haunted upright HOPPING COFFIN monster, the SAME coffin repeated 6 times in a single horizontal row, evenly spaced with clear empty gaps between them, identical scale (before squash/stretch) and identical ground line, nothing overlapping, nothing cropped. Character design (identical in all 6 frames, do not redesign): a classic tapered six-sided coffin standing upright on its narrow foot end, made of weathered rust-brown (#8a4b1f) planks with dark iron nails and a pale bone-coloured cross-shaped carving, chunky black outlines; the lid is slightly ajar at the top, showing a black gap inside with two big sickly-green (#8fc23f) glowing angry eyes and a hint of fangs; two skinny pale bone-white skeletal claw-hands with long fingers grip the sides of the lid/edges; the wooden foot corners act as little stubby feet. Broken cobweb scraps and a chain link hang from it.
+Poses (hop cycle), strict order left to right:
+1. hop crouch: coffin squashed down and slightly wider, lid ajar, eyes glowing, claws gripping low.
+2. hop up: coffin stretching taller and lifting off the ground, slightly narrower, claws out.
+3. hop air: coffin at the peak of the hop, fully off the ground, a little tilted, eyes wide, claws flung out.
+4. hop land: coffin thumping down, squashed, small dust flecks at its feet, lid rattling.
+5. WINDUP / telegraph: coffin crouched low and trembling, lid shaking open a bit wider, bright green light leaking out of the gap, claws gripping the lid edge, eyes flaring.
+6. ATTACK: coffin bursting open: the lid flung wide open and tilted to the side, a burst of green light and green smoke, glowing eyes, a wide fanged mouth and clawing skeletal arms lunging out toward the camera.
+All 6 clearly the same coffin with the same planks, colours and design.

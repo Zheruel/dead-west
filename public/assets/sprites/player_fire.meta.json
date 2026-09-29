@@ -1,0 +1,16 @@
+{
+ "player_fire": {
+  "file": "sprites/player_fire.png",
+  "frameWidth": 128,
+  "frameHeight": 128,
+  "frames": 3,
+  "mode": "strip",
+  "anchor": "bottom",
+  "scale": 0.1564,
+  "names": [
+   "down",
+   "up",
+   "side"
+  ]
+ }
+}

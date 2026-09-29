@@ -1,0 +1,12 @@
+{
+ "fx_spawn": {
+  "file": "sprites/fx_spawn.png",
+  "frameWidth": 128,
+  "frameHeight": 128,
+  "frames": 5,
+  "mode": "strip",
+  "anchor": "center",
+  "scale": 0.2825,
+  "names": []
+ }
+}

@@ -1,0 +1,23 @@
+{
+ "hud_icons": {
+  "file": "sprites/hud_icons.png",
+  "frameWidth": 64,
+  "frameHeight": 64,
+  "frames": 10,
+  "mode": "grid",
+  "anchor": "center",
+  "scale": 0.1657,
+  "names": [
+   "heart_full",
+   "heart_half",
+   "heart_empty",
+   "tin_full",
+   "tin_half",
+   "coin",
+   "key",
+   "dynamite",
+   "bullet_full",
+   "bullet_empty"
+  ]
+ }
+}

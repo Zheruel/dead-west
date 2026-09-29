@@ -1,0 +1,12 @@
+Use: game sprite animation strip for a 2D top-down dark western roguelike enemy ("possessed bandit"), 6 frames.
+Input images: Image 1: STYLE REFERENCE (match its ink outline weight, cross-hatch shading, muted palette, big-head cartoon proportions exactly; do not copy its layout; use the bottom-row designs it shows as the character design basis where told).
+Style: dark ink-cartoon woodcut game art, thick black outlines, cross-hatch shading, flat muted colours with grain, macabre wanted-poster feel, Binding-of-Isaac-like readability. Top-down 3/4 game camera, subject facing the camera. Light from top-left.
+Avoid: cast shadow, ground plane, background, text, numbers, labels, watermark, logos, photorealism, thin outlines, gradients that blur the outline.
+Subject: Design basis = the possessed bandit in Image 1's bottom row (second from left): a possessed outlaw with oversized head (about 40% of body height), floppy dark grey-brown wide-brim hat, glowing hell-red eyes, red bandana mask over the lower face, torn dark long coat, gaunt grey skin, wisps of red hellfire flame curling off his shoulders and hat. Hands are long clawed hands with dark talon nails (no gun in hand; revolver stays holstered on the belt). Full body, boots included, facing the camera.
+Layout: ONE horizontal sprite-sheet strip: the SAME character repeated 6 times in a single horizontal row, evenly spaced with clear empty gaps between them, identical scale and identical ground line (all feet/bottoms on the same horizontal line), nothing overlapping, nothing touching, nothing cropped. Each pose stays inside its own cell (1/6 of the width). Same design, same colours, same outline weight in every frame; only the pose changes. Strict pose order left to right:
+1. Stalking step A: left foot forward, arms hanging loosely with claws curled, red flames flickering low.
+2. Passing pose: feet together, body bobbed slightly up, head tilted, flames taller.
+3. Stalking step B: right foot forward (mirror of pose 1), other arm swinging, flames flickering in a different shape.
+4. Passing pose: feet together, body bobbed up, head tilted the other way, flames swaying.
+5. ATTACK WINDUP: deep crouch, knees bent, hunched forward and low, both clawed hands drawn back and spread wide, eyes blazing brighter, red flames flaring big, ready to pounce.
+6. ATTACK LUNGE: body springing forward toward the camera, stretched and leaning, both clawed hands thrust straight forward, mouth snarling above the bandana, flames streaming backward, coat flying.

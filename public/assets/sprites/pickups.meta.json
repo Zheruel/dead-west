@@ -1,0 +1,23 @@
+{
+ "pickups": {
+  "file": "sprites/pickups.png",
+  "frameWidth": 64,
+  "frameHeight": 64,
+  "frames": 10,
+  "mode": "grid",
+  "anchor": "bottom",
+  "scale": 0.1609,
+  "names": [
+   "heart_full",
+   "heart_half",
+   "heart_tin",
+   "coin",
+   "coin_nickel",
+   "key",
+   "dynamite",
+   "chest_wood",
+   "chest_gold",
+   "chest_open"
+  ]
+ }
+}

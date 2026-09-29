@@ -1,0 +1,13 @@
+Input images: Image 1: STYLE REFERENCE (match its ink outline weight, cross-hatch shading, muted palette, big-head cartoon proportions exactly; do not copy its layout or characters unless told).
+Style: dark ink-cartoon woodcut game art, thick black outlines, cross-hatch shading, flat muted colours with grain, macabre wanted-poster feel, Binding-of-Isaac-like readability. Top-down 3/4 game camera, subject facing the camera. Light from top-left.
+Palette: ink black #120c0a, sepia #6b4423, dust ochre #b8843f, bone #e8dcc0, dried blood #8a1c1c, sickly green #8fc23f, dusk purple #4a3358.
+Avoid: cast shadow, ground plane, background, text, watermark, logos, photorealism, thin outlines, gradients that blur the outline.
+
+Use: 2D game boss sprite sheet (idle animation loop), Binding-of-Isaac-like top-down 3/4 view, boss is big and imposing.
+Subject: THE UNDERTAKER, a boss for a dark occult western. Gaunt, towering, very tall and thin skeletal-looking undertaker with an oversized head (~30% of body height), hollow sunken cheeks, deathly pale grey-bone skin, long thin limbs, huge chunky bony hands. Tall battered black top hat with a frayed dusty-purple hat band and a small bone-coloured skull pin. SUNKEN EYE SOCKETS with bright sickly green glowing eyes (#8fc23f) — the only bright accent. Long black frock coat with tattered hem, high stiff collar, dark waistcoat, bone-coloured watch chain, black cravat. A wooden COFFIN strapped upright on his back with heavy leather straps crossing his chest — the coffin top and sides are clearly visible rising above both shoulders behind the head. He holds a big rusty long-handled grave-digger's SHOVEL in his right hand (viewer's left), blade resting down by his foot, the handle upright. Sepia/black/bone colours with tiny green glow accents. Full body, feet included, front view facing the camera.
+Layout: the SAME character repeated 4 times in a single horizontal row, evenly spaced with wide clear empty gaps between them, identical scale and identical ground line (feet on the same line), nothing overlapping, nothing cropped, every figure fully inside the image. Strict pose order left to right — an idle loop (subtle movement only, same design every frame):
+1) neutral stance, standing tall, head level.
+2) inhales: shoulders and chest rise slightly, head tilts a little to the left, coat hem sways slightly to the right.
+3) neutral stance again but body sinks slightly lower (exhale), head bowed a little forward, hat tilts, coat hem swings back to the left.
+4) head tilts slightly to the right, shoulders up a bit, coat hem swings to the right, green eyes glowing brighter.
+Feet stay planted in all four frames; only torso, head, coat and hat move a little.

@@ -1,0 +1,12 @@
+{
+ "fx_blood": {
+  "file": "sprites/fx_blood.png",
+  "frameWidth": 128,
+  "frameHeight": 128,
+  "frames": 4,
+  "mode": "grid",
+  "anchor": "center",
+  "scale": 0.2335,
+  "names": []
+ }
+}

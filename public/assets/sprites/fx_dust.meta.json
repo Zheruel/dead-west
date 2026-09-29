@@ -1,0 +1,12 @@
+{
+ "fx_dust": {
+  "file": "sprites/fx_dust.png",
+  "frameWidth": 64,
+  "frameHeight": 64,
+  "frames": 4,
+  "mode": "strip",
+  "anchor": "center",
+  "scale": 0.1109,
+  "names": []
+ }
+}

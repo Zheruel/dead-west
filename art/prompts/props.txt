@@ -1,0 +1,13 @@
+Input images: Image 1: STYLE REFERENCE (match its ink outline weight, cross-hatch shading, muted palette, big-head cartoon proportions exactly; do not copy its layout or characters unless told).
+Style: dark ink-cartoon woodcut game art, thick black outlines, cross-hatch shading, flat muted colours with grain, macabre wanted-poster feel, Binding-of-Isaac-like readability. Top-down 3/4 game camera, subject facing the camera. Light from top-left.
+Palette: ink black #120c0a, sepia #6b4423, dust ochre #b8843f, bone #e8dcc0, dried blood #8a1c1c, sickly green #8fc23f, dusk purple #4a3358.
+Avoid: cast shadow, ground plane, background, text, watermark, logos, photorealism, thin outlines, gradients that blur the outline.
+
+Use: 2D game prop sprite atlas for a dark occult western Isaac-like dungeon crawler. Each prop is a chunky standalone object with strong silhouette that stands on a room floor (top-down 3/4 view, we look slightly down at it), square-ish, all roughly the same size (~fills a square cell).
+Layout: a clean grid of 3 columns by 2 rows, exactly 6 separate props, evenly spaced with wide clear empty gaps between all of them, nothing overlapping, nothing cropped, no labels, no floor. Row-major order:
+Row 1, column 1: PEDESTAL — a round stone-and-timber altar dais/plinth, dark grey stone base with rust-iron bands and carved occult notches, with a flat EMPTY top (nothing on it), a faint dull gold rim.
+Row 1, column 2: SHOP PEDESTAL — the same pedestal design, EMPTY top, but with a small tarnished brass PRICE PLATE (blank, no text, only a tiny coin engraving) attached on the front and a small hanging tag.
+Row 1, column 3: TRAPDOOR CLOSED — a square wooden trapdoor set flush in the floor, seen from above at 3/4 angle: dark planks, iron hinges, iron ring pull handle, rusty nails.
+Row 2, column 1: TRAPDOOR OPEN — the same trapdoor with the hatch flipped open on its hinge, revealing a square black hole in the floor leading down with a wooden LADDER visible descending into darkness.
+Row 2, column 2: PEDDLER — a one-eyed skeleton merchant standing behind a small wooden market stall / covered wagon counter: bone-white skull with one eye socket glowing amber (#f0a640) and an eye-patch over the other, a tattered wide-brim hat, a bony hand resting on the counter, a few odd trinkets and bottles on the counter, a small striped tattered awning. Big-head cartoon proportions, characterful and welcoming-creepy.
+Row 2, column 3: TOMBSTONE MARKER — a small cracked stone tombstone with a rounded top, an engraved cross and a tiny skull (no text), a scrap of red cloth tied round it, a couple of small pebbles at its base.

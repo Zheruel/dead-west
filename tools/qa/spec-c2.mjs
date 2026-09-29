@@ -1,0 +1,17 @@
+import { boot } from './spec-lib.mjs';
+const g = await boot('?debug=1&seed=5');
+const wait = (ms) => g.wait(ms);
+const st = () => g.eval(() => { const s = window.__dw.api.state(); return { floor: s.floor, hp: s.hp, coins: s.coins, keys: s.keys, dyn: s.dyn, items: s.items.length, god: window.__dw.player.godMode, room: s.roomType, enemies: s.enemies.length }; });
+console.log('start', JSON.stringify(await st()));
+await g.eval(() => { window.__dw.player.hp = 2; });
+await g.tap('F2'); await wait(200); console.log('F2', JSON.stringify(await st()));
+await g.tap('F3'); await wait(200); console.log('F3', JSON.stringify(await st()));
+await g.tap('F4'); await wait(200); console.log('F4', JSON.stringify(await st()));
+await g.tap('F7'); await wait(200); console.log('F7', JSON.stringify(await st()));
+await g.eval(() => window.__dw.api.spawn('coyote', 900, 500)); 
+await g.tap('F5'); await wait(200); console.log('F5', JSON.stringify(await st()));
+await g.tap('F6'); await wait(1500); console.log('F6', JSON.stringify(await st()));
+await g.tap('F1'); await wait(1500); console.log('F1', JSON.stringify(await st()));
+await g.shot('spec_c2_f1');
+console.log('errors', g.errors);
+await g.close();

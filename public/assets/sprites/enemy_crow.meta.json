@@ -1,0 +1,12 @@
+{
+ "enemy_crow": {
+  "file": "sprites/enemy_crow.png",
+  "frameWidth": 96,
+  "frameHeight": 96,
+  "frames": 6,
+  "mode": "strip",
+  "anchor": "bottom",
+  "scale": 0.2026,
+  "names": []
+ }
+}

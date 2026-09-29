@@ -1,0 +1,1807 @@
+{
+ "audio": {
+  "amb_cave": {
+   "file": "sfx/amb_cave.mp3",
+   "license": "CC0 1.0",
+   "loop": true,
+   "source": "https://freesound.org/people/fonografico/sounds/636125/ + https://freesound.org/people/Electroviolence/sounds/234554/ + https://freesound.org/people/corkob/sounds/392668/",
+   "type": "sfx",
+   "volume": 0.5
+  },
+  "amb_wind": {
+   "file": "sfx/amb_wind.mp3",
+   "license": "CC0 1.0",
+   "loop": true,
+   "source": "https://freesound.org/people/DarkShroom/sounds/645305/",
+   "type": "sfx",
+   "volume": 0.5
+  },
+  "bat_screech": {
+   "file": "sfx/bat_screech.mp3",
+   "license": "CC0 1.0",
+   "loop": false,
+   "source": "https://freesound.org/people/Phorgador/sounds/788212/",
+   "type": "sfx",
+   "volume": 0.5
+  },
+  "bat_screech_2": {
+   "file": "sfx/bat_screech_2.mp3",
+   "license": "CC BY 4.0",
+   "loop": false,
+   "source": "https://freesound.org/people/richcraftstudios/sounds/770720/",
+   "type": "sfx",
+   "volume": 0.5
+  },
+  "bat_screech_3": {
+   "file": "sfx/bat_screech_3.mp3",
+   "license": "CC0 1.0",
+   "loop": false,
+   "source": "https://freesound.org/people/Breviceps/sounds/445958/",
+   "type": "sfx",
+   "volume": 0.5
+  },
+  "boss_die": {
+   "file": "sfx/boss_die.mp3",
+   "license": "CC0 1.0",
+   "loop": false,
+   "source": "https://freesound.org/people/DangAdv64/sounds/398802/ + https://freesound.org/people/Bratish/sounds/500795/",
+   "type": "sfx",
+   "volume": 0.75
+  },
+  "boss_die_2": {
+   "file": "sfx/boss_die_2.mp3",
+   "license": "CC0 1.0",
+   "loop": false,
+   "source": "https://freesound.org/people/Philipdupre10/sounds/721668/ + https://freesound.org/people/unfa/sounds/609587/",
+   "type": "sfx",
+   "volume": 0.75
+  },
+  "boss_hit": {
+   "file": "sfx/boss_hit.mp3",
+   "license": "CC0 1.0 (Kenney) | CC0 1.0",
+   "loop": false,
+   "source": "https://kenney.nl/assets/impact-sounds (impact-sounds pack) + https://freesound.org/people/tonsil5/sounds/555423/",
+   "type": "sfx",
+   "volume": 0.65
+  },
+  "boss_hit_2": {
+   "file": "sfx/boss_hit_2.mp3",
+   "license": "CC0 1.0 (Kenney) | CC0 1.0",
+   "loop": false,
+   "source": "https://kenney.nl/assets/impact-sounds (impact-sounds pack) + https://freesound.org/people/Philipdupre10/sounds/721668/",
+   "type": "sfx",
+   "volume": 0.65
+  },
+  "boss_hit_3": {
+   "file": "sfx/boss_hit_3.mp3",
+   "license": "CC0 1.0 (Kenney) | CC0 1.0",
+   "loop": false,
+   "source": "https://kenney.nl/assets/impact-sounds (impact-sounds pack) + https://freesound.org/people/el_boss/sounds/631985/",
+   "type": "sfx",
+   "volume": 0.65
+  },
+  "boss_intro": {
+   "file": "sfx/boss_intro.mp3",
+   "license": "CC0 1.0 | n/a (generated)",
+   "loop": false,
+   "source": "https://freesound.org/people/harrisonlace/sounds/816376/ + synthesised in-project (numpy/ffmpeg)",
+   "type": "sfx",
+   "volume": 0.7
+  },
+  "boss_intro_2": {
+   "file": "sfx/boss_intro_2.mp3",
+   "license": "CC BY 4.0 | n/a (generated)",
+   "loop": false,
+   "source": "https://freesound.org/people/MeijstroAudio/sounds/377303/ + synthesised in-project (numpy/ffmpeg)",
+   "type": "sfx",
+   "volume": 0.7
+  },
+  "bullet_hit_wall": {
+   "file": "sfx/bullet_hit_wall.mp3",
+   "license": "CC0 1.0 (Kenney)",
+   "loop": false,
+   "source": "https://kenney.nl/assets/impact-sounds (impact-sounds pack)",
+   "type": "sfx",
+   "volume": 0.5
+  },
+  "bullet_hit_wall_2": {
+   "file": "sfx/bullet_hit_wall_2.mp3",
+   "license": "CC0 1.0",
+   "loop": false,
+   "source": "https://freesound.org/people/wilhellboy/sounds/351371/",
+   "type": "sfx",
+   "volume": 0.5
+  },
+  "bullet_hit_wall_3": {
+   "file": "sfx/bullet_hit_wall_3.mp3",
+   "license": "CC0 1.0",
+   "loop": false,
+   "source": "https://freesound.org/people/qubodup/sounds/332058/",
+   "type": "sfx",
+   "volume": 0.5
+  },
+  "buzzard_screech": {
+   "file": "sfx/buzzard_screech.mp3",
+   "license": "CC0 1.0",
+   "loop": false,
+   "source": "https://freesound.org/people/AntumDeluge/sounds/188041/",
+   "type": "sfx",
+   "volume": 0.55
+  },
+  "buzzard_screech_2": {
+   "file": "sfx/buzzard_screech_2.mp3",
+   "license": "CC0 1.0",
+   "loop": false,
+   "source": "https://freesound.org/people/loganzsound/sounds/774252/",
+   "type": "sfx",
+   "volume": 0.55
+  },
+  "buzzard_screech_3": {
+   "file": "sfx/buzzard_screech_3.mp3",
+   "license": "CC0 1.0",
+   "loop": false,
+   "source": "https://freesound.org/people/GrayEpic/sounds/697363/",
+   "type": "sfx",
+   "volume": 0.55
+  },
+  "coffin_open": {
+   "file": "sfx/coffin_open.mp3",
+   "license": "CC0 1.0 (Kenney)",
+   "loop": false,
+   "source": "https://kenney.nl/assets/rpg-audio (rpg-audio pack) + https://kenney.nl/assets/impact-sounds (impact-sounds pack)",
+   "type": "sfx",
+   "volume": 0.6
+  },
+  "coffin_open_2": {
+   "file": "sfx/coffin_open_2.mp3",
+   "license": "CC0 1.0 (Kenney)",
+   "loop": false,
+   "source": "https://kenney.nl/assets/rpg-audio (rpg-audio pack) + https://kenney.nl/assets/impact-sounds (impact-sounds pack)",
+   "type": "sfx",
+   "volume": 0.6
+  },
+  "coffin_open_3": {
+   "file": "sfx/coffin_open_3.mp3",
+   "license": "CC0 1.0 (Kenney)",
+   "loop": false,
+   "source": "https://kenney.nl/assets/rpg-audio (rpg-audio pack) + https://kenney.nl/assets/impact-sounds (impact-sounds pack)",
+   "type": "sfx",
+   "volume": 0.6
+  },
+  "coyote_howl": {
+   "file": "sfx/coyote_howl.mp3",
+   "license": "CC0 1.0",
+   "loop": false,
+   "source": "https://freesound.org/people/stomachache/sounds/53256/",
+   "type": "sfx",
+   "volume": 0.55
+  },
+  "coyote_howl_2": {
+   "file": "sfx/coyote_howl_2.mp3",
+   "license": "CC0 1.0",
+   "loop": false,
+   "source": "https://freesound.org/people/Danjocross/sounds/164268/",
+   "type": "sfx",
+   "volume": 0.55
+  },
+  "coyote_howl_3": {
+   "file": "sfx/coyote_howl_3.mp3",
+   "license": "CC BY 3.0",
+   "loop": false,
+   "source": "https://freesound.org/people/rogerforeman/sounds/68068/",
+   "type": "sfx",
+   "volume": 0.55
+  },
+  "crow_caw": {
+   "file": "sfx/crow_caw.mp3",
+   "license": "CC0 1.0",
+   "loop": false,
+   "source": "https://freesound.org/people/Jofae/sounds/361470/",
+   "type": "sfx",
+   "volume": 0.5
+  },
+  "crow_caw_2": {
+   "file": "sfx/crow_caw_2.mp3",
+   "license": "CC0 1.0",
+   "loop": false,
+   "source": "https://freesound.org/people/qubodup/sounds/813115/",
+   "type": "sfx",
+   "volume": 0.5
+  },
+  "crow_caw_3": {
+   "file": "sfx/crow_caw_3.mp3",
+   "license": "CC0 1.0",
+   "loop": false,
+   "source": "https://freesound.org/people/LiftPizzas/sounds/611150/",
+   "type": "sfx",
+   "volume": 0.5
+  },
+  "dig": {
+   "file": "sfx/dig.mp3",
+   "license": "CC0 1.0",
+   "loop": false,
+   "source": "https://freesound.org/people/JeffPearson/sounds/849840/",
+   "type": "sfx",
+   "volume": 0.55
+  },
+  "dig_2": {
+   "file": "sfx/dig_2.mp3",
+   "license": "CC0 1.0",
+   "loop": false,
+   "source": "https://freesound.org/people/f3bbbo/sounds/651293/",
+   "type": "sfx",
+   "volume": 0.55
+  },
+  "dig_3": {
+   "file": "sfx/dig_3.mp3",
+   "license": "CC0 1.0",
+   "loop": false,
+   "source": "https://freesound.org/people/zepurple/sounds/540264/",
+   "type": "sfx",
+   "volume": 0.55
+  },
+  "dodge_roll": {
+   "file": "sfx/dodge_roll.mp3",
+   "license": "CC0 1.0 (Kenney)",
+   "loop": false,
+   "source": "https://kenney.nl/assets/rpg-audio (rpg-audio pack) + https://kenney.nl/assets/impact-sounds (impact-sounds pack)",
+   "type": "sfx",
+   "volume": 0.5
+  },
+  "dodge_roll_2": {
+   "file": "sfx/dodge_roll_2.mp3",
+   "license": "CC0 1.0 (Kenney)",
+   "loop": false,
+   "source": "https://kenney.nl/assets/rpg-audio (rpg-audio pack) + https://kenney.nl/assets/impact-sounds (impact-sounds pack)",
+   "type": "sfx",
+   "volume": 0.5
+  },
+  "dodge_roll_3": {
+   "file": "sfx/dodge_roll_3.mp3",
+   "license": "CC0 1.0 (Kenney)",
+   "loop": false,
+   "source": "https://kenney.nl/assets/rpg-audio (rpg-audio pack) + https://kenney.nl/assets/impact-sounds (impact-sounds pack)",
+   "type": "sfx",
+   "volume": 0.5
+  },
+  "door_close": {
+   "file": "sfx/door_close.mp3",
+   "license": "CC0 1.0 (Kenney)",
+   "loop": false,
+   "source": "https://kenney.nl/assets/rpg-audio (rpg-audio pack)",
+   "type": "sfx",
+   "volume": 0.6
+  },
+  "door_close_2": {
+   "file": "sfx/door_close_2.mp3",
+   "license": "CC0 1.0 (Kenney)",
+   "loop": false,
+   "source": "https://kenney.nl/assets/rpg-audio (rpg-audio pack)",
+   "type": "sfx",
+   "volume": 0.6
+  },
+  "door_close_3": {
+   "file": "sfx/door_close_3.mp3",
+   "license": "CC0 1.0 (Kenney)",
+   "loop": false,
+   "source": "https://kenney.nl/assets/rpg-audio (rpg-audio pack)",
+   "type": "sfx",
+   "volume": 0.6
+  },
+  "door_locked": {
+   "file": "sfx/door_locked.mp3",
+   "license": "CC0 1.0",
+   "loop": false,
+   "source": "https://freesound.org/people/CastIronCarousel/sounds/216875/",
+   "type": "sfx",
+   "volume": 0.6
+  },
+  "door_locked_2": {
+   "file": "sfx/door_locked_2.mp3",
+   "license": "CC0 1.0 | CC0 1.0 (Kenney)",
+   "loop": false,
+   "source": "https://freesound.org/people/JPolito/sounds/391704/ + https://kenney.nl/assets/impact-sounds (impact-sounds pack)",
+   "type": "sfx",
+   "volume": 0.6
+  },
+  "door_locked_3": {
+   "file": "sfx/door_locked_3.mp3",
+   "license": "CC0 1.0 (Kenney)",
+   "loop": false,
+   "source": "https://kenney.nl/assets/rpg-audio (rpg-audio pack) + https://kenney.nl/assets/impact-sounds (impact-sounds pack)",
+   "type": "sfx",
+   "volume": 0.6
+  },
+  "door_open": {
+   "file": "sfx/door_open.mp3",
+   "license": "CC0 1.0 (Kenney)",
+   "loop": false,
+   "source": "https://kenney.nl/assets/rpg-audio (rpg-audio pack)",
+   "type": "sfx",
+   "volume": 0.6
+  },
+  "door_open_2": {
+   "file": "sfx/door_open_2.mp3",
+   "license": "CC0 1.0 (Kenney)",
+   "loop": false,
+   "source": "https://kenney.nl/assets/rpg-audio (rpg-audio pack)",
+   "type": "sfx",
+   "volume": 0.6
+  },
+  "door_open_3": {
+   "file": "sfx/door_open_3.mp3",
+   "license": "CC0 1.0 (Kenney)",
+   "loop": false,
+   "source": "https://kenney.nl/assets/rpg-audio (rpg-audio pack) + https://kenney.nl/assets/impact-sounds (impact-sounds pack)",
+   "type": "sfx",
+   "volume": 0.6
+  },
+  "door_unlock": {
+   "file": "sfx/door_unlock.mp3",
+   "license": "CC0 1.0 | CC0 1.0 (Kenney)",
+   "loop": false,
+   "source": "https://freesound.org/people/schoman3/sounds/506912/ + https://kenney.nl/assets/rpg-audio (rpg-audio pack)",
+   "type": "sfx",
+   "volume": 0.6
+  },
+  "door_unlock_2": {
+   "file": "sfx/door_unlock_2.mp3",
+   "license": "CC0 1.0 (Kenney)",
+   "loop": false,
+   "source": "https://kenney.nl/assets/rpg-audio (rpg-audio pack) + https://kenney.nl/assets/impact-sounds (impact-sounds pack)",
+   "type": "sfx",
+   "volume": 0.6
+  },
+  "enemy_die": {
+   "file": "sfx/enemy_die.mp3",
+   "license": "CC0 1.0",
+   "loop": false,
+   "source": "https://freesound.org/people/scorpion67890/sounds/151710/",
+   "type": "sfx",
+   "volume": 0.65
+  },
+  "enemy_die_2": {
+   "file": "sfx/enemy_die_2.mp3",
+   "license": "CC0 1.0",
+   "loop": false,
+   "source": "https://freesound.org/people/89o/sounds/434129/",
+   "type": "sfx",
+   "volume": 0.65
+  },
+  "enemy_die_3": {
+   "file": "sfx/enemy_die_3.mp3",
+   "license": "CC0 1.0",
+   "loop": false,
+   "source": "https://freesound.org/people/scorpion67890/sounds/396797/",
+   "type": "sfx",
+   "volume": 0.65
+  },
+  "enemy_hit": {
+   "file": "sfx/enemy_hit.mp3",
+   "license": "CC0 1.0",
+   "loop": false,
+   "source": "https://freesound.org/people/magnuswaker/sounds/522091/",
+   "type": "sfx",
+   "volume": 0.6
+  },
+  "enemy_hit_2": {
+   "file": "sfx/enemy_hit_2.mp3",
+   "license": "CC0 1.0",
+   "loop": false,
+   "source": "https://freesound.org/people/tonsil5/sounds/555420/",
+   "type": "sfx",
+   "volume": 0.6
+  },
+  "enemy_hit_3": {
+   "file": "sfx/enemy_hit_3.mp3",
+   "license": "CC0 1.0 (Kenney)",
+   "loop": false,
+   "source": "https://kenney.nl/assets/impact-sounds (impact-sounds pack)",
+   "type": "sfx",
+   "volume": 0.6
+  },
+  "explosion": {
+   "file": "sfx/explosion.mp3",
+   "license": "CC0 1.0",
+   "loop": false,
+   "source": "https://freesound.org/people/JeffPearson/sounds/849842/",
+   "type": "sfx",
+   "volume": 0.7
+  },
+  "explosion_2": {
+   "file": "sfx/explosion_2.mp3",
+   "license": "CC0 1.0",
+   "loop": false,
+   "source": "https://freesound.org/people/klangfabrik/sounds/335990/",
+   "type": "sfx",
+   "volume": 0.7
+  },
+  "explosion_3": {
+   "file": "sfx/explosion_3.mp3",
+   "license": "CC0 1.0",
+   "loop": false,
+   "source": "https://freesound.org/people/unfa/sounds/609587/",
+   "type": "sfx",
+   "volume": 0.7
+  },
+  "fuse": {
+   "file": "sfx/fuse.mp3",
+   "license": "CC0 1.0",
+   "loop": true,
+   "source": "https://freesound.org/people/squareal/sounds/237406/",
+   "type": "sfx",
+   "volume": 0.4
+  },
+  "ghost_wail": {
+   "file": "sfx/ghost_wail.mp3",
+   "license": "CC0 1.0",
+   "loop": false,
+   "source": "https://freesound.org/people/sierra721/sounds/718952/",
+   "type": "sfx",
+   "volume": 0.55
+  },
+  "ghost_wail_2": {
+   "file": "sfx/ghost_wail_2.mp3",
+   "license": "CC0 1.0",
+   "loop": false,
+   "source": "https://freesound.org/people/SypherZent/sounds/420682/",
+   "type": "sfx",
+   "volume": 0.55
+  },
+  "ghost_wail_3": {
+   "file": "sfx/ghost_wail_3.mp3",
+   "license": "CC0 1.0",
+   "loop": false,
+   "source": "https://freesound.org/people/SirBedlam/sounds/329519/",
+   "type": "sfx",
+   "volume": 0.55
+  },
+  "gun_cock": {
+   "file": "sfx/gun_cock.mp3",
+   "license": "CC0 1.0",
+   "loop": false,
+   "source": "https://freesound.org/people/Dredile/sounds/111676/",
+   "type": "sfx",
+   "volume": 0.6
+  },
+  "gun_cock_2": {
+   "file": "sfx/gun_cock_2.mp3",
+   "license": "CC0 1.0 (Kenney)",
+   "loop": false,
+   "source": "https://kenney.nl/assets/rpg-audio (rpg-audio pack)",
+   "type": "sfx",
+   "volume": 0.6
+  },
+  "heartbeat": {
+   "file": "sfx/heartbeat.mp3",
+   "license": "CC0 1.0",
+   "loop": true,
+   "source": "https://freesound.org/people/Cloud-10/sounds/688735/",
+   "type": "sfx",
+   "volume": 0.6
+  },
+  "item_get": {
+   "file": "sfx/item_get.mp3",
+   "license": "n/a (generated)",
+   "loop": false,
+   "source": "synthesised in-project (numpy Karplus-Strong guitar jingle)",
+   "type": "sfx",
+   "volume": 0.6
+  },
+  "item_get_2": {
+   "file": "sfx/item_get_2.mp3",
+   "license": "n/a (generated)",
+   "loop": false,
+   "source": "synthesised in-project (numpy Karplus-Strong guitar jingle)",
+   "type": "sfx",
+   "volume": 0.6
+  },
+  "item_get_3": {
+   "file": "sfx/item_get_3.mp3",
+   "license": "n/a (generated) | CC0 1.0 (Kenney)",
+   "loop": false,
+   "source": "synthesised in-project (numpy Karplus-Strong guitar jingle) + https://kenney.nl/assets/impact-sounds (impact-sounds pack)",
+   "type": "sfx",
+   "volume": 0.6
+  },
+  "lasso_swish": {
+   "file": "sfx/lasso_swish.mp3",
+   "license": "CC0 1.0",
+   "loop": false,
+   "source": "https://freesound.org/people/zapsplat.com/sounds/719638/",
+   "type": "sfx",
+   "volume": 0.5
+  },
+  "lasso_swish_2": {
+   "file": "sfx/lasso_swish_2.mp3",
+   "license": "CC0 1.0",
+   "loop": false,
+   "source": "https://freesound.org/people/Robo9418/sounds/841835/",
+   "type": "sfx",
+   "volume": 0.5
+  },
+  "lasso_swish_3": {
+   "file": "sfx/lasso_swish_3.mp3",
+   "license": "CC0 1.0",
+   "loop": false,
+   "source": "https://freesound.org/people/ErikCruzDev/sounds/735907/",
+   "type": "sfx",
+   "volume": 0.5
+  },
+  "menu_move": {
+   "file": "sfx/menu_move.mp3",
+   "license": "n/a (generated)",
+   "loop": false,
+   "source": "synthesised in-project (numpy/ffmpeg)",
+   "type": "sfx",
+   "volume": 0.45
+  },
+  "menu_move_2": {
+   "file": "sfx/menu_move_2.mp3",
+   "license": "CC0 1.0 (Kenney)",
+   "loop": false,
+   "source": "https://kenney.nl/assets/impact-sounds (impact-sounds pack)",
+   "type": "sfx",
+   "volume": 0.45
+  },
+  "menu_select": {
+   "file": "sfx/menu_select.mp3",
+   "license": "n/a (generated)",
+   "loop": false,
+   "source": "synthesised in-project (numpy/ffmpeg)",
+   "type": "sfx",
+   "volume": 0.5
+  },
+  "menu_select_2": {
+   "file": "sfx/menu_select_2.mp3",
+   "license": "CC0 1.0 (Kenney)",
+   "loop": false,
+   "source": "https://kenney.nl/assets/rpg-audio (rpg-audio pack) + https://kenney.nl/assets/impact-sounds (impact-sounds pack)",
+   "type": "sfx",
+   "volume": 0.5
+  },
+  "mus_boss": {
+   "file": "music/mus_boss.mp3",
+   "license": "CC BY 4.0 (Kevin MacLeod / incompetech.com: 'Creative Commons: By Attribution 4.0'; attribution required)",
+   "loop": true,
+   "source": "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Witch%20Hunt.mp3 ('Witch Hunt' by Kevin MacLeod, incompetech.com; loop of 33.6s-114.9s (42 bars @124bpm), tail crossfaded into head)",
+   "type": "music",
+   "volume": 0.55
+  },
+  "mus_boss_final": {
+   "file": "music/mus_boss_final.mp3",
+   "license": "CC BY 4.0 (Kevin MacLeod / incompetech.com: 'Creative Commons: By Attribution 4.0'; attribution required)",
+   "loop": true,
+   "source": "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Final%20Count.mp3 ('Final Count' by Kevin MacLeod, incompetech.com; loop of 14.95s-91.9s (25 bars @78bpm), tail crossfaded into head)",
+   "type": "music",
+   "volume": 0.55
+  },
+  "mus_death": {
+   "file": "music/mus_death.mp3",
+   "license": "CC BY 4.0 (Kevin MacLeod / incompetech.com: 'Creative Commons: By Attribution 4.0'; attribution required)",
+   "loop": false,
+   "source": "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Darkness%20Speaks.mp3 ('Darkness Speaks' by Kevin MacLeod, incompetech.com; sting: 1.25s-9.05s excerpt (gong hit + eerie drone), fade-out)",
+   "type": "music",
+   "volume": 0.6
+  },
+  "mus_floor1": {
+   "file": "music/mus_floor1.mp3",
+   "license": "CC BY 4.0 (Kevin MacLeod / incompetech.com: 'Creative Commons: By Attribution 4.0'; attribution required)",
+   "loop": true,
+   "source": "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Neo%20Western.mp3 ('Neo Western' by Kevin MacLeod, incompetech.com; loop of 13.8s-93.8s (28 bars @84bpm), tail crossfaded into head)",
+   "type": "music",
+   "volume": 0.5
+  },
+  "mus_floor2": {
+   "file": "music/mus_floor2.mp3",
+   "license": "CC BY 4.0 (Kevin MacLeod / incompetech.com: 'Creative Commons: By Attribution 4.0'; attribution required)",
+   "loop": true,
+   "source": "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Southern%20Gothic.mp3 ('Southern Gothic' by Kevin MacLeod, incompetech.com; loop of 13.4s-120.1s (56 bars @126bpm), tail crossfaded into head)",
+   "type": "music",
+   "volume": 0.5
+  },
+  "mus_floor3": {
+   "file": "music/mus_floor3.mp3",
+   "license": "CC BY 4.0 (Kevin MacLeod / incompetech.com: 'Creative Commons: By Attribution 4.0'; attribution required)",
+   "loop": true,
+   "source": "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Martian%20Cowboy.mp3 ('Martian Cowboy' by Kevin MacLeod, incompetech.com; loop of 39.1s-163.5s (35 bars @67.5bpm), tail crossfaded into head)",
+   "type": "music",
+   "volume": 0.5
+  },
+  "mus_menu": {
+   "file": "music/mus_menu.mp3",
+   "license": "CC BY 4.0 (Kevin MacLeod / incompetech.com: 'Creative Commons: By Attribution 4.0'; attribution required)",
+   "loop": true,
+   "source": "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Smoking%20Gun.mp3 ('Smoking Gun' by Kevin MacLeod, incompetech.com; loop of 26.7s-135.8s (40 bars @88bpm), tail crossfaded into head)",
+   "type": "music",
+   "volume": 0.5
+  },
+  "mus_shop": {
+   "file": "music/mus_shop.mp3",
+   "license": "CC BY 4.0 (Kevin MacLeod / incompetech.com: 'Creative Commons: By Attribution 4.0'; attribution required)",
+   "loop": true,
+   "source": "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Pale%20Rider.mp3 ('Pale Rider' by Kevin MacLeod, incompetech.com; loop of 7.3s-89.2s, tail crossfaded into head; normalised quieter (-19 LUFS))",
+   "type": "music",
+   "volume": 0.4
+  },
+  "mus_victory": {
+   "file": "music/mus_victory.mp3",
+   "license": "CC BY 4.0 (Kevin MacLeod / incompetech.com: 'Creative Commons: By Attribution 4.0'; attribution required)",
+   "loop": false,
+   "source": "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Cowboy%20Sting.mp3 ('Cowboy Sting' by Kevin MacLeod, incompetech.com; sting: 3rd (88bpm) take, first 11.8s, fade-out)",
+   "type": "music",
+   "volume": 0.6
+  },
+  "pause": {
+   "file": "sfx/pause.mp3",
+   "license": "n/a (generated)",
+   "loop": false,
+   "source": "synthesised in-project (numpy/ffmpeg)",
+   "type": "sfx",
+   "volume": 0.5
+  },
+  "pause_2": {
+   "file": "sfx/pause_2.mp3",
+   "license": "CC0 1.0 (Kenney)",
+   "loop": false,
+   "source": "https://kenney.nl/assets/rpg-audio (rpg-audio pack) + https://kenney.nl/assets/impact-sounds (impact-sounds pack)",
+   "type": "sfx",
+   "volume": 0.5
+  },
+  "pickup_coin": {
+   "file": "sfx/pickup_coin.mp3",
+   "license": "CC0 1.0",
+   "loop": false,
+   "source": "https://freesound.org/people/Anthousai/sounds/336571/",
+   "type": "sfx",
+   "volume": 0.5
+  },
+  "pickup_coin_2": {
+   "file": "sfx/pickup_coin_2.mp3",
+   "license": "CC0 1.0",
+   "loop": false,
+   "source": "https://freesound.org/people/cabled_mess/sounds/350875/",
+   "type": "sfx",
+   "volume": 0.5
+  },
+  "pickup_coin_3": {
+   "file": "sfx/pickup_coin_3.mp3",
+   "license": "CC0 1.0 (Kenney)",
+   "loop": false,
+   "source": "https://kenney.nl/assets/rpg-audio (rpg-audio pack)",
+   "type": "sfx",
+   "volume": 0.5
+  },
+  "pickup_dynamite": {
+   "file": "sfx/pickup_dynamite.mp3",
+   "license": "CC0 1.0 (Kenney) | CC0 1.0",
+   "loop": false,
+   "source": "https://kenney.nl/assets/impact-sounds (impact-sounds pack) + https://freesound.org/people/squareal/sounds/237407/",
+   "type": "sfx",
+   "volume": 0.55
+  },
+  "pickup_dynamite_2": {
+   "file": "sfx/pickup_dynamite_2.mp3",
+   "license": "CC0 1.0 (Kenney) | CC0 1.0",
+   "loop": false,
+   "source": "https://kenney.nl/assets/impact-sounds (impact-sounds pack) + https://freesound.org/people/squareal/sounds/237390/",
+   "type": "sfx",
+   "volume": 0.55
+  },
+  "pickup_heart": {
+   "file": "sfx/pickup_heart.mp3",
+   "license": "n/a (generated)",
+   "loop": false,
+   "source": "synthesised in-project (numpy Karplus-Strong)",
+   "type": "sfx",
+   "volume": 0.55
+  },
+  "pickup_heart_2": {
+   "file": "sfx/pickup_heart_2.mp3",
+   "license": "n/a (generated)",
+   "loop": false,
+   "source": "synthesised in-project (numpy Karplus-Strong)",
+   "type": "sfx",
+   "volume": 0.55
+  },
+  "pickup_heart_3": {
+   "file": "sfx/pickup_heart_3.mp3",
+   "license": "CC0 1.0",
+   "loop": false,
+   "source": "https://freesound.org/people/JoostDev/sounds/340293/",
+   "type": "sfx",
+   "volume": 0.55
+  },
+  "pickup_key": {
+   "file": "sfx/pickup_key.mp3",
+   "license": "CC0 1.0",
+   "loop": false,
+   "source": "https://freesound.org/people/Lightnessko/sounds/390324/",
+   "type": "sfx",
+   "volume": 0.5
+  },
+  "pickup_key_2": {
+   "file": "sfx/pickup_key_2.mp3",
+   "license": "CC0 1.0",
+   "loop": false,
+   "source": "https://freesound.org/people/MeganH2304/sounds/650513/",
+   "type": "sfx",
+   "volume": 0.5
+  },
+  "pickup_key_3": {
+   "file": "sfx/pickup_key_3.mp3",
+   "license": "CC0 1.0 | CC0 1.0 (Kenney)",
+   "loop": false,
+   "source": "https://freesound.org/people/jrssandoval/sounds/68139/ + https://kenney.nl/assets/rpg-audio (rpg-audio pack)",
+   "type": "sfx",
+   "volume": 0.5
+  },
+  "player_die": {
+   "file": "sfx/player_die.mp3",
+   "license": "CC0 1.0",
+   "loop": false,
+   "source": "https://freesound.org/people/scorpion67890/sounds/396801/",
+   "type": "sfx",
+   "volume": 0.7
+  },
+  "player_die_2": {
+   "file": "sfx/player_die_2.mp3",
+   "license": "CC0 1.0",
+   "loop": false,
+   "source": "https://freesound.org/people/Blankened/sounds/554443/",
+   "type": "sfx",
+   "volume": 0.7
+  },
+  "player_hurt": {
+   "file": "sfx/player_hurt.mp3",
+   "license": "CC0 1.0",
+   "loop": false,
+   "source": "https://freesound.org/people/elynch0901/sounds/464486/",
+   "type": "sfx",
+   "volume": 0.65
+  },
+  "player_hurt_2": {
+   "file": "sfx/player_hurt_2.mp3",
+   "license": "CC0 1.0",
+   "loop": false,
+   "source": "https://freesound.org/people/MrFossy/sounds/547209/",
+   "type": "sfx",
+   "volume": 0.65
+  },
+  "player_hurt_3": {
+   "file": "sfx/player_hurt_3.mp3",
+   "license": "CC0 1.0",
+   "loop": false,
+   "source": "https://freesound.org/people/micahlg/sounds/413186/",
+   "type": "sfx",
+   "volume": 0.65
+  },
+  "room_clear": {
+   "file": "sfx/room_clear.mp3",
+   "license": "CC0 1.0",
+   "loop": false,
+   "source": "https://freesound.org/people/MVMTech/sounds/569356/",
+   "type": "sfx",
+   "volume": 0.6
+  },
+  "room_clear_2": {
+   "file": "sfx/room_clear_2.mp3",
+   "license": "CC0 1.0 (Kenney)",
+   "loop": false,
+   "source": "https://kenney.nl/assets/impact-sounds (impact-sounds pack)",
+   "type": "sfx",
+   "volume": 0.6
+  },
+  "room_clear_3": {
+   "file": "sfx/room_clear_3.mp3",
+   "license": "CC0 1.0",
+   "loop": false,
+   "source": "https://freesound.org/people/daytripper/sounds/73678/",
+   "type": "sfx",
+   "volume": 0.6
+  },
+  "shoot": {
+   "file": "sfx/shoot.mp3",
+   "license": "CC0 1.0",
+   "loop": false,
+   "source": "https://freesound.org/people/Shark_Anthony/sounds/683186/",
+   "type": "sfx",
+   "volume": 0.65
+  },
+  "shoot_2": {
+   "file": "sfx/shoot_2.mp3",
+   "license": "CC0 1.0",
+   "loop": false,
+   "source": "https://freesound.org/people/DarkShroom/sounds/645316/",
+   "type": "sfx",
+   "volume": 0.65
+  },
+  "shoot_3": {
+   "file": "sfx/shoot_3.mp3",
+   "license": "Sampling+ 1.0",
+   "loop": false,
+   "source": "https://freesound.org/people/Rock%20Savage/sounds/58904/",
+   "type": "sfx",
+   "volume": 0.65
+  },
+  "shoot_crit": {
+   "file": "sfx/shoot_crit.mp3",
+   "license": "CC0 1.0 | CC BY 4.0",
+   "loop": false,
+   "source": "https://freesound.org/people/Shark_Anthony/sounds/683175/ + https://freesound.org/people/eardeer/sounds/402004/",
+   "type": "sfx",
+   "volume": 0.75
+  },
+  "shoot_crit_2": {
+   "file": "sfx/shoot_crit_2.mp3",
+   "license": "CC0 1.0",
+   "loop": false,
+   "source": "https://freesound.org/people/vabadus/sounds/151071/ + https://freesound.org/people/qubodup/sounds/815476/",
+   "type": "sfx",
+   "volume": 0.75
+  },
+  "shoot_crit_3": {
+   "file": "sfx/shoot_crit_3.mp3",
+   "license": "CC0 1.0",
+   "loop": false,
+   "source": "https://freesound.org/people/elliotlp/sounds/330634/ + https://freesound.org/people/unfa/sounds/609587/",
+   "type": "sfx",
+   "volume": 0.75
+  },
+  "shop_buy": {
+   "file": "sfx/shop_buy.mp3",
+   "license": "CC0 1.0",
+   "loop": false,
+   "source": "https://freesound.org/people/Zott820/sounds/209578/",
+   "type": "sfx",
+   "volume": 0.55
+  },
+  "shop_buy_2": {
+   "file": "sfx/shop_buy_2.mp3",
+   "license": "CC0 1.0 (Kenney)",
+   "loop": false,
+   "source": "https://kenney.nl/assets/rpg-audio (rpg-audio pack) + https://kenney.nl/assets/impact-sounds (impact-sounds pack)",
+   "type": "sfx",
+   "volume": 0.55
+  },
+  "shop_buy_3": {
+   "file": "sfx/shop_buy_3.mp3",
+   "license": "CC0 1.0",
+   "loop": false,
+   "source": "https://freesound.org/people/CapsLok/sounds/184438/",
+   "type": "sfx",
+   "volume": 0.55
+  },
+  "shop_deny": {
+   "file": "sfx/shop_deny.mp3",
+   "license": "n/a (generated)",
+   "loop": false,
+   "source": "synthesised in-project (numpy/ffmpeg)",
+   "type": "sfx",
+   "volume": 0.5
+  },
+  "shop_deny_2": {
+   "file": "sfx/shop_deny_2.mp3",
+   "license": "CC0 1.0 (Kenney)",
+   "loop": false,
+   "source": "https://kenney.nl/assets/impact-sounds (impact-sounds pack) + https://kenney.nl/assets/rpg-audio (rpg-audio pack)",
+   "type": "sfx",
+   "volume": 0.5
+  },
+  "sixth_bullet_ready": {
+   "file": "sfx/sixth_bullet_ready.mp3",
+   "license": "n/a (generated)",
+   "loop": false,
+   "source": "synthesised in-project (numpy/ffmpeg)",
+   "type": "sfx",
+   "volume": 0.55
+  },
+  "sixth_bullet_ready_2": {
+   "file": "sfx/sixth_bullet_ready_2.mp3",
+   "license": "CC0 1.0",
+   "loop": false,
+   "source": "https://freesound.org/people/Guy_Personface/sounds/795313/",
+   "type": "sfx",
+   "volume": 0.55
+  },
+  "skeleton_rattle": {
+   "file": "sfx/skeleton_rattle.mp3",
+   "license": "CC0 1.0",
+   "loop": false,
+   "source": "https://freesound.org/people/Kneeling/sounds/473526/",
+   "type": "sfx",
+   "volume": 0.5
+  },
+  "skeleton_rattle_2": {
+   "file": "sfx/skeleton_rattle_2.mp3",
+   "license": "CC0 1.0",
+   "loop": false,
+   "source": "https://freesound.org/people/Kneeling/sounds/473526/",
+   "type": "sfx",
+   "volume": 0.5
+  },
+  "snake_hiss": {
+   "file": "sfx/snake_hiss.mp3",
+   "license": "CC0 1.0",
+   "loop": false,
+   "source": "https://freesound.org/people/xoiziox/sounds/553374/",
+   "type": "sfx",
+   "volume": 0.55
+  },
+  "snake_hiss_2": {
+   "file": "sfx/snake_hiss_2.mp3",
+   "license": "CC0 1.0",
+   "loop": false,
+   "source": "https://freesound.org/people/Reitanna/sounds/343928/",
+   "type": "sfx",
+   "volume": 0.55
+  },
+  "snake_hiss_3": {
+   "file": "sfx/snake_hiss_3.mp3",
+   "license": "CC0 1.0",
+   "loop": false,
+   "source": "https://freesound.org/people/Reitanna/sounds/241562/",
+   "type": "sfx",
+   "volume": 0.55
+  },
+  "snake_rattle": {
+   "file": "sfx/snake_rattle.mp3",
+   "license": "CC BY-NC 3.0",
+   "loop": false,
+   "source": "https://freesound.org/people/fstagi/sounds/405391/",
+   "type": "sfx",
+   "volume": 0.6
+  },
+  "snake_rattle_2": {
+   "file": "sfx/snake_rattle_2.mp3",
+   "license": "CC0 1.0",
+   "loop": false,
+   "source": "https://freesound.org/people/bjelicvuk/sounds/733002/",
+   "type": "sfx",
+   "volume": 0.6
+  },
+  "snake_rattle_3": {
+   "file": "sfx/snake_rattle_3.mp3",
+   "license": "CC0 1.0",
+   "loop": false,
+   "source": "https://freesound.org/people/TheKingOfGeeks360/sounds/855914/",
+   "type": "sfx",
+   "volume": 0.6
+  },
+  "spawn": {
+   "file": "sfx/spawn.mp3",
+   "license": "CC0 1.0",
+   "loop": false,
+   "source": "https://freesound.org/people/The-Sacha-Rush/sounds/657795/",
+   "type": "sfx",
+   "volume": 0.5
+  },
+  "spawn_2": {
+   "file": "sfx/spawn_2.mp3",
+   "license": "CC0 1.0",
+   "loop": false,
+   "source": "https://freesound.org/people/TommasoMotteran/sounds/850767/",
+   "type": "sfx",
+   "volume": 0.5
+  },
+  "spawn_3": {
+   "file": "sfx/spawn_3.mp3",
+   "license": "CC0 1.0",
+   "loop": false,
+   "source": "https://freesound.org/people/Fupicat/sounds/607208/",
+   "type": "sfx",
+   "volume": 0.5
+  },
+  "step_dirt": {
+   "file": "sfx/step_dirt.mp3",
+   "license": "CC0 1.0",
+   "loop": false,
+   "source": "https://freesound.org/people/BranndyBottle/sounds/464699/",
+   "type": "sfx",
+   "volume": 0.4
+  },
+  "step_dirt_2": {
+   "file": "sfx/step_dirt_2.mp3",
+   "license": "CC0 1.0",
+   "loop": false,
+   "source": "https://freesound.org/people/monte32/sounds/353799/",
+   "type": "sfx",
+   "volume": 0.4
+  },
+  "step_dirt_3": {
+   "file": "sfx/step_dirt_3.mp3",
+   "license": "CC0 1.0",
+   "loop": false,
+   "source": "https://freesound.org/people/monte32/sounds/353799/",
+   "type": "sfx",
+   "volume": 0.4
+  },
+  "step_wood": {
+   "file": "sfx/step_wood.mp3",
+   "license": "CC0 1.0 (Kenney)",
+   "loop": false,
+   "source": "https://kenney.nl/assets/impact-sounds (impact-sounds pack)",
+   "type": "sfx",
+   "volume": 0.4
+  },
+  "step_wood_2": {
+   "file": "sfx/step_wood_2.mp3",
+   "license": "CC0 1.0 (Kenney)",
+   "loop": false,
+   "source": "https://kenney.nl/assets/impact-sounds (impact-sounds pack)",
+   "type": "sfx",
+   "volume": 0.4
+  },
+  "step_wood_3": {
+   "file": "sfx/step_wood_3.mp3",
+   "license": "CC0 1.0 (Kenney)",
+   "loop": false,
+   "source": "https://kenney.nl/assets/impact-sounds (impact-sounds pack)",
+   "type": "sfx",
+   "volume": 0.4
+  },
+  "trapdoor": {
+   "file": "sfx/trapdoor.mp3",
+   "license": "CC0 1.0 (Kenney)",
+   "loop": false,
+   "source": "https://kenney.nl/assets/rpg-audio (rpg-audio pack) + https://kenney.nl/assets/impact-sounds (impact-sounds pack)",
+   "type": "sfx",
+   "volume": 0.6
+  },
+  "trapdoor_2": {
+   "file": "sfx/trapdoor_2.mp3",
+   "license": "CC0 1.0 (Kenney)",
+   "loop": false,
+   "source": "https://kenney.nl/assets/rpg-audio (rpg-audio pack) + https://kenney.nl/assets/impact-sounds (impact-sounds pack)",
+   "type": "sfx",
+   "volume": 0.6
+  },
+  "whip_crack": {
+   "file": "sfx/whip_crack.mp3",
+   "license": "CC0 1.0",
+   "loop": false,
+   "source": "https://freesound.org/people/SciFiSounds/sounds/529925/",
+   "type": "sfx",
+   "volume": 0.6
+  },
+  "whip_crack_2": {
+   "file": "sfx/whip_crack_2.mp3",
+   "license": "CC0 1.0",
+   "loop": false,
+   "source": "https://freesound.org/people/JayRom01/sounds/615761/",
+   "type": "sfx",
+   "volume": 0.6
+  },
+  "whip_crack_3": {
+   "file": "sfx/whip_crack_3.mp3",
+   "license": "CC0 1.0",
+   "loop": false,
+   "source": "https://freesound.org/people/craigsmith/sounds/675833/",
+   "type": "sfx",
+   "volume": 0.6
+  },
+  "zombie_groan": {
+   "file": "sfx/zombie_groan.mp3",
+   "license": "CC0 1.0",
+   "loop": false,
+   "source": "https://freesound.org/people/Breviceps/sounds/445995/",
+   "type": "sfx",
+   "volume": 0.55
+  },
+  "zombie_groan_2": {
+   "file": "sfx/zombie_groan_2.mp3",
+   "license": "CC0 1.0",
+   "loop": false,
+   "source": "https://freesound.org/people/bigmonmulgrew/sounds/346626/",
+   "type": "sfx",
+   "volume": 0.55
+  },
+  "zombie_groan_3": {
+   "file": "sfx/zombie_groan_3.mp3",
+   "license": "CC0 1.0",
+   "loop": false,
+   "source": "https://freesound.org/people/OwNathan/sounds/754438/",
+   "type": "sfx",
+   "volume": 0.55
+  }
+ },
+ "images": {
+  "bg_f1_a": {
+   "file": "images/bg_f1_a.webp",
+   "height": 864,
+   "width": 1440
+  },
+  "bg_f1_b": {
+   "file": "images/bg_f1_b.webp",
+   "height": 864,
+   "width": 1440
+  },
+  "bg_f1_boss": {
+   "file": "images/bg_f1_boss.webp",
+   "height": 864,
+   "width": 1440
+  },
+  "bg_f2_a": {
+   "file": "images/bg_f2_a.webp",
+   "height": 864,
+   "width": 1440
+  },
+  "bg_f2_b": {
+   "file": "images/bg_f2_b.webp",
+   "height": 864,
+   "width": 1440
+  },
+  "bg_f2_boss": {
+   "file": "images/bg_f2_boss.webp",
+   "height": 864,
+   "width": 1440
+  },
+  "bg_f3_a": {
+   "file": "images/bg_f3_a.webp",
+   "height": 864,
+   "width": 1440
+  },
+  "bg_f3_b": {
+   "file": "images/bg_f3_b.webp",
+   "height": 864,
+   "width": 1440
+  },
+  "bg_f3_boss": {
+   "file": "images/bg_f3_boss.webp",
+   "height": 864,
+   "width": 1440
+  },
+  "bg_shop": {
+   "file": "images/bg_shop.webp",
+   "height": 864,
+   "width": 1440
+  },
+  "bg_treasure": {
+   "file": "images/bg_treasure.webp",
+   "height": 864,
+   "width": 1440
+  },
+  "portrait_cascabel": {
+   "file": "images/portrait_cascabel.png",
+   "height": 512,
+   "width": 512
+  },
+  "portrait_grimm": {
+   "file": "images/portrait_grimm.png",
+   "height": 512,
+   "width": 512
+  },
+  "portrait_player": {
+   "file": "images/portrait_player.png",
+   "height": 512,
+   "width": 512
+  },
+  "portrait_undertaker": {
+   "file": "images/portrait_undertaker.png",
+   "height": 512,
+   "width": 512
+  },
+  "title_bg": {
+   "file": "images/title_bg.webp",
+   "height": 960,
+   "width": 1440
+  },
+  "title_logo": {
+   "file": "images/title_logo.png",
+   "height": 400,
+   "width": 1024
+  },
+  "ui_cursor": {
+   "file": "images/ui_cursor.png",
+   "height": 64,
+   "width": 64
+  },
+  "ui_parchment": {
+   "file": "images/ui_parchment.png",
+   "height": 760,
+   "width": 1200
+  }
+ },
+ "sprites": {
+  "boss_cascabel_atk": {
+   "anchor": "bottom",
+   "file": "sprites/boss_cascabel_atk.png",
+   "frameHeight": 320,
+   "frameWidth": 320,
+   "frames": 4,
+   "mode": "strip",
+   "names": [],
+   "scale": 0.462
+  },
+  "boss_cascabel_idle": {
+   "anchor": "bottom",
+   "file": "sprites/boss_cascabel_idle.png",
+   "frameHeight": 320,
+   "frameWidth": 320,
+   "frames": 4,
+   "mode": "strip",
+   "names": [],
+   "scale": 0.4869
+  },
+  "boss_grimm_atk": {
+   "anchor": "bottom",
+   "file": "sprites/boss_grimm_atk.png",
+   "frameHeight": 320,
+   "frameWidth": 320,
+   "frames": 4,
+   "mode": "strip",
+   "names": [],
+   "scale": 0.4501
+  },
+  "boss_grimm_idle": {
+   "anchor": "bottom",
+   "file": "sprites/boss_grimm_idle.png",
+   "frameHeight": 320,
+   "frameWidth": 320,
+   "frames": 4,
+   "mode": "strip",
+   "names": [],
+   "scale": 0.4627
+  },
+  "boss_undertaker_atk": {
+   "anchor": "bottom",
+   "file": "sprites/boss_undertaker_atk.png",
+   "frameHeight": 320,
+   "frameWidth": 320,
+   "frames": 4,
+   "mode": "strip",
+   "names": [],
+   "scale": 0.4752
+  },
+  "boss_undertaker_idle": {
+   "anchor": "bottom",
+   "file": "sprites/boss_undertaker_idle.png",
+   "frameHeight": 320,
+   "frameWidth": 320,
+   "frames": 4,
+   "mode": "strip",
+   "names": [],
+   "scale": 0.475
+  },
+  "doors": {
+   "anchor": "bottom",
+   "file": "sprites/doors.png",
+   "frameHeight": 128,
+   "frameWidth": 192,
+   "frames": 6,
+   "mode": "grid",
+   "names": [
+    "door_open",
+    "door_closed",
+    "door_treasure_open",
+    "door_treasure_locked",
+    "door_boss_open",
+    "door_boss_closed"
+   ],
+   "scale": 0.3203
+  },
+  "dynamite_placed": {
+   "anchor": "bottom",
+   "file": "sprites/dynamite_placed.png",
+   "frameHeight": 64,
+   "frameWidth": 64,
+   "frames": 3,
+   "mode": "strip",
+   "names": [],
+   "scale": 0.0932
+  },
+  "enemy_bat": {
+   "anchor": "bottom",
+   "file": "sprites/enemy_bat.png",
+   "frameHeight": 96,
+   "frameWidth": 96,
+   "frames": 6,
+   "mode": "strip",
+   "names": [],
+   "scale": 0.2335
+  },
+  "enemy_buzzard": {
+   "anchor": "bottom",
+   "file": "sprites/enemy_buzzard.png",
+   "frameHeight": 160,
+   "frameWidth": 160,
+   "frames": 6,
+   "mode": "grid",
+   "names": [],
+   "scale": 0.2766
+  },
+  "enemy_coffin": {
+   "anchor": "bottom",
+   "file": "sprites/enemy_coffin.png",
+   "frameHeight": 160,
+   "frameWidth": 160,
+   "frames": 6,
+   "mode": "strip",
+   "names": [],
+   "scale": 0.2938
+  },
+  "enemy_coyote": {
+   "anchor": "bottom",
+   "file": "sprites/enemy_coyote.png",
+   "frameHeight": 128,
+   "frameWidth": 128,
+   "frames": 6,
+   "mode": "grid",
+   "names": [],
+   "scale": 0.2357
+  },
+  "enemy_crow": {
+   "anchor": "bottom",
+   "file": "sprites/enemy_crow.png",
+   "frameHeight": 96,
+   "frameWidth": 96,
+   "frames": 6,
+   "mode": "strip",
+   "names": [],
+   "scale": 0.2026
+  },
+  "enemy_dynamiter": {
+   "anchor": "bottom",
+   "file": "sprites/enemy_dynamiter.png",
+   "frameHeight": 128,
+   "frameWidth": 128,
+   "frames": 6,
+   "mode": "strip",
+   "names": [],
+   "scale": 0.3069
+  },
+  "enemy_ghost": {
+   "anchor": "bottom",
+   "file": "sprites/enemy_ghost.png",
+   "frameHeight": 128,
+   "frameWidth": 128,
+   "frames": 6,
+   "mode": "strip",
+   "names": [],
+   "scale": 0.2234
+  },
+  "enemy_miner": {
+   "anchor": "bottom",
+   "file": "sprites/enemy_miner.png",
+   "frameHeight": 160,
+   "frameWidth": 160,
+   "frames": 6,
+   "mode": "strip",
+   "names": [],
+   "scale": 0.26
+  },
+  "enemy_mole": {
+   "anchor": "bottom",
+   "file": "sprites/enemy_mole.png",
+   "frameHeight": 128,
+   "frameWidth": 128,
+   "frames": 6,
+   "mode": "strip",
+   "names": [],
+   "scale": 0.3307
+  },
+  "enemy_outlaw": {
+   "anchor": "bottom",
+   "file": "sprites/enemy_outlaw.png",
+   "frameHeight": 128,
+   "frameWidth": 128,
+   "frames": 6,
+   "mode": "strip",
+   "names": [],
+   "scale": 0.2667
+  },
+  "enemy_possessed": {
+   "anchor": "bottom",
+   "file": "sprites/enemy_possessed.png",
+   "frameHeight": 128,
+   "frameWidth": 128,
+   "frames": 6,
+   "mode": "strip",
+   "names": [],
+   "scale": 0.2451
+  },
+  "enemy_rattlesnake": {
+   "anchor": "bottom",
+   "file": "sprites/enemy_rattlesnake.png",
+   "frameHeight": 128,
+   "frameWidth": 128,
+   "frames": 6,
+   "mode": "strip",
+   "names": [],
+   "scale": 0.2672
+  },
+  "enemy_scarecrow": {
+   "anchor": "bottom",
+   "file": "sprites/enemy_scarecrow.png",
+   "frameHeight": 160,
+   "frameWidth": 160,
+   "frames": 6,
+   "mode": "strip",
+   "names": [],
+   "scale": 0.2791
+  },
+  "enemy_skeleton": {
+   "anchor": "bottom",
+   "file": "sprites/enemy_skeleton.png",
+   "frameHeight": 128,
+   "frameWidth": 128,
+   "frames": 6,
+   "mode": "strip",
+   "names": [],
+   "scale": 0.2573
+  },
+  "enemy_tumbleweed": {
+   "anchor": "bottom",
+   "file": "sprites/enemy_tumbleweed.png",
+   "frameHeight": 128,
+   "frameWidth": 128,
+   "frames": 6,
+   "mode": "grid",
+   "names": [],
+   "scale": 0.2667
+  },
+  "enemy_tumbleweed_mini": {
+   "anchor": "bottom",
+   "file": "sprites/enemy_tumbleweed_mini.png",
+   "frameHeight": 64,
+   "frameWidth": 64,
+   "frames": 6,
+   "mode": "grid",
+   "names": [],
+   "scale": 0.1316
+  },
+  "fx_blood": {
+   "anchor": "center",
+   "file": "sprites/fx_blood.png",
+   "frameHeight": 128,
+   "frameWidth": 128,
+   "frames": 4,
+   "mode": "grid",
+   "names": [],
+   "scale": 0.2335
+  },
+  "fx_death_puff": {
+   "anchor": "center",
+   "file": "sprites/fx_death_puff.png",
+   "frameHeight": 128,
+   "frameWidth": 128,
+   "frames": 5,
+   "mode": "strip",
+   "names": [],
+   "scale": 0.2655
+  },
+  "fx_dust": {
+   "anchor": "center",
+   "file": "sprites/fx_dust.png",
+   "frameHeight": 64,
+   "frameWidth": 64,
+   "frames": 4,
+   "mode": "strip",
+   "names": [],
+   "scale": 0.1109
+  },
+  "fx_explosion": {
+   "anchor": "center",
+   "file": "sprites/fx_explosion.png",
+   "frameHeight": 192,
+   "frameWidth": 192,
+   "frames": 6,
+   "mode": "strip",
+   "names": [],
+   "scale": 0.4631
+  },
+  "fx_impact": {
+   "anchor": "center",
+   "file": "sprites/fx_impact.png",
+   "frameHeight": 64,
+   "frameWidth": 64,
+   "frames": 4,
+   "mode": "strip",
+   "names": [],
+   "scale": 0.122
+  },
+  "fx_muzzle": {
+   "anchor": "center",
+   "file": "sprites/fx_muzzle.png",
+   "frameHeight": 96,
+   "frameWidth": 96,
+   "frames": 4,
+   "mode": "strip",
+   "names": [],
+   "scale": 0.1622
+  },
+  "fx_spawn": {
+   "anchor": "center",
+   "file": "sprites/fx_spawn.png",
+   "frameHeight": 128,
+   "frameWidth": 128,
+   "frames": 5,
+   "mode": "strip",
+   "names": [],
+   "scale": 0.2825
+  },
+  "hud_icons": {
+   "anchor": "center",
+   "file": "sprites/hud_icons.png",
+   "frameHeight": 64,
+   "frameWidth": 64,
+   "frames": 10,
+   "mode": "grid",
+   "names": [
+    "heart_full",
+    "heart_half",
+    "heart_empty",
+    "tin_full",
+    "tin_half",
+    "coin",
+    "key",
+    "dynamite",
+    "bullet_full",
+    "bullet_empty"
+   ],
+   "scale": 0.1657
+  },
+  "items_active": {
+   "anchor": "center",
+   "file": "sprites/items_active.png",
+   "frameHeight": 96,
+   "frameWidth": 96,
+   "frames": 4,
+   "mode": "grid",
+   "names": [
+    "whiskey_bottle",
+    "pocket_watch",
+    "powder_keg",
+    "lucky_deck"
+   ],
+   "scale": 0.1489
+  },
+  "items_passive_a": {
+   "anchor": "center",
+   "file": "sprites/items_passive_a.png",
+   "frameHeight": 96,
+   "frameWidth": 96,
+   "frames": 8,
+   "mode": "grid",
+   "names": [
+    "spurs",
+    "lucky_horseshoe",
+    "hollow_point",
+    "speed_loader",
+    "long_barrel",
+    "sawed_off",
+    "ricochet",
+    "dead_eye"
+   ],
+   "scale": 0.2136
+  },
+  "items_passive_b": {
+   "anchor": "center",
+   "file": "sprites/items_passive_b.png",
+   "frameHeight": 96,
+   "frameWidth": 96,
+   "frames": 8,
+   "mode": "grid",
+   "names": [
+    "bandolier",
+    "snake_oil",
+    "tin_star",
+    "liquid_courage",
+    "cursed_coin",
+    "rattler_fang",
+    "silver_bullets",
+    "dynamite_vest"
+   ],
+   "scale": 0.2239
+  },
+  "items_passive_c": {
+   "anchor": "center",
+   "file": "sprites/items_passive_c.png",
+   "frameHeight": 96,
+   "frameWidth": 96,
+   "frames": 8,
+   "mode": "grid",
+   "names": [
+    "spirit_lantern",
+    "crow_companion",
+    "voodoo_doll",
+    "duster_coat",
+    "prospectors_pan",
+    "hex_bag",
+    "fan_the_hammer",
+    "mezcal_worm"
+   ],
+   "scale": 0.1901
+  },
+  "obst_f1": {
+   "anchor": "bottom",
+   "file": "sprites/obst_f1.png",
+   "frameHeight": 96,
+   "frameWidth": 96,
+   "frames": 8,
+   "mode": "grid",
+   "names": [
+    "block_a",
+    "block_b",
+    "breakable",
+    "breakable_broken",
+    "pit",
+    "spikes",
+    "decor_a",
+    "decor_b"
+   ],
+   "scale": 0.2323
+  },
+  "obst_f2": {
+   "anchor": "bottom",
+   "file": "sprites/obst_f2.png",
+   "frameHeight": 96,
+   "frameWidth": 96,
+   "frames": 8,
+   "mode": "grid",
+   "names": [
+    "block_a",
+    "block_b",
+    "breakable",
+    "breakable_broken",
+    "pit",
+    "spikes",
+    "decor_a",
+    "decor_b"
+   ],
+   "scale": 0.2312
+  },
+  "obst_f3": {
+   "anchor": "bottom",
+   "file": "sprites/obst_f3.png",
+   "frameHeight": 96,
+   "frameWidth": 96,
+   "frames": 8,
+   "mode": "grid",
+   "names": [
+    "block_a",
+    "block_b",
+    "breakable",
+    "breakable_broken",
+    "pit",
+    "spikes",
+    "decor_a",
+    "decor_b"
+   ],
+   "scale": 0.226
+  },
+  "pickups": {
+   "anchor": "bottom",
+   "file": "sprites/pickups.png",
+   "frameHeight": 64,
+   "frameWidth": 64,
+   "frames": 10,
+   "mode": "grid",
+   "names": [
+    "heart_full",
+    "heart_half",
+    "heart_tin",
+    "coin",
+    "coin_nickel",
+    "key",
+    "dynamite",
+    "chest_wood",
+    "chest_gold",
+    "chest_open"
+   ],
+   "scale": 0.1609
+  },
+  "player_death": {
+   "anchor": "bottom",
+   "file": "sprites/player_death.png",
+   "frameHeight": 128,
+   "frameWidth": 128,
+   "frames": 5,
+   "mode": "strip",
+   "names": [
+    "hit",
+    "stagger",
+    "collapse",
+    "sprawl",
+    "dead"
+   ],
+   "scale": 0.1719
+  },
+  "player_fire": {
+   "anchor": "bottom",
+   "file": "sprites/player_fire.png",
+   "frameHeight": 128,
+   "frameWidth": 128,
+   "frames": 3,
+   "mode": "strip",
+   "names": [
+    "down",
+    "up",
+    "side"
+   ],
+   "scale": 0.1564
+  },
+  "player_roll": {
+   "anchor": "bottom",
+   "file": "sprites/player_roll.png",
+   "frameHeight": 128,
+   "frameWidth": 128,
+   "frames": 4,
+   "mode": "strip",
+   "names": [
+    "tuck",
+    "flip",
+    "back",
+    "recover"
+   ],
+   "scale": 0.1656
+  },
+  "player_walk_down": {
+   "anchor": "bottom",
+   "file": "sprites/player_walk_down.png",
+   "frameHeight": 128,
+   "frameWidth": 128,
+   "frames": 6,
+   "mode": "strip",
+   "names": [],
+   "scale": 0.2099
+  },
+  "player_walk_side": {
+   "anchor": "bottom",
+   "file": "sprites/player_walk_side.png",
+   "frameHeight": 128,
+   "frameWidth": 128,
+   "frames": 6,
+   "mode": "strip",
+   "names": [],
+   "scale": 0.24
+  },
+  "player_walk_up": {
+   "anchor": "bottom",
+   "file": "sprites/player_walk_up.png",
+   "frameHeight": 128,
+   "frameWidth": 128,
+   "frames": 6,
+   "mode": "strip",
+   "names": [],
+   "scale": 0.2162
+  },
+  "projectiles": {
+   "anchor": "center",
+   "file": "sprites/projectiles.png",
+   "frameHeight": 48,
+   "frameWidth": 48,
+   "frames": 8,
+   "mode": "grid",
+   "names": [
+    "bullet_player",
+    "bullet_crit",
+    "bullet_enemy",
+    "bullet_venom",
+    "bullet_nail",
+    "bullet_ghostfire",
+    "dynamite_stick",
+    "rock_debris"
+   ],
+   "scale": 0.1161
+  },
+  "props": {
+   "anchor": "bottom",
+   "file": "sprites/props.png",
+   "frameHeight": 128,
+   "frameWidth": 128,
+   "frames": 6,
+   "mode": "grid",
+   "names": [
+    "pedestal",
+    "pedestal_shop",
+    "trapdoor_closed",
+    "trapdoor_open",
+    "peddler",
+    "tombstone_marker"
+   ],
+   "scale": 0.2422
+  }
+ },
+ "version": "48e32be18f"
+}

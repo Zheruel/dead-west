@@ -1,0 +1,18 @@
+Input images: Image 1: STYLE REFERENCE (match its ink outline weight, cross-hatch shading, muted palette and chunky cartoon readability exactly; do not copy its layout or characters).
+Style: dark ink-cartoon woodcut game art, thick black outlines, cross-hatch shading, flat muted colours with grain, macabre wanted-poster feel, Binding-of-Isaac-like readability. Icons drawn front-on (flat, no perspective), light from top-left.
+Palette: ink black #120c0a, dust ochre #b8843f, sand #d9b071, bone #e8dcc0, dried blood #8a1c1c, hell red #d63a2a, sepia #6b4423, steel grey-blue tin, brass gold.
+Avoid: cast shadow, ground plane, background, text, watermark, numbers, photorealism, thin outlines, gradients that blur the outline.
+
+Use: HUD icon set for a dark occult western Isaac-like game. Icons are displayed very small (about 32-64 px), so each must be a chunky, bold, instantly readable silhouette with a THICK black ink outline, few details, strong contrast. All ten icons are the SAME size (each fills roughly the same square area, about equal visual size), same outline weight, same style.
+Layout: a clean grid of 5 columns by 2 rows, exactly 10 separate icons, evenly spaced with wide clear empty gaps between all of them, nothing overlapping, nothing touching, nothing cropped, no labels. Row-major order:
+Row 1, col 1: HEART FULL - a plump dried-blood-red heart, stitched with a tiny cross-stitch seam, glossy highlight top-left.
+Row 1, col 2: HEART HALF - the SAME heart shape, left half filled blood red, right half empty (dark hollow interior, dark grey-brown), both halves inside one heart outline.
+Row 1, col 3: HEART EMPTY - the SAME heart shape completely empty: dark hollow interior (very dark brown, near black) with a thick outline and a faint bone-coloured rim highlight so it reads on dark backgrounds.
+Row 1, col 4: TIN FULL - the SAME heart shape but made of riveted grey-blue tin/steel plate, rivets at edges, a bright metallic highlight top-left (an armour heart).
+Row 1, col 5: TIN HALF - the same tin heart, left half shiny tin plate, right half empty dark hollow with a jagged cracked edge.
+Row 2, col 1: COIN - an old western silver dollar / gold coin seen front-on, ochre-gold with a small skull-and-star emblem in the centre, ridged rim.
+Row 2, col 2: KEY - an old brass skeleton key, diagonal, with a round bow with a hole and a chunky bit, brass gold with highlight.
+Row 2, col 3: DYNAMITE - a single red dynamite stick, upright or slightly tilted, with a paper wrap band, a short fuse with a small orange spark.
+Row 2, col 4: BULLET FULL - a revolver cylinder chamber slot: a round dark steel ring with a shiny brass bullet cartridge (round copper primer face visible) sitting in it, seen head-on.
+Row 2, col 5: BULLET EMPTY - the SAME steel cylinder chamber ring, seen head-on, with an empty dark hole (no bullet).
+All ten must obviously be one family. Transparent background between icons.

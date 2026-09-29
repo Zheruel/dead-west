@@ -1,0 +1,74 @@
+{
+  "mus_menu": {
+    "file": "music/mus_menu.mp3",
+    "type": "music",
+    "volume": 0.5,
+    "loop": true,
+    "source": "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Smoking%20Gun.mp3 ('Smoking Gun' by Kevin MacLeod, incompetech.com; loop of 26.7s-135.8s (40 bars @88bpm), tail crossfaded into head)",
+    "license": "CC BY 4.0 (Kevin MacLeod / incompetech.com: 'Creative Commons: By Attribution 4.0'; attribution required)"
+  },
+  "mus_floor1": {
+    "file": "music/mus_floor1.mp3",
+    "type": "music",
+    "volume": 0.5,
+    "loop": true,
+    "source": "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Neo%20Western.mp3 ('Neo Western' by Kevin MacLeod, incompetech.com; loop of 13.8s-93.8s (28 bars @84bpm), tail crossfaded into head)",
+    "license": "CC BY 4.0 (Kevin MacLeod / incompetech.com: 'Creative Commons: By Attribution 4.0'; attribution required)"
+  },
+  "mus_floor2": {
+    "file": "music/mus_floor2.mp3",
+    "type": "music",
+    "volume": 0.5,
+    "loop": true,
+    "source": "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Southern%20Gothic.mp3 ('Southern Gothic' by Kevin MacLeod, incompetech.com; loop of 13.4s-120.1s (56 bars @126bpm), tail crossfaded into head)",
+    "license": "CC BY 4.0 (Kevin MacLeod / incompetech.com: 'Creative Commons: By Attribution 4.0'; attribution required)"
+  },
+  "mus_floor3": {
+    "file": "music/mus_floor3.mp3",
+    "type": "music",
+    "volume": 0.5,
+    "loop": true,
+    "source": "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Martian%20Cowboy.mp3 ('Martian Cowboy' by Kevin MacLeod, incompetech.com; loop of 39.1s-163.5s (35 bars @67.5bpm), tail crossfaded into head)",
+    "license": "CC BY 4.0 (Kevin MacLeod / incompetech.com: 'Creative Commons: By Attribution 4.0'; attribution required)"
+  },
+  "mus_boss": {
+    "file": "music/mus_boss.mp3",
+    "type": "music",
+    "volume": 0.55,
+    "loop": true,
+    "source": "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Witch%20Hunt.mp3 ('Witch Hunt' by Kevin MacLeod, incompetech.com; loop of 33.6s-114.9s (42 bars @124bpm), tail crossfaded into head)",
+    "license": "CC BY 4.0 (Kevin MacLeod / incompetech.com: 'Creative Commons: By Attribution 4.0'; attribution required)"
+  },
+  "mus_boss_final": {
+    "file": "music/mus_boss_final.mp3",
+    "type": "music",
+    "volume": 0.55,
+    "loop": true,
+    "source": "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Final%20Count.mp3 ('Final Count' by Kevin MacLeod, incompetech.com; loop of 14.95s-91.9s (25 bars @78bpm), tail crossfaded into head)",
+    "license": "CC BY 4.0 (Kevin MacLeod / incompetech.com: 'Creative Commons: By Attribution 4.0'; attribution required)"
+  },
+  "mus_shop": {
+    "file": "music/mus_shop.mp3",
+    "type": "music",
+    "volume": 0.4,
+    "loop": true,
+    "source": "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Pale%20Rider.mp3 ('Pale Rider' by Kevin MacLeod, incompetech.com; loop of 7.3s-89.2s, tail crossfaded into head; normalised quieter (-19 LUFS))",
+    "license": "CC BY 4.0 (Kevin MacLeod / incompetech.com: 'Creative Commons: By Attribution 4.0'; attribution required)"
+  },
+  "mus_death": {
+    "file": "music/mus_death.mp3",
+    "type": "music",
+    "volume": 0.6,
+    "loop": false,
+    "source": "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Darkness%20Speaks.mp3 ('Darkness Speaks' by Kevin MacLeod, incompetech.com; sting: 1.25s-9.05s excerpt (gong hit + eerie drone), fade-out)",
+    "license": "CC BY 4.0 (Kevin MacLeod / incompetech.com: 'Creative Commons: By Attribution 4.0'; attribution required)"
+  },
+  "mus_victory": {
+    "file": "music/mus_victory.mp3",
+    "type": "music",
+    "volume": 0.6,
+    "loop": false,
+    "source": "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Cowboy%20Sting.mp3 ('Cowboy Sting' by Kevin MacLeod, incompetech.com; sting: 3rd (88bpm) take, first 11.8s, fade-out)",
+    "license": "CC BY 4.0 (Kevin MacLeod / incompetech.com: 'Creative Commons: By Attribution 4.0'; attribution required)"
+  }
+}

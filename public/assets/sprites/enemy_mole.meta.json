@@ -1,0 +1,12 @@
+{
+ "enemy_mole": {
+  "file": "sprites/enemy_mole.png",
+  "frameWidth": 128,
+  "frameHeight": 128,
+  "frames": 6,
+  "mode": "strip",
+  "anchor": "bottom",
+  "scale": 0.3307,
+  "names": []
+ }
+}

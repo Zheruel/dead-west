@@ -1,0 +1,17 @@
+{
+ "items_active": {
+  "file": "sprites/items_active.png",
+  "frameWidth": 96,
+  "frameHeight": 96,
+  "frames": 4,
+  "mode": "grid",
+  "anchor": "center",
+  "scale": 0.1489,
+  "names": [
+   "whiskey_bottle",
+   "pocket_watch",
+   "powder_keg",
+   "lucky_deck"
+  ]
+ }
+}

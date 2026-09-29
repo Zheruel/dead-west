@@ -1,0 +1,12 @@
+{
+ "enemy_tumbleweed": {
+  "file": "sprites/enemy_tumbleweed.png",
+  "frameWidth": 128,
+  "frameHeight": 128,
+  "frames": 6,
+  "mode": "grid",
+  "anchor": "bottom",
+  "scale": 0.2667,
+  "names": []
+ }
+}

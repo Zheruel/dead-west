@@ -1,0 +1,12 @@
+{
+ "fx_impact": {
+  "file": "sprites/fx_impact.png",
+  "frameWidth": 64,
+  "frameHeight": 64,
+  "frames": 4,
+  "mode": "strip",
+  "anchor": "center",
+  "scale": 0.122,
+  "names": []
+ }
+}

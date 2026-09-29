@@ -1,0 +1,5 @@
+# Python deps for the asset pipeline (tools/*.py). Also needs system ffmpeg and pngquant (brew install ffmpeg pngquant).
+#   python3 -m venv .venv-art && .venv-art/bin/pip install -r tools/requirements.txt
+numpy>=2.0
+pillow>=11.0
+scipy>=1.14

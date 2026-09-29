@@ -1,0 +1,19 @@
+{
+ "props": {
+  "file": "sprites/props.png",
+  "frameWidth": 128,
+  "frameHeight": 128,
+  "frames": 6,
+  "mode": "grid",
+  "anchor": "bottom",
+  "scale": 0.2422,
+  "names": [
+   "pedestal",
+   "pedestal_shop",
+   "trapdoor_closed",
+   "trapdoor_open",
+   "peddler",
+   "tombstone_marker"
+  ]
+ }
+}

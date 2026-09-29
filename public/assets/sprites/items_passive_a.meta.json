@@ -1,0 +1,21 @@
+{
+ "items_passive_a": {
+  "file": "sprites/items_passive_a.png",
+  "frameWidth": 96,
+  "frameHeight": 96,
+  "frames": 8,
+  "mode": "grid",
+  "anchor": "center",
+  "scale": 0.2136,
+  "names": [
+   "spurs",
+   "lucky_horseshoe",
+   "hollow_point",
+   "speed_loader",
+   "long_barrel",
+   "sawed_off",
+   "ricochet",
+   "dead_eye"
+  ]
+ }
+}

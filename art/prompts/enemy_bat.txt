@@ -1,0 +1,13 @@
+Use: 2D game enemy sprite animation strip, 6 frames, for a dark occult western top-down shooter (Floor 3, a dark mine with near-black rock, so the sprite must read bright against near-black: pale bone/grey-lilac fur highlights, rust-orange inner wings, sickly-green glowing eyes).
+Input images: Image 1: STYLE REFERENCE (match its ink outline weight, cross-hatch shading, muted palette, big-head cartoon proportions exactly; do not copy its layout or characters unless told).
+Style: dark ink-cartoon woodcut game art, thick black outlines, cross-hatch shading, flat muted colours with grain, macabre wanted-poster feel, Binding-of-Isaac-like readability. Top-down 3/4 game camera, subject facing the camera. Light from top-left.
+Avoid: cast shadow, ground plane, ground line, floor, background, text, watermark, logos, photorealism, thin outlines, gradients that blur the outline.
+Subject: ONE fangy cave bat, the SAME bat repeated 6 times in a single horizontal row, evenly spaced with clear empty gaps between them, identical scale and identical centre line, nothing overlapping, nothing cropped. Character design (identical in all 6 frames, do not redesign): a cute-but-vicious cartoon cave bat seen from the front, with a big round head (~45% of body size), large pointy ears, small furry chubby body in dark charcoal-purple fur with pale bone-grey fur on the chest, two glowing sickly-green (#8fc23f) eyes, a snarling mouth with two long white fangs, tiny clawed feet, and two large leathery scalloped wings with visible finger bones, thick black outlines, wing membranes in rust (#8a4b1f) and dusk purple (#4a3358) with cross-hatching.
+Poses, strict order left to right:
+1. flap: wings raised high up and open, symmetrical.
+2. flap: wings mid-way, half raised, slightly angled up.
+3. flap: wings swept fully down and forward, body slightly higher.
+4. flap: wings mid-way, half lowered, slightly angled down.
+5. WINDUP / telegraph: wings pulled back and up behind him folded, hunched, head tilted back, mouth wide open with fangs bared and eyes flaring, about to dive.
+6. DIVE ATTACK: plunging toward the camera, wings swept sharply back along the body, head tilted down and forward, mouth open, fangs out, claws extended forward, motion streaks behind.
+Wing span roughly 2x body width in the flap frames; all 6 clearly the same bat with the same face and colours.

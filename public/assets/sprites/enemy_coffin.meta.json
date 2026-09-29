@@ -1,0 +1,12 @@
+{
+ "enemy_coffin": {
+  "file": "sprites/enemy_coffin.png",
+  "frameWidth": 160,
+  "frameHeight": 160,
+  "frames": 6,
+  "mode": "strip",
+  "anchor": "bottom",
+  "scale": 0.2938,
+  "names": []
+ }
+}

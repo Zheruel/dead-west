@@ -1,0 +1,21 @@
+{
+ "items_passive_c": {
+  "file": "sprites/items_passive_c.png",
+  "frameWidth": 96,
+  "frameHeight": 96,
+  "frames": 8,
+  "mode": "grid",
+  "anchor": "center",
+  "scale": 0.1901,
+  "names": [
+   "spirit_lantern",
+   "crow_companion",
+   "voodoo_doll",
+   "duster_coat",
+   "prospectors_pan",
+   "hex_bag",
+   "fan_the_hammer",
+   "mezcal_worm"
+  ]
+ }
+}

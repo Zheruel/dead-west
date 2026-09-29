@@ -1,0 +1,21 @@
+{
+ "projectiles": {
+  "file": "sprites/projectiles.png",
+  "frameWidth": 48,
+  "frameHeight": 48,
+  "frames": 8,
+  "mode": "grid",
+  "anchor": "center",
+  "scale": 0.1161,
+  "names": [
+   "bullet_player",
+   "bullet_crit",
+   "bullet_enemy",
+   "bullet_venom",
+   "bullet_nail",
+   "bullet_ghostfire",
+   "dynamite_stick",
+   "rock_debris"
+  ]
+ }
+}

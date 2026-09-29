@@ -1,0 +1,12 @@
+{
+ "boss_grimm_idle": {
+  "file": "sprites/boss_grimm_idle.png",
+  "frameWidth": 320,
+  "frameHeight": 320,
+  "frames": 4,
+  "mode": "strip",
+  "anchor": "bottom",
+  "scale": 0.4627,
+  "names": []
+ }
+}

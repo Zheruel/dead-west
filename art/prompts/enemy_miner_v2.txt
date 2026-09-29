@@ -1,0 +1,5 @@
+Use: 2D game enemy sprite animation strip edit (dark occult western top-down shooter).
+Input images: Image 1: STYLE REFERENCE (match its ink outline weight, cross-hatch shading, muted palette; do not copy its layout or characters). Image 2: EDIT TARGET, a strip of 6 zombie miner poses on a transparent background.
+Same image as Image 2. Change ONLY the 6th (rightmost) figure, the attack pose. In the new 6th pose the miner is hunched forward and slamming the pickaxe straight down, BUT the pickaxe is planted BESIDE his right boot: the pick head's lowest point ends at exactly the same ground line as the bottoms of his boots (the pick must NOT extend below the boots, no pick tip poking below the feet). He still grips the handle with both hands, mouth open, headlamp lit, a few small rock chips flying near the pick tip at boot level. Keep the same miner design, scale and colours.
+Keep figures 1 to 5 IDENTICAL: same poses, same positions, same scale, same drawing, same even spacing with clear empty gaps, same shared ground line, preserve the transparent background.
+Avoid: cast shadow, ground plane, ground line, floor, background, text, watermark.

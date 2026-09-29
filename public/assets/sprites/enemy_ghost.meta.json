@@ -1,0 +1,12 @@
+{
+ "enemy_ghost": {
+  "file": "sprites/enemy_ghost.png",
+  "frameWidth": 128,
+  "frameHeight": 128,
+  "frames": 6,
+  "mode": "strip",
+  "anchor": "bottom",
+  "scale": 0.2234,
+  "names": []
+ }
+}

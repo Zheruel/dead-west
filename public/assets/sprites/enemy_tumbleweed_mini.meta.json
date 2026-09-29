@@ -1,0 +1,12 @@
+{
+ "enemy_tumbleweed_mini": {
+  "file": "sprites/enemy_tumbleweed_mini.png",
+  "frameWidth": 64,
+  "frameHeight": 64,
+  "frames": 6,
+  "mode": "grid",
+  "anchor": "bottom",
+  "scale": 0.1316,
+  "names": []
+ }
+}

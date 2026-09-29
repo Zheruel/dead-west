@@ -1,0 +1,12 @@
+{
+ "enemy_scarecrow": {
+  "file": "sprites/enemy_scarecrow.png",
+  "frameWidth": 160,
+  "frameHeight": 160,
+  "frames": 6,
+  "mode": "strip",
+  "anchor": "bottom",
+  "scale": 0.2791,
+  "names": []
+ }
+}

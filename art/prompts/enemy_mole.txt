@@ -1,0 +1,13 @@
+Use: 2D game enemy sprite animation strip, 6 frames, for a dark occult western top-down shooter (Floor 3, a dark mine with near-black rock, so the sprite must read against near-black: lighter dusty tan-brown fur, pale pink nose and claws, bone-coloured claws, warm dirt-ochre soil).
+Input images: Image 1: STYLE REFERENCE (match its ink outline weight, cross-hatch shading, muted palette, big-head cartoon proportions exactly; do not copy its layout or characters unless told).
+Style: dark ink-cartoon woodcut game art, thick black outlines, cross-hatch shading, flat muted colours with grain, macabre wanted-poster feel, Binding-of-Isaac-like readability. Top-down 3/4 game camera, subject facing the camera. Light from top-left.
+Avoid: cast shadow, ground plane, ground line, floor, background, text, watermark, logos, photorealism, thin outlines, gradients that blur the outline.
+Subject: ONE angry giant MOLE, the SAME mole repeated 6 times in a single horizontal row, evenly spaced with clear empty gaps between them, identical scale and identical ground line, nothing overlapping, nothing cropped. Character design (identical in all 6 frames, do not redesign): a chubby, barrel-bodied giant cartoon mole seen from the front, oversized head, tiny squinting beady eyes with a furious brow (with a faint sickly-green #8fc23f glint), a big pink pointed snout with flared nostrils and a snarling mouth with two big buck teeth, dusty tan-brown fur with cross-hatching, huge oversized bone-white digging claws on shovel-like hands with thick black outlines, small stubby feet, a scarred ear notch.
+Poses, strict order left to right:
+1. scurry A: surfaced, crouched forward on stubby legs, left claw raised, snout up sniffing, body leaning slightly left.
+2. scurry B: body bobbed up a little, both claws lowered, snarling.
+3. scurry C: right claw raised, body leaning slightly right.
+4. scurry D: body bobbed low, both claws swinging out, snarling.
+5. BURROWING / telegraph: the mole is diving into the ground: mostly a heap of loose dirt with clumps and cracked earth mound, with only the top of his angry head/snout and two big claws sticking out of the dirt mound, small dirt clods flying.
+6. ERUPTING: the mole bursts up from the ground, arms flung wide with claws spread and mouth open roaring, a spray of dirt clods and pebbles flying outward around him, a broken ring of upturned dirt at his base.
+All 6 clearly the same mole with the same face and fur colours.

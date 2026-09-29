@@ -1,0 +1,12 @@
+{
+ "fx_muzzle": {
+  "file": "sprites/fx_muzzle.png",
+  "frameWidth": 96,
+  "frameHeight": 96,
+  "frames": 4,
+  "mode": "strip",
+  "anchor": "center",
+  "scale": 0.1622,
+  "names": []
+ }
+}

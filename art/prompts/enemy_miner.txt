@@ -1,0 +1,13 @@
+Use: 2D game enemy sprite animation strip, 6 frames, for a dark occult western top-down shooter (Floor 3, a dark mine with near-black rock, so the sprite must be bright and readable: bone-white skin, rust-orange clothes, green glow accents).
+Input images: Image 1: STYLE REFERENCE (match its ink outline weight, cross-hatch shading, muted palette, big-head cartoon proportions exactly; do not copy its layout or characters unless told).
+Style: dark ink-cartoon woodcut game art, thick black outlines, cross-hatch shading, flat muted colours with grain, macabre wanted-poster feel, Binding-of-Isaac-like readability. Top-down 3/4 game camera, subject facing the camera. Light from top-left.
+Avoid: cast shadow, ground plane, ground line, floor, background, text, watermark, logos, photorealism, thin outlines, gradients that blur the outline.
+Subject: ONE big, slow, lumbering ZOMBIE MINER, the SAME character repeated 6 times in a single horizontal row, evenly spaced with clear empty gaps between them, identical scale and identical ground line (feet on the same invisible line), nothing overlapping, nothing cropped. Character design (identical in all 6 frames, do not redesign): hulking stooped undead miner with an oversized head (~40% of body height) and a small, wide, heavy body; pallid bone-white grey-green rotting skin, sunken black eye sockets with tiny sickly-green (#8fc23f) glowing pupils, gaping jaw with a few broken teeth; battered rust-orange (#8a4b1f) hard-hat helmet with a dented brass headlamp on the front that glows warm lantern amber (#f0a640); tattered sepia-brown miner's overalls with suspenders, patched and torn, dust-ochre shirt; huge chunky hands and heavy chunky boots; carries a big rusty iron pickaxe (dark iron head, sepia wooden handle) in his right hand.
+Poses, strict order left to right:
+1. idle/walk A: stooped, standing, pickaxe held low at his side head-down, weight on left foot.
+2. walk B: right foot stepping forward, body raised slightly, pickaxe swaying, head bobbing.
+3. walk C: standing, pickaxe held low at his side, weight on right foot (mirror of pose 1 in leg positions).
+4. walk D: left foot stepping forward, body lowered slightly, pickaxe swaying the other way.
+5. WINDUP / telegraph: leans back with both hands gripping the pickaxe raised high above his head, mouth wide open roaring, headlamp flaring brighter.
+6. ATTACK: hunched forward, pickaxe slammed down in front of him at the ground, both hands on the handle, body lunging toward camera, a few small rock chips flying off the pick point.
+The 6 figures must be clearly the same miner with the same proportions, outfit, colours and pickaxe.

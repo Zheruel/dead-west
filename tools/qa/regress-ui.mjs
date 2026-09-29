@@ -1,0 +1,36 @@
+// REGRESSION (UI): drives menu -> options -> bounty board -> credits -> run -> pause -> pause options -> death poster with the keyboard. Screens -> art/qa/ui-*.png
+//   node tools/qa/regress-ui.mjs   (look at the screenshots; prints settings persistence + pause/resume checks)
+import { launch } from './harness.mjs';
+const g = await launch({ query: '?debug=1&seed=42', name: 'ui' });
+const k = async (key, w = 150) => { await g.tap(key); await g.wait(w); };
+await g.wait(1500);
+await g.shot('ui-menu');
+await k('ArrowDown'); await k('Enter', 600);
+await g.shot('ui-options');
+await k('ArrowDown'); await k('ArrowLeft'); await k('ArrowLeft'); await k('ArrowUp'); await k('ArrowLeft'); await k('ArrowLeft');
+console.log('settings', await g.eval(() => JSON.parse(localStorage.getItem('deadwest.save.v1')).settings));
+await g.shot('ui-options2');
+await k('Escape', 400);
+await k('ArrowDown'); await k('Enter', 600);
+await g.shot('ui-bounty');
+await k('Escape', 400);
+await k('ArrowDown'); await k('Enter', 600);
+await g.shot('ui-credits');
+await k('Escape', 400);
+await k('ArrowDown'); // wrap to RIDE OUT
+await g.startRun();
+await g.eval(() => { window.__dw.api.giveItem('spurs'); window.__dw.api.giveItem('hollow_point'); window.__dw.api.giveItem('whiskey_bottle'); });
+await k('Escape', 700);
+await g.shot('ui-pause');
+await k('ArrowDown'); await k('Enter', 500);
+await g.shot('ui-pause-options');
+await k('Escape', 300);
+console.log('still paused', await g.eval(() => window.__game.scene.isActive('Pause')));
+await k('Escape', 500);
+console.log('resumed', await g.eval(() => !window.__game.scene.isActive('Pause') && window.__game.scene.isActive('Game')));
+await g.eval(() => { const s = window.__dw.scene; s.run.kills = 23; s.run.roomsCleared = 6; s.run.bossesKilled = 1; s.run.floor = 2; s.run.time = 754; s.run.damageTaken = 9; });
+await g.eval(() => window.__dw.api.die());
+await g.wait(7500);
+await g.shot('ui-death');
+console.log('errors', g.errors);
+await g.close();

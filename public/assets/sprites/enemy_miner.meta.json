@@ -1,0 +1,12 @@
+{
+ "enemy_miner": {
+  "file": "sprites/enemy_miner.png",
+  "frameWidth": 160,
+  "frameHeight": 160,
+  "frames": 6,
+  "mode": "strip",
+  "anchor": "bottom",
+  "scale": 0.26,
+  "names": []
+ }
+}

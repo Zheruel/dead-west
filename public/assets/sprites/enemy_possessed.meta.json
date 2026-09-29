@@ -1,0 +1,12 @@
+{
+ "enemy_possessed": {
+  "file": "sprites/enemy_possessed.png",
+  "frameWidth": 128,
+  "frameHeight": 128,
+  "frames": 6,
+  "mode": "strip",
+  "anchor": "bottom",
+  "scale": 0.2451,
+  "names": []
+ }
+}

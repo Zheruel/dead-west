@@ -1,0 +1,12 @@
+{
+ "player_walk_down": {
+  "file": "sprites/player_walk_down.png",
+  "frameWidth": 128,
+  "frameHeight": 128,
+  "frames": 6,
+  "mode": "strip",
+  "anchor": "bottom",
+  "scale": 0.2099,
+  "names": []
+ }
+}
