@@ -143,3 +143,7 @@ Keys: F1 next floor, F2 heal, F3 random passive, F4 +99 coins/keys/dynamite, F5 
 * `Enemy.hitFeedback` (squash, sparks, blood specks; Sixth Bullet adds 35 ms hit-stop + kick); deaths add bone chips, killing-shot blood spray, bigger decals. Player: white hurt flash, roll afterimages, dodge-ready ring, heal sparkles. Doors: `Door.juice` (slam/swell + dust). Room clear: gold ring + faint flash. Dynamite: fuse spark + flickering light. Items: 0.34 s slow-mo beat on pickup. Rooms: `Room.buildLights` (F3 lantern green pulse, F2 warm flicker). Camera lookahead in `GameScene.updateCamera` (skipped during transitions/cutscenes).
 * `hud:flash` colours now work (Vignette uses a white texture tinted red by default). Every shake honours the Screenshake setting.
 * QA: the throw-away `feel-*` scripts were pruned; use `smoke.mjs`, `bot.mjs` (autoplay through all floors) and the fast-forward pattern in `fuzz-run.mjs` (note: Phaser tweens still run on real time, so wait real ms for tween-driven visuals).
+
+
+## Round 2 (in progress)
+DEAD WEST v2 (floors 4-6, 3 new riders, 46 items, events, meta, story) is planned in `docs/v2/`: `ARCH_V2.md` (engineering, ids, ownership), `WORK_PLAN.md` (workflows and jobs), `ASSET_SPEC_V2.md`, `AUDIO_SPEC_V2.md`, plus the designer docs. This file describes round 1 until QA-7 replaces this section with the final file map.
