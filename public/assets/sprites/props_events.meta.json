@@ -1,0 +1,21 @@
+{
+ "props_events": {
+  "file": "sprites/props_events.png",
+  "frameWidth": 192,
+  "frameHeight": 192,
+  "frames": 8,
+  "mode": "grid",
+  "anchor": "bottom",
+  "scale": 0.4052,
+  "names": [
+   "card_table",
+   "well",
+   "wagon_oil",
+   "confessional",
+   "grave_mound",
+   "grave_open",
+   "duel_post",
+   "altar_shrine"
+  ]
+ }
+}

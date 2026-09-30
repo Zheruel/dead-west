@@ -1,0 +1,12 @@
+{
+ "enemy_hellhound": {
+  "file": "sprites/enemy_hellhound.png",
+  "frameWidth": 128,
+  "frameHeight": 128,
+  "frames": 6,
+  "mode": "strip",
+  "anchor": "bottom",
+  "scale": 0.3769,
+  "names": []
+ }
+}

@@ -1,0 +1,18 @@
+{
+ "player_hunter_death": {
+  "file": "sprites/player_hunter_death.png",
+  "frameWidth": 128,
+  "frameHeight": 128,
+  "frames": 5,
+  "mode": "strip",
+  "anchor": "bottom",
+  "scale": 0.3315,
+  "names": [
+   "hit",
+   "stagger",
+   "collapse",
+   "sprawl",
+   "dead"
+  ]
+ }
+}

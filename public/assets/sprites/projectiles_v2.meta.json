@@ -1,0 +1,21 @@
+{
+ "projectiles_v2": {
+  "file": "sprites/projectiles_v2.png",
+  "frameWidth": 48,
+  "frameHeight": 48,
+  "frames": 8,
+  "mode": "grid",
+  "anchor": "center",
+  "scale": 0.102,
+  "names": [
+   "bullet_bone",
+   "bullet_ghost",
+   "bullet_cap",
+   "bullet_orbit",
+   "bullet_ice",
+   "bullet_coin",
+   "bullet_mirror",
+   "bullet_child"
+  ]
+ }
+}

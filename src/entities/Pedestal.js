@@ -2,11 +2,20 @@
 // Presentation: icon bobs & breathes above a rotating amber ring (magic circle) with a soft glow and rising sparks; the item name fades in
 // when the player is near (plus "TAKE ONE" on pick-one pairs). Touching it picks the item up (shop pedestals charge first).
 // Actives: picking one while holding another swaps - the old active stays on the pedestal (detached from any pick-one group).
+// Round 2: tag chips under the name (coloured), a gold synergy spark + `SYNERGY!` line when the item would complete a synergy (setting synergyHints),
+// and a red deal plate (`rec.deal`: true = the def's deal.pay, or a {container,coins,keys,tin,dynamite} object) paid through ItemSystem.canPay/pay.
 import Phaser from 'phaser';
 import { DEPTH, actorDepth, FONT_BODY } from '../config.js';
 import { Assets } from '../core/Assets.js';
+import { bus } from '../core/events.js';
+import { Save } from '../core/Save.js';
 import { getItem } from '../items/registry.js';
+import { tagColor, tagLabel } from '../items/tags.js';
 import { tryBuy } from './Shop.js';
+
+const PAY_LABEL = { container: (n) => `-${n} HEART${n > 1 ? 'S' : ''}`, coins: (n) => `${n} COINS`, keys: (n) => `${n} KEY${n > 1 ? 'S' : ''}`, tin: (n) => `${n / 2} TIN`, dynamite: (n) => `${n} DYNAMITE` };
+const payText = (pay) => Object.keys(pay).filter((k) => PAY_LABEL[k] && pay[k]).map((k) => PAY_LABEL[k](pay[k])).join('  ');
+const hintsOn = () => { try { return Save.settings().synergyHints !== false; } catch (e) { return true; } };
 
 const ICON_Y = 66; // icon centre above the pedestal's ground point (floats over the altar top)
 
@@ -21,6 +30,13 @@ export default class Pedestal {
     this.denyCd = 0;
     this.sparkT = 0;
     this.nameK = 0;
+    this.chips = [];
+    this.chipN = 0;
+    this.pulseT = 0;
+    this.synergy = false;
+    this.synT = 0;
+    this.seen = false;
+    this.plate = null;
     const shop = rec.price != null;
     this.base = Assets.makeCell(scene, this.x, this.y + 36, 'props', shop ? 'pedestal_shop' : 'pedestal', 1);
     this.base.setDepth(actorDepth(this.y + 34));
@@ -36,7 +52,16 @@ export default class Pedestal {
     this.refresh();
   }
 
-  get objs() { return [this.base, this.glow, this.ring, this.ring2, this.tag, this.icon, this.label].filter(Boolean); }
+  get objs() { return [this.base, this.glow, this.ring, this.ring2, this.tag, this.icon, this.label, this.plate, ...this.chips].filter(Boolean); }
+
+  /** The deal cost of this pedestal ({container,coins,keys,tin,dynamite}) or null. */
+  get dealPay() {
+    const d = this.rec.deal;
+    if (!d) return null;
+    if (typeof d === 'object') return d;
+    const def = this.rec.itemId ? getItem(this.rec.itemId) : null;
+    return def && def.deal ? def.deal.pay : null;
+  }
 
   refresh() {
     const rec = this.rec;
@@ -54,9 +79,40 @@ export default class Pedestal {
     this.ring.setVisible(!!this.icon);
     this.ring2.setVisible(!!this.icon);
     if (this.label) this.label.setVisible(!!this.icon);
+    this.syncSynergy();
     const nm = def && this.icon ? def.name.toUpperCase() : '';
-    this.tag.setText(nm && rec.group != null ? `${nm}\n(TAKE ONE)` : nm);
+    this.tag.setText(this.synergy && hintsOn() && nm ? 'SYNERGY!' : nm && rec.group != null ? `${nm}\n(TAKE ONE)` : nm);
+    this.tag.setColor(this.synergy && hintsOn() ? '#ffd860' : '#f5e6b8');
     if (!this.icon) this.tag.setAlpha(0);
+    this.refreshChips(def && this.icon ? def : null);
+    this.refreshPlate();
+  }
+
+  /** Would taking this item complete a synergy? (spark ring + `SYNERGY!` in place of the name) */
+  syncSynergy() {
+    const rec = this.rec;
+    this.synergy = !!(rec.itemId && !rec.taken && this.scene.items && this.scene.items.wouldComplete(rec.itemId));
+  }
+
+  /** Small coloured tag chips under the name (pooled Text objects, up to 3). */
+  refreshChips(def) {
+    const tags = def && def.tags ? def.tags.slice(0, 3) : [];
+    for (let i = 0; i < 3; i++) {
+      let c = this.chips[i];
+      if (!c) {
+        c = this.chips[i] = this.scene.add.text(this.x, this.y, '', { fontFamily: FONT_BODY, fontSize: '15px', color: '#e8dcc0', stroke: '#120c0a', strokeThickness: 4 }).setOrigin(0.5, 0).setDepth(DEPTH.pickups + 4).setAlpha(0);
+      }
+      if (tags[i]) c.setText(tagLabel(tags[i])).setColor(tagColor(tags[i])); else c.setText('');
+    }
+    this.chipN = tags.length;
+  }
+
+  /** Red plate under a devil's-deal pedestal: what it costs. */
+  refreshPlate() {
+    const pay = this.dealPay;
+    if (!pay || this.rec.taken || !this.icon) { if (this.plate) { this.plate.destroy(); this.plate = null; } return; }
+    if (!this.plate) this.plate = this.scene.add.text(this.x, this.y + 58, '', { fontFamily: FONT_BODY, fontSize: '22px', color: '#ff8a7a', backgroundColor: '#3a0c10', padding: { x: 8, y: 3 }, stroke: '#120c0a', strokeThickness: 3 }).setOrigin(0.5).setDepth(DEPTH.pickups + 2);
+    this.plate.setText(payText(pay));
   }
 
   update(dt) {
@@ -82,7 +138,18 @@ export default class Pedestal {
       // name tag fades in when close
       const near = p && !p.dead ? Math.hypot(p.x - this.x, p.y - this.y) < 230 : false;
       this.nameK += ((near ? 1 : 0) - this.nameK) * Math.min(1, dt * 8);
-      this.tag.setAlpha(this.nameK).setY(this.y - ICON_Y - 50 - this.nameK * 8 + bob * 0.5);
+      const ty = this.y - ICON_Y - 50 - this.nameK * 8 + bob * 0.5;
+      this.tag.setAlpha(this.nameK).setY(ty);
+      const n = this.chipN;
+      for (let i = 0; i < n; i++) this.chips[i].setPosition(this.x + (i - (n - 1) / 2) * 74, ty + 6).setAlpha(this.nameK * 0.95);
+      if (near && !this.seen) { this.seen = true; this.markSeen(); }
+      if (near) { this.synT -= dt; if (this.synT <= 0) { this.synT = 0.6; const was = this.synergy; this.syncSynergy(); if (was !== this.synergy) this.refresh(); } }
+      if (this.synergy && hintsOn()) { // gold spark ring
+        const k = 0.5 + 0.5 * Math.sin(this.age * 6);
+        this.ring2.setTint(0xffd860).setAlpha(0.35 + k * 0.4).setScale(0.4 + k * 0.12, 0.16 + k * 0.05);
+        this.pulseT -= dt;
+        if (this.pulseT <= 0) { this.pulseT = 1.4; this.scene.fx.ringPulse(this.x, this.y + 14, 0xffd860, 70, 600, 0.5); }
+      } else this.ring2.setTint(0xffe090);
     }
     if (this.label && rec.price != null) {
       const pr = this.scene.player.price(rec.price);
@@ -94,9 +161,30 @@ export default class Pedestal {
     if (d < p.radius + 34 && this.age > 0.4) this.touch(p);
   }
 
+  markSeen() {
+    const id = this.rec.itemId;
+    if (!id) return;
+    try { Save.seeItem(id); } catch (e) { /* storage unavailable */ }
+    bus.emit('item:seen', { id });
+  }
+
   touch(p) {
     const rec = this.rec;
     const s = this.scene;
+    const pay = this.dealPay;
+    if (pay) { // devil's deal: pay first (ItemSystem.canPay / pay)
+      if (this.denyCd > 0) return;
+      const def = getItem(rec.itemId);
+      const ok = s.items.canPay(p, { deal: { pay } });
+      if (ok !== true) {
+        this.denyCd = 1.2;
+        s.fx.text(this.x, this.y - 60, ok === true ? '' : 'CANNOT PAY', { color: '#d63a2a', size: 22 });
+        bus.emit('pickup:denied', { id: rec.itemId });
+        return;
+      }
+      s.items.pay(p, { id: def ? def.id : rec.itemId, deal: { pay } }, { emit: true });
+      rec.deal = null;
+    }
     if (rec.price != null) {
       if (this.denyCd > 0) return;
       if (!tryBuy(s, p, p.price(rec.price), this)) { this.denyCd = 1.2; return; }

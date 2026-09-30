@@ -25,7 +25,7 @@ export default class Chest {
 
   open(p) {
     const rec = this.rec;
-    if (rec.type === 'chest_gold') {
+    if (rec.type === 'chest_gold' && !rec.free) { // rec.free: mini-boss reward chest opens on touch without a key
       if (p.keys <= 0) {
         if (this.denyCd <= 0) { this.denyCd = 1; Sfx.play('door_locked'); this.scene.fx.text(this.x, this.y - 50, 'NEEDS A KEY', { color: '#e8c84a', size: 22 }); }
         return;

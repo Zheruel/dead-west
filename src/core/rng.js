@@ -66,6 +66,13 @@ export function initSeed(explicit) {
   return runSeed;
 }
 export const getSeed = () => runSeed;
+/**
+ * Deterministic content stream keyed by (label, ...parts) and the run seed, independent of `rng.game` and of play order:
+ * seed-mates (Daily Ride) get identical rolls. e.g. subRng('item', room.seed, slot), subRng('gate', floor). Returns a fresh RNG each call.
+ */
+export const subRng = (label, ...parts) => new RNG(hashStr(`sub:${label}:${runSeed}:${parts.join(':')}`));
+/** Numeric seed of a Daily Ride ('YYYY-MM-DD', UTC): same date -> same run seed on every machine. */
+export const dailySeed = (dateStr) => hashStr(`dw2:daily:${dateStr}`);
 /** Fresh deterministic stream for floor N (independent of gameplay rolls). */
 export const floorRng = (floor, seed = runSeed) => new RNG(hashStr(`floor:${seed}:${floor}`));
 /** Gameplay stream: drops, random rolls that should be reproducible for a seed. */

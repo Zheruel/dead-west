@@ -1,0 +1,12 @@
+{
+ "enemy_rail_rat": {
+  "file": "sprites/enemy_rail_rat.png",
+  "frameWidth": 64,
+  "frameHeight": 64,
+  "frames": 6,
+  "mode": "strip",
+  "anchor": "bottom",
+  "scale": 0.1644,
+  "names": []
+ }
+}

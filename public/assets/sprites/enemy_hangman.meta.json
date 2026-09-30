@@ -1,0 +1,12 @@
+{
+ "enemy_hangman": {
+  "file": "sprites/enemy_hangman.png",
+  "frameWidth": 192,
+  "frameHeight": 192,
+  "frames": 6,
+  "mode": "strip",
+  "anchor": "bottom",
+  "scale": 0.5027,
+  "names": []
+ }
+}

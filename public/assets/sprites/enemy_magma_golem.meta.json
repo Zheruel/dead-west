@@ -1,0 +1,12 @@
+{
+ "enemy_magma_golem": {
+  "file": "sprites/enemy_magma_golem.png",
+  "frameWidth": 160,
+  "frameHeight": 160,
+  "frames": 6,
+  "mode": "strip",
+  "anchor": "bottom",
+  "scale": 0.4394,
+  "names": []
+ }
+}

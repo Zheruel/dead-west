@@ -1,0 +1,12 @@
+{
+ "fx_hellfire": {
+  "file": "sprites/fx_hellfire.png",
+  "frameWidth": 128,
+  "frameHeight": 192,
+  "frames": 6,
+  "mode": "strip",
+  "anchor": "bottom",
+  "scale": 0.3696,
+  "names": []
+ }
+}

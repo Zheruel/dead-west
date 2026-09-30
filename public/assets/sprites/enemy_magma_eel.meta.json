@@ -1,0 +1,12 @@
+{
+ "enemy_magma_eel": {
+  "file": "sprites/enemy_magma_eel.png",
+  "frameWidth": 128,
+  "frameHeight": 128,
+  "frames": 6,
+  "mode": "strip",
+  "anchor": "bottom",
+  "scale": 0.3594,
+  "names": []
+ }
+}

@@ -1,0 +1,21 @@
+{
+ "items2_a": {
+  "file": "sprites/items2_a.png",
+  "frameWidth": 96,
+  "frameHeight": 96,
+  "frames": 8,
+  "mode": "grid",
+  "anchor": "center",
+  "scale": 0.2013,
+  "names": [
+   "forked_tongue",
+   "widows_bone",
+   "lightning_rod",
+   "blast_caps",
+   "wraith_rounds",
+   "lodestone",
+   "blue_norther",
+   "brand_iron"
+  ]
+ }
+}

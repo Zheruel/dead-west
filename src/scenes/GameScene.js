@@ -2,10 +2,11 @@
 import Phaser from 'phaser';
 import { ROOM, FLOORS, MAX_FLOOR, FEEL, DEPTH, W, H } from '../config.js';
 import { initSeed, getSeed } from '../core/rng.js';
+import { bossMeta } from '../bosses/registry.js';
 import { bus } from '../core/events.js';
 import { Sfx, Music, Audio, playMusicFor, MUSIC_FOR } from '../core/Audio.js';
 import { Save } from '../core/Save.js';
-import { flag } from '../core/util.js';
+import { flag, qs, clamp } from '../core/util.js';
 import RunState from '../core/RunState.js';
 import GameInput from '../core/Input.js';
 import Fx from '../systems/Fx.js';
@@ -16,18 +17,28 @@ import RoomManager from '../rooms/RoomManager.js';
 import { ItemSystem, getItem, allItems } from '../items/index.js';
 import { spawnEnemy } from '../enemies/index.js';
 import { installDebug } from '../core/Debug.js';
-import { playFinale } from './finale.js';
+import * as flow from './flow.js';
+
+// Optional run setup from the meta layer (FN-3): applyRunSetup(scene, data) picks rider / mode / difficulty / mutators, finishRun(scene, payload) adds the ledger.
+const SETUP = Object.values(import.meta.glob('../meta/runSetup.js', { eager: true }))[0] || null;
+const RIDERS = ['gunslinger', 'preacher', 'hunter', 'queen'];
+
+const track = (k) => MUSIC_FOR[k] || (String(k).startsWith('mus_') ? k : `mus_${k}`); // 'boss4' -> 'mus_boss4'
 
 export default class GameScene extends Phaser.Scene {
   constructor() { super('Game'); }
+
+  init(data) { this.startData = data || {}; }
 
   get room() { return this.roomMgr ? this.roomMgr.room : null; }
 
   create() {
     this.cameras.main.setBackgroundColor('#0d0806');
     this.cameras.main.setScroll(0, 0);
-    this.seed = initSeed();
+    this.seed = initSeed(this.startData.seed); // checkpoint continue passes the saved seed; otherwise ?seed= or random
     this.run = new RunState(this.seed);
+    this.endingStarted = false;
+    this.chapter = 1;
     this.enemies = [];
     this.dynamites = [];
     this.floorNum = 1;
@@ -66,12 +77,31 @@ export default class GameScene extends Phaser.Scene {
     this._onBlur = () => { if (!this.ended && this.player && !this.player.dead) this.pauseGame(); };
     this.game.events.on('blur', this._onBlur);
 
-    this.roomMgr.loadFloor(1);
-    this.time.delayedCall(250, () => bus.emit('floor:intro', { floor: 1, name: FLOORS[1].name, subtitle: FLOORS[1].subtitle }));
+    this.applyRunSetup();
+    const start = this.startFloor();
+    this.roomMgr.loadFloor(start);
+    this.time.delayedCall(250, () => flow.afterFloorIntro(this, { from: 0, floor: start }));
     installDebug(this);
 
     this.events.once('shutdown', () => this.onShutdown());
     this.cameras.main.fadeIn(350, 13, 8, 6);
+  }
+
+  /** Rider / mode: the meta layer's runSetup when present, else the ?char= / ?mode= flags (validated). */
+  applyRunSetup() {
+    const d = this.startData;
+    if (SETUP && typeof SETUP.applyRunSetup === 'function') {
+      try { SETUP.applyRunSetup(this, { char: qs('char') || d.char, mode: qs('mode') || d.mode, ...d }); return; } catch (e) { console.warn('[GameScene] runSetup failed', e); }
+    }
+    const char = qs('char') || d.char, mode = qs('mode') || d.mode;
+    if (RIDERS.includes(char)) this.run.char = char;
+    if (mode === 'hell' || mode === 'normal') this.run.mode = mode;
+  }
+
+  /** First floor: ?floor=N (1..MAX_FLOOR) or the start data (checkpoint continue). */
+  startFloor() {
+    const n = parseInt(qs('floor') || this.startData.floor, 10);
+    return Number.isFinite(n) ? clamp(n, 1, MAX_FLOOR) : 1;
   }
 
   onShutdown() {
@@ -146,25 +176,18 @@ export default class GameScene extends Phaser.Scene {
     this.cutscene = true;
     this.player.vx = this.player.vy = 0;
     const data = boss.introData();
+    const ms = data.mini ? 1500 : 2100;
+    data.ms = ms;
     bus.emit('boss:intro', data);
-    const key = boss.meta.music === 'boss_final' ? 'boss_final' : 'boss';
-    playMusicFor(key);
-    this.time.delayedCall(2100, () => {
+    playMusicFor(track(boss.meta.music || 'boss'));
+    this.time.delayedCall(ms, () => {
       this.cutscene = false;
       if (boss.alive) boss.startFight();
     });
   }
 
-  onBossDefeated(boss) {
-    if (this.ended || (this.player && this.player.dead)) return; // the player died while the boss was dying: the death screen wins (no finale card / floor music over it)
-    if (this.floorNum >= MAX_FLOOR) { playFinale(this); return; } // chapter finale: no reward/trapdoor, straight to the chapter-complete screen
-    const room = this.room;
-    if (room) room.onBossDefeated(boss);
-    playMusicFor(`floor${this.floorNum}`, { fade: 1500 });
-    if (this.floorNum >= MAX_FLOOR) {
-      this.time.delayedCall(2600, () => { this.run.won = true; this.endRun('complete'); });
-    }
-  }
+  /** A boss or mini boss died (after its own death sequence): flow.js decides what happens next. */
+  onBossDefeated(boss) { flow.onBossDefeated(this, boss); }
 
   onPlayerDied() {
     Audio.heartbeat(false);
@@ -180,7 +203,10 @@ export default class GameScene extends Phaser.Scene {
     const prevBest = Save.get().bestTime; // before recordRun: EndScene shows 'NEW BEST TIME' on a faster clear
     Save.recordRun({ floor: r.floor, time: r.time, kills: r.kills, won: variant === 'complete' });
     bus.emit('run:ended', { variant, stats: r.toJSON() });
-    const payload = { variant, run: r.toJSON(), items: [...this.player.items, ...(this.player.active ? [this.player.active.id] : [])], seed: this.seed, best: { time: Save.get().bestTime, isNew: variant === 'complete' && (!prevBest || r.time < prevBest) } };
+    const payload = { variant, ending: r.ending || null, run: r.toJSON(), items: [...this.player.items, ...(this.player.active ? [this.player.active.id] : [])], seed: this.seed, best: { time: Save.get().bestTime, isNew: variant === 'complete' && (!prevBest || r.time < prevBest) } };
+    if (SETUP && typeof SETUP.finishRun === 'function') {
+      try { SETUP.finishRun(this, payload); } catch (e) { console.warn('[GameScene] finishRun failed', e); }
+    }
     this.cameras.main.fadeOut(600, 13, 8, 6);
     this.cameras.main.once('camerafadeoutcomplete', () => {
       this.scene.stop('HUD');
@@ -188,12 +214,15 @@ export default class GameScene extends Phaser.Scene {
     });
   }
 
-  /** Music by room type. */
-  updateMusic() {
+  /** Music by room: shop, the boss track named in BOSS_META (uncleared boss room), otherwise the floor track. */
+  updateMusic(opts) {
     const room = this.room;
     if (!room) return;
-    if (room.type === 'shop') playMusicFor('shop');
-    else if (room.type === 'boss' && !room.state.cleared) playMusicFor(room.tpl.boss === 'undertaker' ? 'boss_final' : 'boss');
-    else playMusicFor(`floor${this.floorNum}`);
+    if (this.roomMgr.inPocket) return; // the crossroads track belongs to the pocket (audio director)
+    if (room.type === 'shop') playMusicFor('shop', opts);
+    else if (room.type === 'boss' && !room.state.cleared) {
+      const m = bossMeta(room.tpl.boss);
+      playMusicFor(track((m && m.music) || 'boss'), opts);
+    } else playMusicFor(FLOORS[this.floorNum].music || `floor${this.floorNum}`, opts);
   }
 }

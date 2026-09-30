@@ -1,0 +1,16 @@
+{
+ "player_hunter_fire": {
+  "file": "sprites/player_hunter_fire.png",
+  "frameWidth": 128,
+  "frameHeight": 128,
+  "frames": 3,
+  "mode": "strip",
+  "anchor": "bottom",
+  "scale": 0.3315,
+  "names": [
+   "down",
+   "up",
+   "side"
+  ]
+ }
+}

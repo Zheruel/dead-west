@@ -8,7 +8,8 @@ import { explode } from '../systems/Explosions.js';
 
 export default class Dynamite {
   /**
-   * o: {fuse, radius, damage, playerDamage, hurtEnemies, hurtPlayer, from:{x,y}, flight (s, arc time), fromPlayer}
+   * o: {fuse, radius, damage, playerDamage, hurtEnemies, hurtPlayer, from:{x,y}, flight (s, arc time), owner:'player'|'enemy' (default enemy)}
+   * owner 'player' feeds the item engine (nitro fire, clusters, refunds, `explosion` hook) via explode().
    * If `from` and `flight` are given the stick arcs from `from` to (x,y) before starting its fuse.
    */
   constructor(scene, x, y, o = {}) {
@@ -87,6 +88,7 @@ export default class Dynamite {
       hurtEnemies: o.hurtEnemies,
       hurtPlayer: o.hurtPlayer,
       source: this,
+      owner: o.owner,
     });
     const i = s.dynamites.indexOf(this);
     if (i >= 0) s.dynamites.splice(i, 1);

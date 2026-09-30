@@ -1,0 +1,12 @@
+{
+ "npc_dealer": {
+  "file": "sprites/npc_dealer.png",
+  "frameWidth": 160,
+  "frameHeight": 160,
+  "frames": 6,
+  "mode": "strip",
+  "anchor": "bottom",
+  "scale": 0.2261,
+  "names": []
+ }
+}

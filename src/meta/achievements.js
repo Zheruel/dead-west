@@ -1,0 +1,56 @@
+// The deeds (CHARACTERS_META B4 + STORY 13.2). Pure data. Conditions use the grammar of cond.js; `reward` entries are unlock ids
+// ('char:x', 'mode:x', 'gate:x', 'title:x'). `hidden` deeds show "???" until earned. `cat` = ach_cat badge cell.
+const A = (id, cat, name, desc, cond, np, reward = [], hidden = false) => ({ id, cat, name, desc, cond, np, reward, hidden });
+
+export const ACHIEVEMENTS = [
+  A('first_blood', 'combat', 'First Blood', 'Slay your first enemy', 'L.kills >= 1', 10),
+  A('saddle_sore', 'ride', 'Saddle Sore', 'Start 10 rides', 'L.runs >= 10', 10),
+  A('lifer', 'ride', 'Lifer', 'Start 50 rides', 'L.runs >= 50', 30),
+  A('gravedigger', 'combat', 'Gravedigger', 'Slay 500 enemies', 'L.kills >= 500', 25),
+  A('mass_grave', 'combat', 'Mass Grave', 'Slay 5,000 enemies', 'L.kills >= 5000', 100, ['title:gravedigger']),
+  A('sixth_son', 'combat', 'Sixth Son', '100 kills with the Sixth Bullet', 'L.sixthKills >= 100', 25),
+  A('patience', 'skill', 'Patience Pays', '25 kills with Dead Eye shots', 'L.deadEyeKills >= 25', 25),
+  A('fire_in_the_hole', 'combat', 'Fire in the Hole', '100 kills by dynamite', 'L.dynamiteKills >= 100', 40, ['gate:pyro']),
+  A('curse_breaker', 'combat', 'Curse Breaker', 'Slay 50 elites', 'L.elites >= 50', 30),
+  A('head_collector', 'boss', 'Head Collector', 'Slay 10 mini-bosses', 'L.minibosses >= 10', 30),
+  A('rattle_silenced', 'boss', 'Rattle Silenced', 'Defeat El Cascabel', 'E boss:defeated{boss=cascabel}', 20),
+  A('lawless', 'boss', 'Lawless', 'Defeat Marshal Grimm', 'E boss:defeated{boss=grimm}', 40, ['char:preacher']),
+  A('last_rites', 'boss', 'Last Rites', 'Defeat The Undertaker', 'E boss:defeated{boss=undertaker}', 60, ['char:hunter', 'mode:daily']),
+  A('deeper_still', 'boss', 'Deeper Still', 'Defeat the floor-4 boss', 'E boss:defeated{floor=4}', 60),
+  A('point_of_no_return', 'boss', 'Point of No Return', 'Defeat the floor-5 boss', 'E boss:defeated{floor=5}', 80),
+  A('debt_paid', 'boss', 'Debt Paid', 'Defeat the final boss', 'E run:ended{variant=complete}', 200, ['char:queen', 'mode:hell']),
+  A('untouchable', 'skill', 'Untouchable', 'Defeat any boss without being hit', 'E boss:defeated{noHit=1}', 40),
+  A('dead_in_seconds', 'skill', 'Dead in Seconds', 'Defeat a boss in under 40 s', 'E boss:defeated{fightTime<=40}', 40),
+  A('charmed_life', 'skill', 'Charmed Life', 'Clear 8 rooms in a row without a scratch', 'R.hitlessStreak >= 8', 30),
+  A('ghost_rider', 'skill', 'Ghost Rider', 'Win taking 5 hits or fewer', 'E run:ended{variant=complete,hits<=5}', 150, ['title:ghost_rider']),
+  A('quickdraw', 'ride', 'Quickdraw', 'Win in under 35 minutes', 'E run:ended{variant=complete,time<=2100}', 100, ['title:quickdraw']),
+  A('hell_on_earth', 'ride', 'Hell on Earth', 'Win on Hell on Earth', 'E run:ended{variant=complete,mode=hell}', 300, ['title:hellraiser']),
+  A('pocket_change', 'economy', 'Pocket Change', 'Collect 1,000 coins', 'L.coinsCollected >= 1000', 20),
+  A('big_spender', 'economy', 'Big Spender', 'Spend 500 coins', 'L.coinsSpent >= 500', 30),
+  A('tycoon', 'economy', 'Tycoon', 'Hold 99 coins at once', 'R.coins >= 99', 20),
+  A('magpie', 'relic', 'Magpie', 'Discover 30 relics', 'L.itemsFound >= 30', 20),
+  A('hoarder', 'relic', 'Hoarder', 'Discover 60 relics', 'L.itemsFound >= 60', 40),
+  A('complete_set', 'relic', 'Complete Set', 'Discover every relic', 'L.itemsFound >= L.itemsTotal', 100, ['title:curator']),
+  A('combo_rider', 'relic', 'Combo Rider', 'Trigger 3 different item synergies', 'EC synergy:activated{} x3', 30, ['gate:chaos']),
+  A('wall_knocker', 'secret', 'Wall Knocker', 'Reveal 10 secret rooms', 'L.secrets >= 10', 30, ['gate:occult']),
+  A('sign_here', 'secret', 'Sign Here', 'Accept a Crossroads deal', 'E crossroads:deal{}', 15),
+  A('souls_sold', 'secret', 'Souls Sold', 'Accept 5 Crossroads deals', 'L.deals >= 5', 40, ['gate:bloodpact']),
+  A('clean_hands', 'ride', 'Clean Hands', 'Win without ever making a deal', 'E run:ended{variant=complete,deals<=0}', 50),
+  A('amen', 'rider', 'Amen', 'Win with the Preacher', 'E run:ended{variant=complete,char=preacher}', 100, ['gate:holy']),
+  A('paid_in_full', 'rider', 'Paid in Full', 'Win with the Bounty Hunter', 'E run:ended{variant=complete,char=hunter}', 100, ['gate:sniper']),
+  A('all_in', 'rider', 'All In', 'Win with the Outlaw Queen', 'E run:ended{variant=complete,char=queen}', 100, ['gate:gambler']),
+  A('full_deck', 'rider', 'Full Deck', 'Earn all 12 rider marks', 'M.all.undertaker & M.all.final & M.all.hell', 300, ['title:legend']),
+  A('daily_bread', 'ride', 'Daily Bread', 'Finish a Daily Ride', 'E daily:finished{}', 15),
+  A('front_page', 'ride', 'Front Page', 'Score 12,000 on a Daily Ride', 'E daily:finished{score>=12000}', 50),
+  A('contract_killer', 'ride', 'Contract Killer', 'Complete 10 Bounty Board contracts', 'L.bountiesDone >= 10', 60, ['gate:lawman']),
+  A('marshal_of_the_board', 'ride', 'Marshal of the Board', 'Complete all 30 contracts', 'L.bountiesDone >= 30', 200, ['title:marshal']),
+  A('foot_gun', 'secret', 'Foot Gun', 'Die to your own dynamite', 'E player:died{source=own_dynamite}', 10, [], true),
+  A('tumbleweed_season', 'secret', 'Tumbleweed Season', 'Slay 100 tumbleweeds', 'L.k.tumbleweed >= 100', 15, [], true),
+  A('crowd', 'secret', 'Three\'s a Crowd', 'Have 3 familiars at once', 'R.familiars >= 3', 20, [], true),
+  // STORY 13.2
+  A('take_the_chair', 'ride', 'Take the Chair', 'Finish the story', 'E run:ended{variant=complete,ending=a}', 20),
+  A('sixth_bullet', 'ride', 'The Sixth Bullet', 'See the true ending', 'E run:ended{variant=complete,ending=true}', 250, ['title:closer']),
+];
+export const ACH_BY_ID = Object.fromEntries(ACHIEVEMENTS.map((a) => [a.id, a]));
+export const ACH_CATS = ['combat', 'boss', 'ride', 'skill', 'economy', 'relic', 'rider', 'secret'];
+export default ACHIEVEMENTS;

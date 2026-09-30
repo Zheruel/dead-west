@@ -1,0 +1,21 @@
+{
+ "ach_cat": {
+  "file": "sprites/ach_cat.png",
+  "frameWidth": 96,
+  "frameHeight": 96,
+  "frames": 8,
+  "mode": "grid",
+  "anchor": "center",
+  "scale": 0.2624,
+  "names": [
+   "combat",
+   "boss",
+   "ride",
+   "skill",
+   "economy",
+   "relic",
+   "rider",
+   "secret"
+  ]
+ }
+}

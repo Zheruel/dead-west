@@ -1,0 +1,58 @@
+{
+  "mus_floor4": {
+    "file": "music/mus_floor4.mp3",
+    "type": "music",
+    "volume": 0.5,
+    "loop": true,
+    "source": "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Crusade.mp3 ('Crusade' by Kevin MacLeod, incompetech.com; loop of 13.4s-88.0s (28 bars, 4/4), time-stretched 90.0 -> 84 bpm (atempo 0.9331), tail equal-power crossfaded 2.5 s into head; + quiet in-project synthesised fire-crackle bed and detuned slide-guitar drones)",
+    "license": "CC BY 4.0 (Kevin MacLeod / incompetech.com: 'Creative Commons: By Attribution 4.0'; attribution required)"
+  },
+  "mus_floor5": {
+    "file": "music/mus_floor5.mp3",
+    "type": "music",
+    "volume": 0.5,
+    "loop": true,
+    "source": "in-project synthesis (Python/numpy: brushed shuffle, rail clack, steam chuff, pizzicato bass, low strings, harmonica, distant bell); 6/8, dotted-quarter = 100 bpm, 72 bars, 86.4 s, tail wrapped circularly into head (reverb tail included). Generator kept in tmp/audio_music2a/",
+    "license": "Original in-project synthesis (Python/numpy, own composition and sound design; no third-party audio or samples). No attribution required (dedicated CC0)."
+  },
+  "mus_floor6": {
+    "file": "music/mus_floor6.mp3",
+    "type": "music",
+    "volume": 0.5,
+    "loop": true,
+    "source": "in-project synthesis (Python/numpy: flat honky-tonk piano, harpsichord, muted trumpet, choir hum, upright bass, brushes, glass clinks); waltz gone wrong in D minor, 3/4 at 96 bpm, 48 bars, 90.0 s, tail wrapped circularly into head. Generator kept in tmp/audio_music2a/",
+    "license": "Original in-project synthesis (Python/numpy, own composition and sound design; no third-party audio or samples). No attribution required (dedicated CC0)."
+  },
+  "mus_boss4": {
+    "file": "music/mus_boss4.mp3",
+    "type": "music",
+    "volume": 0.55,
+    "loop": true,
+    "source": "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Death%20and%20Axes.mp3 ('Death and Axes' by Kevin MacLeod, incompetech.com; loop of 68.6s-130.3s (36 bars, 4/4), time-stretched 140 -> 132 bpm (atempo 0.9429), tail equal-power crossfaded 2.0 s into head; + in-project synthesised stampede tom layer)",
+    "license": "CC BY 4.0 (Kevin MacLeod / incompetech.com: 'Creative Commons: By Attribution 4.0'; attribution required)"
+  },
+  "mus_boss5_a": {
+    "file": "music/mus_boss5_a.mp3",
+    "type": "music",
+    "volume": 0.55,
+    "loop": true,
+    "source": "in-project synthesis (Python/numpy) - Engine No. 666 locomotive ostinato, E minor, 32 bars of 4/4 at 118 bpm (chug, doom bass, toms, low strings, whistle stabs); identical bar layout across _a/_b/_c so stem crossfades stay on the bar; tail wrapped circularly into head. Generator kept in tmp/audio_music2a/",
+    "license": "Original in-project synthesis (Python/numpy, own composition and sound design; no third-party audio or samples). No attribution required (dedicated CC0)."
+  },
+  "mus_boss5_b": {
+    "file": "music/mus_boss5_b.mp3",
+    "type": "music",
+    "volume": 0.55,
+    "loop": true,
+    "source": "in-project synthesis (Python/numpy) - Engine No. 666 locomotive ostinato, E minor, 32 bars of 4/4 at 132 bpm (a + ghost choir); identical bar layout across _a/_b/_c so stem crossfades stay on the bar; tail wrapped circularly into head. Generator kept in tmp/audio_music2a/",
+    "license": "Original in-project synthesis (Python/numpy, own composition and sound design; no third-party audio or samples). No attribution required (dedicated CC0)."
+  },
+  "mus_boss5_c": {
+    "file": "music/mus_boss5_c.mp3",
+    "type": "music",
+    "volume": 0.55,
+    "loop": true,
+    "source": "in-project synthesis (Python/numpy) - Engine No. 666 locomotive ostinato, E minor, 32 bars of 4/4 at 148 bpm (b + full brass and cymbals); identical bar layout across _a/_b/_c so stem crossfades stay on the bar; tail wrapped circularly into head. Generator kept in tmp/audio_music2a/",
+    "license": "Original in-project synthesis (Python/numpy, own composition and sound design; no third-party audio or samples). No attribution required (dedicated CC0)."
+  }
+}

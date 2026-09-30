@@ -1,0 +1,21 @@
+{
+ "haz_f4": {
+  "file": "sprites/haz_f4.png",
+  "frameWidth": 96,
+  "frameHeight": 96,
+  "frames": 8,
+  "mode": "grid",
+  "anchor": "center",
+  "scale": 0.284,
+  "names": [
+   "lava_a",
+   "lava_b",
+   "lava_c",
+   "lava_rim",
+   "vent_idle",
+   "vent_warn",
+   "vent_erupt",
+   "scorch_patch"
+  ]
+ }
+}

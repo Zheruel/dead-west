@@ -4,6 +4,8 @@ import { registerItem } from '../registry.js';
 registerItem({
   id: 'liquid_courage', name: 'Liquid Courage', desc: '+0.4 damage per missing half heart', type: 'passive', pool: ['treasure', 'shop', 'secret'],
   icon: { sheet: 'items_passive_b', name: 'liquid_courage' },
+  tags: ['blood'], tier: 2,
+  lore: "Bravery by the bottle, bruises by the hour.",
   applyLate(player, { stats }) {
     const maxHp = Math.max(1, Math.min(12, Math.round(stats.maxHearts))) * 2;
     stats.damage += 0.4 * Math.max(0, maxHp - player.hp);

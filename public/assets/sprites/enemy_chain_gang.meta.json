@@ -1,0 +1,12 @@
+{
+ "enemy_chain_gang": {
+  "file": "sprites/enemy_chain_gang.png",
+  "frameWidth": 128,
+  "frameHeight": 128,
+  "frames": 6,
+  "mode": "strip",
+  "anchor": "bottom",
+  "scale": 0.3047,
+  "names": []
+ }
+}

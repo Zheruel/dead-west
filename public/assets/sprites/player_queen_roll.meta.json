@@ -1,0 +1,17 @@
+{
+ "player_queen_roll": {
+  "file": "sprites/player_queen_roll.png",
+  "frameWidth": 128,
+  "frameHeight": 128,
+  "frames": 4,
+  "mode": "strip",
+  "anchor": "bottom",
+  "scale": 0.2918,
+  "names": [
+   "tuck",
+   "flip",
+   "back",
+   "recover"
+  ]
+ }
+}

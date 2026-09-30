@@ -1,0 +1,21 @@
+{
+ "items2_b": {
+  "file": "sprites/items2_b.png",
+  "frameWidth": 96,
+  "frameHeight": 96,
+  "frames": 8,
+  "mode": "grid",
+  "anchor": "center",
+  "scale": 0.2063,
+  "names": [
+   "gila_gland",
+   "holy_water",
+   "wanted_poster",
+   "bronco_boots",
+   "hand_mirror",
+   "black_cat_bone",
+   "blood_bandana",
+   "banker_ledger"
+  ]
+ }
+}

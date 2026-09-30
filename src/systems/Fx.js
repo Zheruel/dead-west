@@ -14,6 +14,7 @@ export default class Fx {
     this.pool = new Map(); // fx sprite pool: key -> [hidden sprites]
     this.emitters = new Map(); // burst emitter cache: config signature -> ParticleEmitter
     this.casings = []; // pooled shell casings (manual ballistic sprites)
+    this.arcs = []; // pooled lightning arcs (Graphics)
     this._mkStreak();
   }
 
@@ -164,7 +165,44 @@ export default class Fx {
     s.tweens.add({ targets: im, alpha: 0, duration: ms, onComplete: () => im.destroy() });
   }
   /** Per-frame simulation-time update (called from GameScene.update, so it respects hit-stop and slow-mo). */
-  update(dt) { this.updateCasings(dt); }
+  update(dt) { this.updateCasings(dt); this._updateArcs(dt); }
+
+  /** Code-drawn jagged lightning line (ITEMS 2.3 chain). Pooled Graphics, fades over `ms`. */
+  arc(x1, y1, x2, y2, o = {}) {
+    let a = null;
+    for (let i = 0; i < this.arcs.length; i++) if (!this.arcs[i].on && this.arcs[i].g.scene) { a = this.arcs[i]; break; }
+    if (!a) {
+      if (this.arcs.length >= 24) return;
+      a = { g: this.scene.add.graphics().setDepth(DEPTH.fx + 3).setBlendMode(Phaser.BlendModes.ADD), on: false, t: 0, ms: 120 };
+      a.g.__noSnap = true;
+      this.arcs.push(a);
+    }
+    const color = o.color ?? 0xfff2a0;
+    const dx = x2 - x1, dy = y2 - y1;
+    const len = Math.hypot(dx, dy) || 1;
+    const n = Math.max(2, Math.min(9, Math.round(len / 34)));
+    const px = -dy / len, py = dx / len;
+    const g = a.g;
+    g.clear().setVisible(true).setAlpha(1);
+    for (let pass = 0; pass < 2; pass++) {
+      g.lineStyle(pass ? 2 : 6, pass ? 0xffffff : color, pass ? 1 : 0.45);
+      g.beginPath(); g.moveTo(x1, y1);
+      for (let i = 1; i < n; i++) {
+        const k = i / n, j = (Math.random() - 0.5) * 26;
+        g.lineTo(x1 + dx * k + px * j, y1 + dy * k + py * j);
+      }
+      g.lineTo(x2, y2); g.strokePath();
+    }
+    a.on = true; a.t = 0; a.ms = o.ms ?? 120;
+  }
+  _updateArcs(dt) {
+    for (let i = 0; i < this.arcs.length; i++) {
+      const a = this.arcs[i];
+      if (!a.on) continue;
+      a.t += dt * 1000;
+      if (a.t >= a.ms) { a.on = false; a.g.clear().setVisible(false); } else a.g.setAlpha(1 - a.t / a.ms);
+    }
+  }
   impact(x, y, angle = 0, scale = 1) { return this.play('fx_impact', x, y, { scale: 0.9 * scale, rotation: angle, fps: 26, depth: DEPTH.fx }); }
   muzzle(x, y, angle, scale = 1) { return this.play('fx_muzzle', x, y, { origin: [0, 0.5], rotation: angle, scale: 0.75 * scale, fps: 30 }); }
   deathPuff(x, y, scale = 1) { return this.play('fx_death_puff', x, y - 20, { scale, fps: 14 }); }
@@ -295,5 +333,6 @@ export default class Fx {
     for (const list of this.pool.values()) { for (let i = list.length - 1; i >= 0; i--) if (!list[i].scene) list.splice(i, 1); }
     for (const em of this.emitters.values()) { try { em.killAll(); } catch (e) { /* */ } }
     for (const c of this.casings) if (c.on) { c.on = false; if (c.img.scene) c.img.setVisible(false).setActive(false); }
+    for (const a of this.arcs) if (a.on) { a.on = false; if (a.g.scene) a.g.clear().setVisible(false); }
   }
 }

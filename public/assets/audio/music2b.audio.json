@@ -1,0 +1,122 @@
+{
+  "mus_boss6_a": {
+    "file": "music/mus_boss6_a.mp3",
+    "type": "music",
+    "volume": 0.55,
+    "loop": true,
+    "source": "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Grand%20Dark%20Waltz%20Allegretto.mp3 ('Grand Dark Waltz Allegretto' by Kevin MacLeod, incompetech.com; time-stretched x1.0385 (104 -> 108 bpm, 3/4); 32-bar loop (~53.3 s), tail crossfaded into head (2 s, equal power); static gain + limiter)",
+    "license": "CC BY 4.0 (Kevin MacLeod / incompetech.com: 'Creative Commons: By Attribution 4.0'; attribution required)"
+  },
+  "mus_boss6_b": {
+    "file": "music/mus_boss6_b.mp3",
+    "type": "music",
+    "volume": 0.55,
+    "loop": true,
+    "source": "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Grand%20Dark%20Waltz%20Allegro.mp3 ('Grand Dark Waltz Allegro' by Kevin MacLeod, incompetech.com; time-stretched x0.9917 (121 -> 120 bpm, 3/4); 32-bar loop (48 s), tail crossfaded into head (2 s, equal power))",
+    "license": "CC BY 4.0 (Kevin MacLeod / incompetech.com: 'Creative Commons: By Attribution 4.0'; attribution required)"
+  },
+  "mus_boss6_c": {
+    "file": "music/mus_boss6_c.mp3",
+    "type": "music",
+    "volume": 0.55,
+    "loop": true,
+    "source": "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Unholy%20Knight.mp3 ('Unholy Knight' by Kevin MacLeod, incompetech.com; time-stretched x0.943 (140 -> 132 bpm, 4/4); 36-bar loop (~65.5 s) of the full organ + choir + brass section, tail crossfaded into head (2.5 s))",
+    "license": "CC BY 4.0 (Kevin MacLeod / incompetech.com: 'Creative Commons: By Attribution 4.0'; attribution required)"
+  },
+  "mus_boss6_d": {
+    "file": "music/mus_boss6_d.mp3",
+    "type": "music",
+    "volume": 0.5,
+    "loop": true,
+    "source": "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Spiders%20Web.mp3 ('Spider's Web' by Kevin MacLeod, incompetech.com; harpsichord loop of 0.9-38.9 s (~38 s), tail crossfaded into head (1.3 s); plus in-project synthesis: heartbeat (numpy, 46 beats/loop = ~71.7 bpm) and a low C2 drone (integer-cycle sines, loop-periodic))",
+    "license": "CC BY 4.0 (Kevin MacLeod / incompetech.com: 'Creative Commons: By Attribution 4.0'; attribution required)"
+  },
+  "mus_interlude": {
+    "file": "music/mus_interlude.mp3",
+    "type": "music",
+    "volume": 0.5,
+    "loop": false,
+    "source": "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Past%20the%20Edge.mp3 ('Past the Edge' by Kevin MacLeod, incompetech.com; sting: 10-42 s excerpt (32 s, fade-in 1.5 s / fade-out 8 s); plus in-project synthesis: descending D3->D2 drone, one distant tower bell (additive inharmonic partials + reverb), one distant low horn (band-limited saw stack + reverb))",
+    "license": "CC BY 4.0 (Kevin MacLeod / incompetech.com: 'Creative Commons: By Attribution 4.0'; attribution required)"
+  },
+  "mus_crossroads": {
+    "file": "music/mus_crossroads.mp3",
+    "type": "music",
+    "volume": 0.5,
+    "loop": true,
+    "source": "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Anamalie.mp3 ('Anamalie' by Kevin MacLeod, incompetech.com; 16-bar loop @58.5 bpm (~65.6 s), tail crossfaded into head (2.5 s); plus in-project synthesis: low E1 pulse on the beat, four whispered-chorus phrases (formant-filtered noise + reverb), one distant crow (https://freesound.org/people/qubodup/sounds/813115/ (project file sfx/crow_caw_2.mp3, CC0 1.0)))",
+    "license": "CC BY 4.0 (Kevin MacLeod / incompetech.com: 'Creative Commons: By Attribution 4.0'; attribution required)"
+  },
+  "mus_miniboss": {
+    "file": "music/mus_miniboss.mp3",
+    "type": "music",
+    "volume": 0.5,
+    "loop": true,
+    "source": "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Impact%20Intermezzo.mp3 ('Impact Intermezzo' by Kevin MacLeod, incompetech.com; time-stretched x1.15 (100 -> 115 bpm); 16-bar percussion loop (~33.4 s), tail crossfaded into head (1.5 s); plus in-project synthesis: low E1/Bb1 tritone drone pulsing on the beat)",
+    "license": "CC BY 4.0 (Kevin MacLeod / incompetech.com: 'Creative Commons: By Attribution 4.0'; attribution required)"
+  },
+  "mus_cutscene_intro": {
+    "file": "music/mus_cutscene_intro.mp3",
+    "type": "music",
+    "volume": 0.5,
+    "loop": true,
+    "source": "https://incompetech.com/music/royalty-free/mp3-royaltyfree/When%20The%20Wind%20Blows.mp3 ('When The Wind Blows' by Kevin MacLeod, incompetech.com; 12-bar loop @60 bpm (48 s, sparse opening section), tail crossfaded into head (2.5 s); plus in-project synthesis: night-wind noise bed and three distant church-bell tolls (additive bell + reverb))",
+    "license": "CC BY 4.0 (Kevin MacLeod / incompetech.com: 'Creative Commons: By Attribution 4.0'; attribution required)"
+  },
+  "mus_ending_a": {
+    "file": "music/mus_ending_a.mp3",
+    "type": "music",
+    "volume": 0.5,
+    "loop": true,
+    "source": "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Disquiet.mp3 ('Disquiet' by Kevin MacLeod, incompetech.com; free-time (rubato piano) loop of 54.0-94.5 s (40.5 s), tail crossfaded into head (2.5 s); plus in-project synthesis: very quiet C/G low pad)",
+    "license": "CC BY 4.0 (Kevin MacLeod / incompetech.com: 'Creative Commons: By Attribution 4.0'; attribution required)"
+  },
+  "mus_ending_true": {
+    "file": "music/mus_ending_true.mp3",
+    "type": "music",
+    "volume": 0.5,
+    "loop": true,
+    "source": "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Crossing%20the%20Divide.mp3 ('Crossing the Divide' by Kevin MacLeod, incompetech.com; 12-bar loop @72 bpm (40 s) of the full major-key arrangement, tail crossfaded into head (2.5 s); plus in-project synthesis: three soft bell strikes (C5/G4/C5, additive bell + reverb))",
+    "license": "CC BY 4.0 (Kevin MacLeod / incompetech.com: 'Creative Commons: By Attribution 4.0'; attribution required)"
+  },
+  "mus_credits": {
+    "file": "music/mus_credits.mp3",
+    "type": "music",
+    "volume": 0.5,
+    "loop": true,
+    "source": "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Smoking%20Gun.mp3 ('Smoking Gun' by Kevin MacLeod, incompetech.com; same track as mus_menu, time-stretched x0.75 (88 -> 66 bpm); 24-bar loop (~87.3 s), tail crossfaded into head (3 s); 7 kHz low-pass; plus in-project synthesis: wind noise bed)",
+    "license": "CC BY 4.0 (Kevin MacLeod / incompetech.com: 'Creative Commons: By Attribution 4.0'; attribution required)"
+  },
+  "amb_lava": {
+    "file": "sfx/amb_lava.mp3",
+    "type": "sfx",
+    "volume": 0.5,
+    "loop": true,
+    "source": "32 s loop mixed in-project from: https://freesound.org/people/morganpurkis/sounds/385098/ (volcano rumble, CC0 1.0, via https://commons.wikimedia.org/wiki/File:385098_morganpurkis_volcano.ogg; harmonic exciter + low-pass so the sub rumble is audible on laptop speakers) + https://commons.wikimedia.org/wiki/File:WWS_Bonfireburning.ogg ('Bonfire burning' by Werstas / Work With Sounds, CC BY 4.0; high-passed >650 Hz for crackle) + in-project synthesis (heat-shimmer hiss, seven lava plops); both recordings tail-crossfaded (3 s) into their heads",
+    "license": "CC0 1.0 (volcano); CC BY 4.0 (bonfire crackle, Werstas / Work With Sounds); synthesis n/a"
+  },
+  "amb_rail": {
+    "file": "sfx/amb_rail.mp3",
+    "type": "sfx",
+    "volume": 0.5,
+    "loop": true,
+    "source": "40 s loop, in-project synthesis (numpy: periodic night-wind noise, four creaking-iron friction events with reverb) + one distant steam whistle from https://commons.wikimedia.org/wiki/File:WWS_SteamWhistle.ogg ('Steam whistle' by Konrad Gutkowski / Work With Sounds, CC BY 4.0; low-passed 1.7 kHz + long reverb for distance)",
+    "license": "CC BY 4.0 (whistle, Konrad Gutkowski / Work With Sounds); synthesis n/a"
+  },
+  "amb_saloon": {
+    "file": "sfx/amb_saloon.mp3",
+    "type": "sfx",
+    "volume": 0.5,
+    "loop": true,
+    "source": "32 s loop: muffled crowd walla from https://commons.wikimedia.org/wiki/File:Restaurant_ambience.ogg (original http://www.pdsounds.org/audio/download/274/restaurant_walla.mp3, by stephan, public domain; band-limited 110 Hz-1.5 kHz to sound heard through the saloon doors; tail crossfaded (3 s) into head) + in-project synthesis (six glass clinks)",
+    "license": "Public domain (pdsounds.org); synthesis n/a"
+  },
+  "amb_crossroads": {
+    "file": "sfx/amb_crossroads.mp3",
+    "type": "sfx",
+    "volume": 0.5,
+    "loop": true,
+    "source": "36 s loop, in-project synthesis (numpy: dry periodic wind, cricket bed that cuts dead at 13 s and drifts back in over the last 9 s, low 55 Hz hum that swells while the crickets are silent) + one distant crow from https://freesound.org/people/Jofae/sounds/361470/ (project file sfx/crow_caw.mp3, CC0 1.0)",
+    "license": "CC0 1.0 (crow); synthesis n/a"
+  }
+}

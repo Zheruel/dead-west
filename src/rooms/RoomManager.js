@@ -1,12 +1,16 @@
 // Owns the current floor, per-room persistent state, the current Room, room-to-room slide transitions and floor changes.
-import { W, H, ROOM, DOORS, DIR_VEC, OPPOSITE, FLOORS, MAX_FLOOR } from '../config.js';
+import { W, H, ROOM, DOORS, DIR_VEC, OPPOSITE, FLOORS, MAX_FLOOR, CHAPTER_OF } from '../config.js';
 import { generateFloor } from '../gen/FloorGen.js';
-import { getSeed } from '../core/rng.js';
+import { getSeed, hashStr } from '../core/rng.js';
 import { bus } from '../core/events.js';
 import { Sfx } from '../core/Audio.js';
 import Room from './Room.js';
+import * as flow from '../scenes/flow.js';
 
 const SLIDE_MS = 380;
+const POCKET_ID = 'xroads';
+const POCKET_ENTRY = { x: 720, y: 790 }; // where the player appears in the crossroads pocket room (below the return portal at tile (6,5))
+const FADE_MS = 400;
 
 export default class RoomManager {
   constructor(scene) {
@@ -30,12 +34,13 @@ export default class RoomManager {
     this.teardown();
     this.floor = generateFloor(n, getSeed());
     this.floor.byId = Object.fromEntries(this.floor.rooms.map((r) => [r.id, r]));
-    this.states = {};
+    this.states = {}; // also drops the crossroads pocket state of the previous floor
     this.touchMap();
     s.floorNum = n;
-    if (s.run) s.run.floor = n;
+    s.chapter = CHAPTER_OF(n);
+    if (s.run) { s.run.floor = n; s.run.chapter = s.chapter; }
     this.jump(this.floor.startId, null, { intro: true });
-    bus.emit('floor:changed', { floor: n, name: FLOORS[n].name });
+    bus.emit('floor:changed', { floor: n, name: FLOORS[n].name, chapter: s.chapter });
     s.updateMusic();
   }
 
@@ -51,23 +56,29 @@ export default class RoomManager {
     if (this.room) { this.room.destroy(); this.room = null; }
   }
 
-  /** Enter a room without a slide (floor start, debug teleport). via = door dir in the new room the player comes through (or null: centre). */
-  jump(id, via = null, { intro = false } = {}) {
+  /**
+   * Enter a room without a slide (floor start, debug teleport, pocket rooms). via = door dir in the new room the player comes through (or null: centre);
+   * `at` = {x, y} exact arrival point (overrides the door / centre).
+   */
+  jump(id, via = null, { intro = false, at = null } = {}) {
     const s = this.scene;
+    const def = this.floor.byId[id];
+    if (!def) { console.warn(`[RoomManager] jump: unknown room '${id}'`); return; }
     this.teardown();
     this.currentId = id;
-    const def = this.floor.byId[id];
     const st = this.stateFor(id);
     st.visited = true;
     this.touchMap();
     this.room = new Room(s, def, st, this.floor);
     const p = s.player;
-    if (via) p.teleport(DOORS[via].entry.x, DOORS[via].entry.y); else p.teleport(ROOM.cx, ROOM.cy);
+    if (at) p.teleport(at.x, at.y);
+    else if (via) p.teleport(DOORS[via].entry.x, DOORS[via].entry.y);
+    else p.teleport(ROOM.cx, ROOM.cy);
     p.setEntryInvuln(intro ? 1.0 : 0.6);
     p.locked = false;
-    if (via) p.forceWalk(-DOORS[via].dx, -DOORS[via].dy, 0.4);
+    if (via && !at) p.forceWalk(-DOORS[via].dx, -DOORS[via].dy, 0.4);
     bus.emit('room:transition', { from: null, to: id, dir: via });
-    const delay = via ? 430 : 60;
+    const delay = via && !at ? 430 : 60;
     const room = this.room;
     s.time.delayedCall(delay, () => { if (this.room === room && !room.destroyed) room.onEntered(via); });
   }
@@ -136,7 +147,56 @@ export default class RoomManager {
     return rt;
   }
 
+  // ------------------------------------------------------------------------------------------------ crossroads pocket
+  /** Fade out, run `fn` (swap rooms), fade back in. Guards against overlapping transitions. */
+  fadeSwap(fn) {
+    const s = this.scene;
+    if (s.transitioning) return false;
+    s.transitioning = true;
+    s.player.locked = true;
+    s.player.vx = s.player.vy = 0;
+    const cam = s.cameras.main;
+    cam.fadeOut(FADE_MS, 13, 8, 6);
+    cam.once('camerafadeoutcomplete', () => {
+      try { fn(); } finally {
+        s.transitioning = false;
+        s.player.locked = false;
+        cam.fadeIn(FADE_MS, 13, 8, 6);
+      }
+    });
+    return true;
+  }
+
+  /** Step into the Crossroads pocket room (the HellGate calls this). The boss room it came from is remembered in states.xroads.returnId. */
+  enterPocket() {
+    const fx = this.floor && this.floor.xroads;
+    if (!fx || this.currentId === POCKET_ID) return false;
+    const returnId = this.currentId;
+    return this.fadeSwap(() => {
+      fx.opened = true;
+      this.floor.byId[POCKET_ID] = fx.def;
+      this.stateFor(POCKET_ID).returnId = returnId;
+      this.jump(POCKET_ID, null, { at: POCKET_ENTRY });
+      bus.emit('pocket:entered', { id: POCKET_ID });
+    });
+  }
+
+  /** Leave the pocket through the return portal: back to the boss room, next to the gate. */
+  leavePocket() {
+    if (this.currentId !== POCKET_ID) return false;
+    const st = this.stateFor(POCKET_ID);
+    const returnId = st.returnId || this.floor.bossId;
+    return this.fadeSwap(() => {
+      const gate = this.stateFor(returnId).gate;
+      this.jump(returnId, null, { at: gate ? { x: gate.x + 95, y: gate.y } : null });
+      bus.emit('pocket:left', { id: POCKET_ID });
+    });
+  }
+
+  get inPocket() { return this.currentId === POCKET_ID; }
+
   // ------------------------------------------------------------------------------------------------ descend
+  /** Trapdoor: drop to the next floor. After the chapter-1 boss the interlude chain runs first (flow.js), then floor 4 loads. */
   descend() {
     const s = this.scene;
     if (s.transitioning) return;
@@ -144,17 +204,20 @@ export default class RoomManager {
     s.player.locked = true;
     Sfx.play('trapdoor');
     const cam = s.cameras.main;
-    // player drops into the hole
-    s.tweens.add({ targets: s.player.sprite, scale: 0.2, alpha: 0, duration: 450 });
+    s.tweens.add({ targets: s.player.sprite, scale: 0.2, alpha: 0, duration: 450 }); // the player drops into the hole
     cam.fadeOut(600, 13, 8, 6);
     cam.once('camerafadeoutcomplete', () => {
-      const n = Math.min(MAX_FLOOR, s.floorNum + 1);
+      const from = s.floorNum;
+      const n = Math.min(MAX_FLOOR, from + 1);
       s.player.sprite.setScale(1).setAlpha(1);
-      this.loadFloor(n);
-      s.transitioning = false;
-      s.player.locked = false;
-      cam.fadeIn(600, 13, 8, 6);
-      bus.emit('floor:intro', { floor: n, name: FLOORS[n].name, subtitle: FLOORS[n].subtitle });
+      const arrive = () => {
+        this.loadFloor(n);
+        s.transitioning = false;
+        s.player.locked = false;
+        cam.fadeIn(600, 13, 8, 6);
+        flow.afterFloorIntro(s, { from, floor: n });
+      };
+      flow.beforeDescend(s, from, n, arrive);
     });
   }
 

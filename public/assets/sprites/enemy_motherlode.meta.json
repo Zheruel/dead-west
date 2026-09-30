@@ -1,0 +1,12 @@
+{
+ "enemy_motherlode": {
+  "file": "sprites/enemy_motherlode.png",
+  "frameWidth": 192,
+  "frameHeight": 192,
+  "frames": 6,
+  "mode": "strip",
+  "anchor": "bottom",
+  "scale": 0.5222,
+  "names": []
+ }
+}

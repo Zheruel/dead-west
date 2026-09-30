@@ -1,0 +1,19 @@
+{
+ "items2_f": {
+  "file": "sprites/items2_f.png",
+  "frameWidth": 96,
+  "frameHeight": 96,
+  "frames": 8,
+  "mode": "grid",
+  "anchor": "center",
+  "scale": 0.2115,
+  "names": [
+   "gold_fever",
+   "brimstone_bandolier",
+   "lazarus_pact",
+   "pact_of_ashes",
+   "devils_dice",
+   "leech_contract"
+  ]
+ }
+}

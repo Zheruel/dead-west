@@ -1,0 +1,21 @@
+{
+ "items2_e": {
+  "file": "sprites/items2_e.png",
+  "frameWidth": 96,
+  "frameHeight": 96,
+  "frames": 8,
+  "mode": "grid",
+  "anchor": "center",
+  "scale": 0.2201,
+  "names": [
+   "gideons_bible",
+   "cylinder_spin",
+   "lasso_rope",
+   "ouija_planchette",
+   "devils_own_colt",
+   "cylinder_of_sin",
+   "bloodletter",
+   "reapers_bargain"
+  ]
+ }
+}

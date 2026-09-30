@@ -4,5 +4,7 @@ import { registerItem } from '../registry.js';
 registerItem({
   id: 'lucky_horseshoe', name: 'Lucky Horseshoe', desc: '+2 luck: better drops and lucky shots', type: 'passive', pool: ['treasure', 'shop', 'secret'],
   icon: { sheet: 'items_passive_a', name: 'lucky_horseshoe' },
+  tags: ['luck', 'crit'], tier: 1,
+  lore: "Someone else's luck, hung the right way up.",
   apply(player, { stats }) { stats.luck += 2; },
 });

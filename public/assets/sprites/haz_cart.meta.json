@@ -1,0 +1,17 @@
+{
+ "haz_cart": {
+  "file": "sprites/haz_cart.png",
+  "frameWidth": 192,
+  "frameHeight": 128,
+  "frames": 4,
+  "mode": "grid",
+  "anchor": "center",
+  "scale": 0.2696,
+  "names": [
+   "cart_h_0",
+   "cart_h_1",
+   "cart_v_0",
+   "cart_v_1"
+  ]
+ }
+}

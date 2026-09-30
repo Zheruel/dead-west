@@ -1,30 +1,36 @@
-// Content checks for room templates (pure node, no Phaser): counts per floor/kind, enemy ids valid for the floor, wave sizes, spawn fairness
-// (>=300 px from every door entry after Room.safeSpawns relocation is possible), boss arena centre kept clear, special-room slots.
+// Content checks for room templates (pure node, no Phaser): counts per floor/kind (floors 1-6; floors without real templates use the derived
+// stand-ins of fallback.js), enemy ids valid for the floor, wave sizes, spawn fairness (>=300 px from every door entry after Room.safeSpawns
+// relocation is possible), boss arena centre kept clear, special-room slots (secret variants, champion, event, crossroads, vault).
 // Used by selftest.mjs; returns { errors:[], warns:[], report:[] }.
 import { Templates, BLOCKING } from './Templates.js';
 import { ENEMY_META } from '../enemies/registry.js';
 import { BOSS_META } from '../bosses/registry.js';
-import { DOORS, DIRS, COLS, ROWS, tileToWorld } from '../config.js';
+import { DOORS, DIRS, COLS, ROWS, MAX_FLOOR, tileToWorld } from '../config.js';
 
 export const SAFE_DIST = 300; // px: nothing spawns this close to the player's entry door
-const MIN = { normal: 14, treasure: 3, shop: 2, secret: 2, boss: 1 };
+const MIN = { normal: 14, treasure: 3, shop: 2, secret: 2, boss: 1, champion: 1 };
 const TILE_SAFE_EXTRA = 3; // spare safe tiles beyond the biggest wave so relocation always has room
 
 export function checkTemplates() {
   const errors = [], warns = [], report = [];
   errors.push(...Templates.validateAll());
   const doorTiles = new Set(DIRS.flatMap((d) => [DOORS[d].tile.join(','), DOORS[d].front.join(',')]));
-  for (const f of [1, 2, 3]) {
+  for (let f = 1; f <= MAX_FLOOR; f++) {
     for (const [kind, n] of Object.entries(MIN)) {
-      const c = Templates.all.filter((t) => t.kind === kind && t.floors.includes(f)).length;
+      const c = Templates.forFloor(f, kind).length;
       if (c < n) errors.push(`floor ${f}: ${c} '${kind}' templates (need >= ${n})`);
     }
-    const tiers = [1, 2, 3].map((k) => Templates.all.filter((t) => t.kind === 'normal' && t.floors.includes(f) && t.tier === k).length);
+    const normals = Templates.forFloor(f, 'normal');
+    const tiers = [1, 2, 3].map((k) => normals.filter((t) => t.tier === k).length);
     if (tiers.some((n) => n < 3)) errors.push(`floor ${f}: tier buckets ${tiers.join('/')} (need >= 3 each)`);
-    const totals = Templates.all.filter((t) => t.kind === 'normal' && t.floors.includes(f)).map((t) => enemyTotal(t));
-    report.push(`floor ${f}: ${totals.length} normals, tiers ${tiers.join('/')}, enemies/room min ${Math.min(...totals)} avg ${(totals.reduce((a, b) => a + b, 0) / totals.length).toFixed(1)} max ${Math.max(...totals)}`);
+    const totals = normals.map((t) => enemyTotal(t));
+    const stand = normals.some((t) => t.derived) ? ' (derived stand-ins)' : '';
+    report.push(`floor ${f}: ${totals.length} normals${stand}, tiers ${tiers.join('/')}, enemies/room min ${Math.min(...totals)} avg ${(totals.reduce((a, b) => a + b, 0) / totals.length).toFixed(1)} max ${Math.max(...totals)}`);
   }
-  for (const t of Templates.all) {
+  for (const id of ['crossroads_a', 'vault_a']) if (!Templates.get(id)) errors.push(`missing template ${id}`);
+  for (const ev of ['card_sharp', 'wishing_well', 'gravedigger', 'snake_oil', 'preacher', 'quick_draw']) if (!Templates.get(`event_${ev}`)) errors.push(`missing template event_${ev}`);
+  for (const v of ['dead_mans_hand', 'cache', 'shrine']) if (!Templates.all.some((t) => t.kind === 'secret' && t.variant === v)) errors.push(`missing secret variant template '${v}'`);
+  for (const t of [...Templates.all, ...Templates.derived]) {
     const id = t.id;
     if (t.kind === 'normal') {
       if (t.floors.length !== 1) warns.push(`${id}: normal template shared by several floors (enemy ids are floor-specific)`);
@@ -32,6 +38,7 @@ export function checkTemplates() {
       if (digits.length < 1 || digits.length > 3) errors.push(`${id}: ${digits.length} waves (need 1..3)`);
       digits.forEach((d, i) => { if (+d !== i + 1) errors.push(`${id}: wave digits must be 1,2,3 without gaps (got ${digits.join('')})`); });
       for (const d of digits) {
+        if (t.derived) break; // stand-in: random fill, flyers dropped; only the layout counts
         const slots = t.slots.waves[d].length;
         const list = t.waves[d] || [];
         const air = (t.air && t.air[d]) || [];
@@ -47,7 +54,7 @@ export function checkTemplates() {
           if (c < 0 || r < 0 || c >= COLS || r >= ROWS) errors.push(`${id}: air spawn out of bounds`);
         }
       }
-      if (enemyTotal(t) > 10) errors.push(`${id}: ${enemyTotal(t)} enemies in total (max 10)`);
+      if (!t.derived && enemyTotal(t) > 10) errors.push(`${id}: ${enemyTotal(t)} enemies in total (max 10)`);
       // spawn fairness: for every entry door there must be enough safe free tiles to relocate a whole wave
       const biggest = Math.max(0, ...digits.map((d) => t.slots.waves[d].length + ((t.air && t.air[d]) || []).length + (d === '1' ? t.slots.E.length : 0)));
       for (const dir of DIRS) {
@@ -60,6 +67,12 @@ export function checkTemplates() {
       // centre lane (cols 5..7, rows 2..4) must be free of obstacles so the boss and the dodge roll have room
       for (let r = 2; r <= 4; r++) for (let c = 5; c <= 7; c++) if (BLOCKING.has(t.grid[r][c]) || t.grid[r][c] === 'S') errors.push(`${id}: obstacle in the arena centre (${c},${r})`);
       if (t.slots.waves['1'].length !== 1) errors.push(`${id}: needs exactly one boss slot`);
+    } else if (t.kind === 'champion') {
+      const m = (t.waves[1] || [])[0];
+      if (!(BOSS_META[m] && BOSS_META[m].mini)) errors.push(`${id}: '${m}' is not a registered mini boss`);
+      const f = t.floors[0];
+      if (BOSS_META[m] && BOSS_META[m].floor !== f) errors.push(`${id}: mini '${m}' belongs to floor ${BOSS_META[m].floor}, not ${f}`);
+      for (let r = 2; r <= 4; r++) for (const c of [5, 6, 7]) if (BLOCKING.has(t.grid[r][c]) && !(r === 2 && c === 6)) errors.push(`${id}: obstacle in the arena centre (${c},${r})`);
     } else if (t.kind === 'treasure') {
       if (!t.pickOne && t.slots.I.length !== 1) errors.push(`${id}: single treasure needs exactly one I`);
       if (t.pickOne && t.slots.I.length !== 2) errors.push(`${id}: pickOne treasure needs two I`);
@@ -67,11 +80,22 @@ export function checkTemplates() {
       if (t.slots.H.length !== 3) errors.push(`${id}: shop needs exactly 3 H slots`);
       if (t.slots.K.length !== 1) errors.push(`${id}: shop needs one K`);
     } else if (t.kind === 'secret') {
-      if (t.slots.C.length < 2) errors.push(`${id}: secret needs >= 2 C slots`);
-      if (t.slots.I.length !== 1) errors.push(`${id}: secret needs one I slot`);
+      const v = t.variant || 'stash';
+      if (v === 'stash') {
+        if (t.slots.C.length < 2) errors.push(`${id}: secret needs >= 2 C slots`);
+        if (t.slots.I.length !== 1) errors.push(`${id}: secret needs one I slot`);
+      } else if (v === 'dead_mans_hand') {
+        if (t.slots.C.length !== 5) errors.push(`${id}: dead man's hand needs exactly 5 C slots (has ${t.slots.C.length})`);
+      } else if (v === 'cache') {
+        if ((t.counts.B || 0) < 8) errors.push(`${id}: cache needs >= 8 B crates`);
+        if ((t.counts.Z || 0) !== 3) errors.push(`${id}: cache needs exactly 3 Z barrels`);
+      } else if (v === 'shrine') {
+        if (t.slots.I.length !== 1) errors.push(`${id}: shrine needs one I slot`);
+        if ((t.counts.s || 0) < 6) errors.push(`${id}: shrine needs a ring of >= 6 s tiles`);
+      }
     }
     // markers must not sit next to doors
-    for (const key of doorTiles) { const [c, r] = key.split(',').map(Number); if (/[1-9EIHKC]/.test(t.grid[r][c])) errors.push(`${id}: marker on door tile ${key}`); }
+    if (t.kind !== 'crossroads') for (const key of doorTiles) { const [c, r] = key.split(',').map(Number); if (/[1-9EIHKC]/.test(t.grid[r][c])) errors.push(`${id}: marker on door tile ${key}`); }
   }
   return { errors, warns, report };
 }

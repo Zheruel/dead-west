@@ -1,0 +1,21 @@
+{
+ "props_deals": {
+  "file": "sprites/props_deals.png",
+  "frameWidth": 128,
+  "frameHeight": 128,
+  "frames": 8,
+  "mode": "grid",
+  "anchor": "bottom",
+  "scale": 0.2611,
+  "names": [
+   "hellgate_a",
+   "hellgate_b",
+   "deal_table",
+   "signpost",
+   "candelabra",
+   "dead_tree",
+   "skull_pile",
+   "ledger_book"
+  ]
+ }
+}

@@ -1,0 +1,21 @@
+{
+ "meta_icons": {
+  "file": "sprites/meta_icons.png",
+  "frameWidth": 96,
+  "frameHeight": 96,
+  "frames": 8,
+  "mode": "grid",
+  "anchor": "center",
+  "scale": 0.2088,
+  "names": [
+   "sermon_bible",
+   "hunters_ledger",
+   "gilded_pair",
+   "star_tin",
+   "star_silver",
+   "star_gold",
+   "padlock",
+   "rank_badge"
+  ]
+ }
+}

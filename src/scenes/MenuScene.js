@@ -1,13 +1,17 @@
-// Main menu: logo over the dusk art, RIDE OUT / OPTIONS / BOUNTY BOARD / CREDITS (keyboard + mouse, menu sfx), drifting embers, controls, credits line.
-// Options = OptionsPanel (persisted volume sliders, mute, screenshake, fullscreen). Bounty Board + Credits are parchment modals (ESC / Enter / click closes).
+// Main menu: logo over the dusk art, then CONTINUE (checkpoint) / RIDE OUT / DAILY RIDE / BOUNTY BOARD / CODEX / OPTIONS / CREDITS (keyboard + mouse, menu sfx),
+// drifting embers, controls, a Notoriety chip. RIDE OUT goes through CharSelect once a second rider or Hell on Earth is unlocked (or straight in for a fresh save
+// / ?char=). The meta scenes (CharSelect, Daily, Board, Codex) are registered at runtime here. Credits is a parchment modal (ESC / Enter / click closes).
 import Phaser from 'phaser';
-import { W, H, FONT_TITLE, FONT_BODY, CSS, FLOORS } from '../config.js';
+import { W, H, FONT_TITLE, CSS, FLOORS } from '../config.js';
 import { Assets } from '../core/Assets.js';
 import { Sfx, playMusicFor, Audio } from '../core/Audio.js';
 import { Save } from '../core/Save.js';
 import { bus } from '../core/events.js';
-import { fmtTime, flag } from '../core/util.js';
-import { allItems } from '../items/index.js'; // importing the index registers every item def (the Bounty Board lists them)
+import { flag, qs } from '../core/util.js';
+import { Meta } from '../meta/index.js';
+import { registerMetaScenes } from '../meta/scenes.js';
+import AchievementToast from '../ui/AchievementToast.js';
+import { chip } from '../ui/Silhouette.js';
 import { MenuList, parchment, title, body, inkText, INK, uiSfx, setOsCursor } from '../ui/UiKit.js';
 import OptionsPanel from '../ui/OptionsPanel.js';
 
@@ -45,22 +49,28 @@ export default class MenuScene extends Phaser.Scene {
     }
     this.add.text(W / 2, 398, 'CHAPTER I  -  PERDITION COUNTY', body(28, CSS.amber, { strokeThickness: 5 })).setOrigin(0.5);
     const s = Save.get();
-    if (s.runs > 0) {
-      const f = FLOORS[s.bestFloor];
-      this.add.text(W / 2, 436, `BEST: FLOOR ${s.bestFloor}${f ? ` - ${f.name}` : ''}   |   RUNS ${s.runs}   |   KILLS ${s.kills}`, body(20, '#b89a68', { strokeThickness: 4 })).setOrigin(0.5);
+    if (s.stats.runs > 0) {
+      const f = FLOORS[s.best.floor];
+      this.add.text(W / 2, 436, `BEST: FLOOR ${s.best.floor}${f ? ` - ${f.name}` : ''}   |   RUNS ${s.stats.runs}   |   KILLS ${s.stats.kills}`, body(20, '#b89a68', { strokeThickness: 4 })).setOrigin(0.5);
+      chip(this, W / 2, 476, `${Meta.titleLabel().toUpperCase()}  -  ${s.notoriety.np.toLocaleString('en-US')} NP`, { size: 18, color: CSS.amber });
     }
 
     // menu list
     this.opt = new OptionsPanel(this, { cx: W / 2, cy: H / 2, onBack: () => { this.dim.setVisible(false); this.list.setEnabled(true); this.list.refresh(); } });
     this.dim = this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.82).setDepth(90).setVisible(false);
-    this.list = new MenuList(this, [
-      { label: 'RIDE OUT', act: () => this.start() },
-      { label: 'OPTIONS', act: () => this.openOptions() },
-      { label: 'BOUNTY BOARD', act: () => this.openBoard() },
-      { label: 'CREDITS', act: () => this.openCredits() },
-    ], { x: 560, y: 520, gap: 72, size: 50, hitW: 520 });
-    const hint = this.add.text(560, 520 + 4 * 72 - 10, 'W / S  choose        ENTER  select', body(20, '#a48a5c')).setOrigin(0.5);
-    this.tweens.add({ targets: hint, alpha: 0.4, duration: 900, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    registerMetaScenes(this.game);
+    const cp = this.checkpoint();
+    const dailyOk = Meta.isModeUnlocked('daily');
+    const items = [];
+    if (cp) items.push({ label: `CONTINUE - FLOOR ${cp.floor}`, act: () => this.go('Game', { continue: true, floor: cp.floor }) });
+    items.push({ label: 'RIDE OUT', act: () => this.rideOut() });
+    items.push({ label: dailyOk ? 'DAILY RIDE' : 'DAILY RIDE (LOCKED)', act: () => (dailyOk ? this.go('Daily') : Sfx.play('shop_deny', { vol: 0.7 })) });
+    items.push({ label: 'BOUNTY BOARD', act: () => this.go('Board') });
+    items.push({ label: 'CODEX', act: () => this.go('Codex') });
+    items.push({ label: 'OPTIONS', act: () => this.openOptions() });
+    items.push({ label: 'CREDITS', act: () => this.openCredits() });
+    this.list = new MenuList(this, items, { x: 560, y: cp ? 512 : 528, gap: 54, size: 40, hitW: 520 });
+    this.list.select(cp ? 1 : 0, true);
 
     // controls + credits line + mute state
     const controls = ['WASD  move          ARROWS / MOUSE  shoot', 'SPACE  dodge roll          E  dynamite          Q  item', 'ESC / P  pause          M  mute'];
@@ -71,6 +81,8 @@ export default class MenuScene extends Phaser.Scene {
     bus.scoped(this, 'audio:changed', () => this.refreshMute());
     this.time.addEvent({ delay: 400, loop: true, callback: () => this.refreshMute() });
     if (flag('debug')) this.add.text(30, 30, 'DEBUG MODE (F1-F7)', body(20, CSS.green));
+
+    this.toasts = new AchievementToast(this, {});
 
     // ESC / Enter / click close a modal
     const closeModal = () => { if (this.modal && performance.now() > this.modal.t0 + 200) this.closeModal(); };
@@ -89,12 +101,24 @@ export default class MenuScene extends Phaser.Scene {
     }).setDepth(2);
   }
 
-  start() {
+  /** Saved checkpoint (normal / hell runs only) or null. */
+  checkpoint() {
+    try { return Save.loadCheckpoint(); } catch (e) { return null; }
+  }
+
+  /** RIDE OUT: CharSelect once there is a choice to make, otherwise straight into a normal Gunslinger run. */
+  rideOut() {
+    const choice = !qs('char') && (Meta.isCharUnlocked('preacher') || Meta.isCharUnlocked('hunter') || Meta.isCharUnlocked('queen') || Meta.isModeUnlocked('hell'));
+    if (choice) this.go('CharSelect');
+    else this.go('Game', { char: 'gunslinger', mode: 'normal' });
+  }
+
+  go(scene, data) {
     if (this.starting) return;
     this.starting = true;
-    Sfx.play('gun_cock', { vol: 0.7 });
-    this.cameras.main.fadeOut(320, 13, 8, 6);
-    this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start('Game'));
+    if (scene === 'Game') Sfx.play('gun_cock', { vol: 0.7 }); else uiSfx.select();
+    this.cameras.main.fadeOut(scene === 'Game' ? 320 : 220, 13, 8, 6);
+    this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start(scene, data));
   }
 
   // ---------------------------------------------------------------------------------------------- modals
@@ -131,58 +155,5 @@ export default class MenuScene extends Phaser.Scene {
       y += 30 + t.height + 22;
     }
     add(this.add.text(W / 2, top + panel.displayHeight - 92, 'ESC  -  back', inkText(22, '#5a1a10')).setOrigin(0.5));
-  }
-
-  openBoard() {
-    uiSfx.select();
-    const seenSet = new Set(Save.get().itemsSeen);
-    const items = allItems();
-    const tip = { txt: null };
-    const add = this.beginModal((p) => {
-      let hit = null;
-      for (const c of cells) if (Math.abs(p.x - c.x) < 30 && Math.abs(p.y - c.y) < 30) { hit = c; break; }
-      tip.txt.setText(hit ? (hit.seen ? `${hit.def.name}  -  ${hit.def.desc || ''}` : '???  not yet discovered') : '');
-    });
-    const cells = [];
-    const s = Save.get();
-    const panel = add(parchment(this, W / 2, H / 2, 1180));
-    const top = H / 2 - panel.displayHeight / 2, left = W / 2 - 1180 / 2;
-    add(this.add.text(W / 2, top + 88, 'BOUNTY BOARD', title(60, '#3a1a10', { stroke: '#e8d9b0', strokeThickness: 2 })).setOrigin(0.5));
-    add(this.add.text(W / 2, top + 142, 'The recorded crimes of one cursed gunslinger', inkText(22, INK, { fontStyle: 'italic' })).setOrigin(0.5));
-    const f = FLOORS[s.bestFloor];
-    const stats = [
-      ['Deepest floor', s.bestFloor ? `${s.bestFloor} - ${f ? f.name : ''}` : '-'],
-      ['Fastest clear', s.bestTime ? fmtTime(s.bestTime) : '-'],
-      ['Chapters cleared', String(s.wins)],
-      ['Rides started', String(s.runs)],
-      ['Times hanged', String(s.deaths)],
-      ['Enemies slain', String(s.kills)],
-      ['Most kills in a run', String(s.bestKills || 0)],
-      ['Time in the saddle', fmtTime(s.playTime || 0)],
-    ];
-    stats.forEach(([k, v], i) => {
-      const col = i % 2, r = Math.floor(i / 2);
-      const x0 = left + 150 + col * 480, y = top + 208 + r * 40;
-      add(this.add.text(x0, y, k, inkText(24)).setOrigin(0, 0.5));
-      add(this.add.text(x0 + 420, y, v, inkText(24, '#5a1a10', { fontStyle: 'bold' })).setOrigin(1, 0.5));
-    });
-    const gy = top + 208 + 4 * 40 + 20;
-    const g = add(this.add.graphics());
-    g.lineStyle(2, 0x2a1810, 0.6).lineBetween(left + 150, gy, left + 1180 - 150, gy);
-    const seen = items.filter((d) => seenSet.has(d.id)).length;
-    add(this.add.text(W / 2, gy + 30, `RELICS DISCOVERED   ${seen} / ${items.length}`, title(26, '#3a1a10', { stroke: '#e8d9b0', strokeThickness: 1 })).setOrigin(0.5));
-    const perRow = 14, step = 62;
-    items.forEach((def, i) => {
-      const row = Math.floor(i / perRow), col = i % perRow;
-      const inRow = Math.min(perRow, items.length - row * perRow);
-      const x = W / 2 - ((inRow - 1) * step) / 2 + col * step, y = gy + 88 + row * step;
-      const ic = def.icon || { sheet: 'items_passive_a', name: def.id };
-      const im = add(Assets.makeCell(this, x, y, ic.sheet, ic.name, 0.5)).setScale(0.6);
-      const isSeen = seenSet.has(def.id);
-      if (!isSeen) im.setTintFill(0x2a1810).setAlpha(0.3);
-      cells.push({ x, y, def, seen: isSeen });
-    });
-    tip.txt = add(this.add.text(W / 2, top + panel.displayHeight - 96, '', inkText(22, '#5a1a10', { align: 'center' })).setOrigin(0.5));
-    if (!cells.length) tip.txt.setText('No relics registered yet.');
   }
 }

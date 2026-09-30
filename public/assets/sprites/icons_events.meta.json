@@ -1,0 +1,21 @@
+{
+ "icons_events": {
+  "file": "sprites/icons_events.png",
+  "frameWidth": 96,
+  "frameHeight": 96,
+  "frames": 8,
+  "mode": "grid",
+  "anchor": "center",
+  "scale": 0.2365,
+  "names": [
+   "bless_steady",
+   "bless_grace",
+   "bless_iron",
+   "bless_fleet",
+   "curse_debt",
+   "curse_dark",
+   "curse_rot",
+   "curse_lead"
+  ]
+ }
+}

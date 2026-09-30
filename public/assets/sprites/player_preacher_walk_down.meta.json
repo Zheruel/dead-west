@@ -1,0 +1,12 @@
+{
+ "player_preacher_walk_down": {
+  "file": "sprites/player_preacher_walk_down.png",
+  "frameWidth": 128,
+  "frameHeight": 128,
+  "frames": 6,
+  "mode": "strip",
+  "anchor": "bottom",
+  "scale": 0.3673,
+  "names": []
+ }
+}

@@ -1,0 +1,18 @@
+{
+ "player_preacher_death": {
+  "file": "sprites/player_preacher_death.png",
+  "frameWidth": 128,
+  "frameHeight": 128,
+  "frames": 5,
+  "mode": "strip",
+  "anchor": "bottom",
+  "scale": 0.3217,
+  "names": [
+   "hit",
+   "stagger",
+   "collapse",
+   "sprawl",
+   "dead"
+  ]
+ }
+}

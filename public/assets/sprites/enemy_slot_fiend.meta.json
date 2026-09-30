@@ -1,0 +1,12 @@
+{
+ "enemy_slot_fiend": {
+  "file": "sprites/enemy_slot_fiend.png",
+  "frameWidth": 160,
+  "frameHeight": 160,
+  "frames": 6,
+  "mode": "strip",
+  "anchor": "bottom",
+  "scale": 0.4685,
+  "names": []
+ }
+}

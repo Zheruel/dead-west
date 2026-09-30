@@ -1,0 +1,21 @@
+{
+ "items2_c": {
+  "file": "sprites/items2_c.png",
+  "frameWidth": 96,
+  "frameHeight": 96,
+  "frames": 8,
+  "mode": "grid",
+  "anchor": "center",
+  "scale": 0.211,
+  "names": [
+   "hush_money",
+   "rabbits_foot",
+   "dowsing_rod",
+   "bone_hound",
+   "tumbleweed_pal",
+   "little_coffin",
+   "saints_halo",
+   "lit_cigar"
+  ]
+ }
+}

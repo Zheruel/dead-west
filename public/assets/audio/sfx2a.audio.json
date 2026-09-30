@@ -1,0 +1,338 @@
+{
+ "bull_roar": {
+  "file": "sfx/bull_roar.mp3",
+  "type": "sfx",
+  "volume": 0.75,
+  "loop": false,
+  "source": "https://freesound.org/people/TheKingOfGeeks360/sounds/827111/ + https://freesound.org/people/hotcupofcoco/sounds/867483/",
+  "license": "CC0 1.0"
+ },
+ "bull_snort": {
+  "file": "sfx/bull_snort.mp3",
+  "type": "sfx",
+  "volume": 0.6,
+  "loop": false,
+  "source": "https://freesound.org/people/TheKingOfGeeks360/sounds/867549/",
+  "license": "CC0 1.0"
+ },
+ "bull_snort_2": {
+  "file": "sfx/bull_snort_2.mp3",
+  "type": "sfx",
+  "volume": 0.6,
+  "loop": false,
+  "source": "https://freesound.org/people/TheKingOfGeeks360/sounds/867549/",
+  "license": "CC0 1.0"
+ },
+ "card_shuffle": {
+  "file": "sfx/card_shuffle.mp3",
+  "type": "sfx",
+  "volume": 0.5,
+  "loop": false,
+  "source": "https://freesound.org/people/SomeoneCool15/sounds/423767/",
+  "license": "CC0 1.0"
+ },
+ "cart_rumble": {
+  "file": "sfx/cart_rumble.mp3",
+  "type": "sfx",
+  "volume": 0.5,
+  "loop": false,
+  "source": "https://freesound.org/people/craigsmith/sounds/480042/",
+  "license": "CC0 1.0"
+ },
+ "chandelier_creak": {
+  "file": "sfx/chandelier_creak.mp3",
+  "type": "sfx",
+  "volume": 0.6,
+  "loop": false,
+  "source": "https://freesound.org/people/EagleStealthTeam/sounds/172411/",
+  "license": "CC0 1.0"
+ },
+ "chip_clatter": {
+  "file": "sfx/chip_clatter.mp3",
+  "type": "sfx",
+  "volume": 0.5,
+  "loop": false,
+  "source": "https://freesound.org/people/SilverDubloons/sounds/817567/",
+  "license": "CC0 1.0"
+ },
+ "chip_clatter_2": {
+  "file": "sfx/chip_clatter_2.mp3",
+  "type": "sfx",
+  "volume": 0.5,
+  "loop": false,
+  "source": "https://freesound.org/people/AnikadeBeer_231312/sounds/707910/",
+  "license": "CC0 1.0"
+ },
+ "contract_tear": {
+  "file": "sfx/contract_tear.mp3",
+  "type": "sfx",
+  "volume": 0.75,
+  "loop": false,
+  "source": "https://freesound.org/people/sgrowe/sounds/342541/ + https://freesound.org/people/freemaster2/sounds/487206/ + synthesised in-project (numpy)",
+  "license": "CC0 1.0 (freesound) | n/a (generated part)"
+ },
+ "devil_laugh": {
+  "file": "sfx/devil_laugh.mp3",
+  "type": "sfx",
+  "volume": 0.75,
+  "loop": false,
+  "source": "https://freesound.org/people/DRFX/sounds/350679/",
+  "license": "CC0 1.0"
+ },
+ "devil_laugh_2": {
+  "file": "sfx/devil_laugh_2.mp3",
+  "type": "sfx",
+  "volume": 0.75,
+  "loop": false,
+  "source": "https://freesound.org/people/OleSouWester/sounds/692035/",
+  "license": "CC0 1.0"
+ },
+ "dice_roll": {
+  "file": "sfx/dice_roll.mp3",
+  "type": "sfx",
+  "volume": 0.5,
+  "loop": false,
+  "source": "https://freesound.org/people/Flem0527/sounds/629982/",
+  "license": "CC0 1.0"
+ },
+ "dice_roll_2": {
+  "file": "sfx/dice_roll_2.mp3",
+  "type": "sfx",
+  "volume": 0.5,
+  "loop": false,
+  "source": "https://freesound.org/people/ekfink/sounds/235489/",
+  "license": "CC0 1.0"
+ },
+ "fire_crackle": {
+  "file": "sfx/fire_crackle.mp3",
+  "type": "sfx",
+  "volume": 0.4,
+  "loop": true,
+  "source": "https://freesound.org/people/florianreichelt/sounds/563764/ + https://freesound.org/people/kyles/sounds/637523/",
+  "license": "CC0 1.0"
+ },
+ "fire_whoosh": {
+  "file": "sfx/fire_whoosh.mp3",
+  "type": "sfx",
+  "volume": 0.6,
+  "loop": false,
+  "source": "https://freesound.org/people/hnhnh/sounds/244926/",
+  "license": "CC0 1.0"
+ },
+ "fire_whoosh_2": {
+  "file": "sfx/fire_whoosh_2.mp3",
+  "type": "sfx",
+  "volume": 0.6,
+  "loop": false,
+  "source": "https://freesound.org/people/scarbelly25/sounds/33943/",
+  "license": "CC0 1.0"
+ },
+ "glass_break": {
+  "file": "sfx/glass_break.mp3",
+  "type": "sfx",
+  "volume": 0.6,
+  "loop": false,
+  "source": "https://freesound.org/people/dasebr/sounds/212698/",
+  "license": "CC0 1.0"
+ },
+ "glass_break_2": {
+  "file": "sfx/glass_break_2.mp3",
+  "type": "sfx",
+  "volume": 0.6,
+  "loop": false,
+  "source": "https://freesound.org/people/MegaPenguin13/sounds/118198/",
+  "license": "CC0 1.0"
+ },
+ "hoof_thunder": {
+  "file": "sfx/hoof_thunder.mp3",
+  "type": "sfx",
+  "volume": 0.6,
+  "loop": false,
+  "source": "https://freesound.org/people/C-V/sounds/583261/",
+  "license": "CC0 1.0"
+ },
+ "hoof_thunder_2": {
+  "file": "sfx/hoof_thunder_2.mp3",
+  "type": "sfx",
+  "volume": 0.6,
+  "loop": false,
+  "source": "https://freesound.org/people/Max_Headroom/sounds/175356/",
+  "license": "CC0 1.0"
+ },
+ "hound_growl": {
+  "file": "sfx/hound_growl.mp3",
+  "type": "sfx",
+  "volume": 0.5,
+  "loop": false,
+  "source": "https://freesound.org/people/coldvet/sounds/404920/",
+  "license": "CC0 1.0"
+ },
+ "hound_growl_2": {
+  "file": "sfx/hound_growl_2.mp3",
+  "type": "sfx",
+  "volume": 0.5,
+  "loop": false,
+  "source": "https://freesound.org/people/coldvet/sounds/404920/",
+  "license": "CC0 1.0"
+ },
+ "lava_bubble": {
+  "file": "sfx/lava_bubble.mp3",
+  "type": "sfx",
+  "volume": 0.4,
+  "loop": false,
+  "source": "https://freesound.org/people/Breviceps/sounds/456806/",
+  "license": "CC0 1.0"
+ },
+ "lava_bubble_2": {
+  "file": "sfx/lava_bubble_2.mp3",
+  "type": "sfx",
+  "volume": 0.4,
+  "loop": false,
+  "source": "https://freesound.org/people/Breviceps/sounds/456806/",
+  "license": "CC0 1.0"
+ },
+ "mimic_chomp": {
+  "file": "sfx/mimic_chomp.mp3",
+  "type": "sfx",
+  "volume": 0.6,
+  "loop": false,
+  "source": "https://freesound.org/people/Wigglesworth/sounds/830093/ + https://freesound.org/people/coldvet/sounds/404920/ + synthesised in-project (numpy)",
+  "license": "CC0 1.0 (freesound) | n/a (generated part)"
+ },
+ "mimic_chomp_2": {
+  "file": "sfx/mimic_chomp_2.mp3",
+  "type": "sfx",
+  "volume": 0.6,
+  "loop": false,
+  "source": "https://freesound.org/people/LucasDuff/sounds/527489/ + https://freesound.org/people/qubodup/sounds/816237/ + synthesised in-project (numpy)",
+  "license": "CC0 1.0 (freesound) | n/a (generated part)"
+ },
+ "piano_sting": {
+  "file": "sfx/piano_sting.mp3",
+  "type": "sfx",
+  "volume": 0.6,
+  "loop": false,
+  "source": "https://freesound.org/people/nomiqbomi/sounds/578358/",
+  "license": "CC0 1.0"
+ },
+ "piano_sting_2": {
+  "file": "sfx/piano_sting_2.mp3",
+  "type": "sfx",
+  "volume": 0.6,
+  "loop": false,
+  "source": "https://freesound.org/people/DianneLaChauveSouris/sounds/460042/",
+  "license": "CC0 1.0"
+ },
+ "rail_clatter": {
+  "file": "sfx/rail_clatter.mp3",
+  "type": "sfx",
+  "volume": 0.5,
+  "loop": false,
+  "source": "https://freesound.org/people/kyles/sounds/455775/",
+  "license": "CC0 1.0"
+ },
+ "rail_clatter_2": {
+  "file": "sfx/rail_clatter_2.mp3",
+  "type": "sfx",
+  "volume": 0.5,
+  "loop": false,
+  "source": "https://freesound.org/people/FunWithSound/sounds/591939/",
+  "license": "CC0 1.0"
+ },
+ "rat_squeak": {
+  "file": "sfx/rat_squeak.mp3",
+  "type": "sfx",
+  "volume": 0.4,
+  "loop": false,
+  "source": "https://freesound.org/people/Reitanna/sounds/217767/",
+  "license": "CC0 1.0"
+ },
+ "rat_squeak_2": {
+  "file": "sfx/rat_squeak_2.mp3",
+  "type": "sfx",
+  "volume": 0.4,
+  "loop": false,
+  "source": "https://freesound.org/people/Reitanna/sounds/217767/",
+  "license": "CC0 1.0"
+ },
+ "rat_squeak_3": {
+  "file": "sfx/rat_squeak_3.mp3",
+  "type": "sfx",
+  "volume": 0.4,
+  "loop": false,
+  "source": "https://freesound.org/people/Reitanna/sounds/217767/",
+  "license": "CC0 1.0"
+ },
+ "roulette_tick": {
+  "file": "sfx/roulette_tick.mp3",
+  "type": "sfx",
+  "volume": 0.5,
+  "loop": false,
+  "source": "https://freesound.org/people/Joao_Janz/sounds/482663/",
+  "license": "CC0 1.0"
+ },
+ "roulette_zap": {
+  "file": "sfx/roulette_zap.mp3",
+  "type": "sfx",
+  "volume": 0.6,
+  "loop": false,
+  "source": "https://freesound.org/people/JoelAudio/sounds/136542/",
+  "license": "CC0 1.0"
+ },
+ "slot_ding": {
+  "file": "sfx/slot_ding.mp3",
+  "type": "sfx",
+  "volume": 0.6,
+  "loop": false,
+  "source": "synthesised in-project (numpy)",
+  "license": "n/a (generated)"
+ },
+ "slot_spin": {
+  "file": "sfx/slot_spin.mp3",
+  "type": "sfx",
+  "volume": 0.4,
+  "loop": false,
+  "source": "https://freesound.org/people/aghirlandaio/sounds/415074/",
+  "license": "CC0 1.0"
+ },
+ "steam_hiss": {
+  "file": "sfx/steam_hiss.mp3",
+  "type": "sfx",
+  "volume": 0.5,
+  "loop": false,
+  "source": "https://freesound.org/people/wubitog/sounds/234782/",
+  "license": "CC0 1.0"
+ },
+ "steam_hiss_2": {
+  "file": "sfx/steam_hiss_2.mp3",
+  "type": "sfx",
+  "volume": 0.5,
+  "loop": false,
+  "source": "https://freesound.org/people/SukritSen/sounds/398077/",
+  "license": "CC0 1.0"
+ },
+ "train_bell": {
+  "file": "sfx/train_bell.mp3",
+  "type": "sfx",
+  "volume": 0.6,
+  "loop": false,
+  "source": "https://freesound.org/people/chungus43A/sounds/705377/",
+  "license": "CC0 1.0"
+ },
+ "train_horn": {
+  "file": "sfx/train_horn.mp3",
+  "type": "sfx",
+  "volume": 0.75,
+  "loop": false,
+  "source": "https://freesound.org/people/Bidone/sounds/71778/",
+  "license": "CC0 1.0"
+ },
+ "vent_erupt": {
+  "file": "sfx/vent_erupt.mp3",
+  "type": "sfx",
+  "volume": 0.6,
+  "loop": false,
+  "source": "https://freesound.org/people/scarbelly25/sounds/33943/ + https://freesound.org/people/LookIMadeAThing/sounds/260555/ + https://freesound.org/people/SukritSen/sounds/398077/ + synthesised in-project (numpy)",
+  "license": "CC0 1.0 (freesound) | n/a (generated part)"
+ }
+}

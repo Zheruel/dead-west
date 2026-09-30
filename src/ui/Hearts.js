@@ -1,7 +1,9 @@
 // Hearts + tin hearts (icons from 'hud_icons'). Wraps after 6 per row and shrinks to fit the 96px strip (1 row big, 2 rows medium, 3 rows small).
 // Slots are pooled: only the changed heart animates (damage = shake + white flash, heal / new container = green-gold pop).
 // At <= 1 heart (incl. tin) the filled hearts throb with the heartbeat (hud.beat from Vignette).
+// A red HUNTED chip sits under the strip while stats.curseHunted > 0 (cursed elites x(1 + 1.5 * curseHunted)); hovering it explains why.
 import Assets from '../core/Assets.js';
+import { FONT_BODY } from '../config.js';
 
 const PER_ROW = 6, X0 = 24;
 
@@ -12,6 +14,8 @@ export default class Hearts {
     this.sig = '';
     this.rows = 0;
     this.prevUnits = null;
+    this.hunted = hud.add.text(24, 104, 'HUNTED', { fontFamily: FONT_BODY, fontSize: '16px', color: '#ffb0a0', backgroundColor: '#5a0e10', padding: { x: 8, y: 3 }, stroke: '#120c0a', strokeThickness: 2 }).setDepth(11).setVisible(false);
+    this.tip = hud.add.text(24, 132, 'HUNTED: cursed elites find you more often', { fontFamily: FONT_BODY, fontSize: '16px', color: '#e8dcc0', backgroundColor: '#120c0af0', padding: { x: 8, y: 4 } }).setDepth(200).setVisible(false);
   }
 
   layout(total) {
@@ -63,6 +67,13 @@ export default class Hearts {
       this.sig = sig;
       this.prevUnits = units;
     }
+    // HUNTED chip + hover tooltip (manual hit-test: the HUD never owns interactive objects)
+    const hunted = p.stats.curseHunted > 0;
+    if (hunted !== this.hunted.visible) this.hunted.setVisible(hunted);
+    if (hunted) {
+      const ptr = this.hud.input.activePointer, c = this.hunted;
+      this.tip.setVisible(ptr.x >= c.x && ptr.x <= c.x + c.width && ptr.y >= c.y && ptr.y <= c.y + c.height);
+    } else if (this.tip.visible) this.tip.setVisible(false);
     // low-health throb
     const b = this.hud.beat || 0;
     const sc = this.scale * (1 + b * 0.22);
@@ -85,5 +96,5 @@ export default class Hearts {
       h.tweens.add({ targets: im, scale: { from: this.scale * 0.5, to: this.scale }, duration: 380, ease: 'Back.easeOut', onComplete: done });
     }
   }
-  destroy() { for (const s of this.slots) s.img.destroy(); this.slots.length = 0; }
+  destroy() { for (const s of this.slots) s.img.destroy(); this.slots.length = 0; this.hunted.destroy(); this.tip.destroy(); }
 }

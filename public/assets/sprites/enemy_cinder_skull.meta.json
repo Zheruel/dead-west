@@ -1,0 +1,12 @@
+{
+ "enemy_cinder_skull": {
+  "file": "sprites/enemy_cinder_skull.png",
+  "frameWidth": 96,
+  "frameHeight": 96,
+  "frames": 6,
+  "mode": "strip",
+  "anchor": "bottom",
+  "scale": 0.2527,
+  "names": []
+ }
+}

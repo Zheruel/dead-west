@@ -1,0 +1,21 @@
+{
+ "projectiles_c2": {
+  "file": "sprites/projectiles_c2.png",
+  "frameWidth": 48,
+  "frameHeight": 48,
+  "frames": 8,
+  "mode": "grid",
+  "anchor": "center",
+  "scale": 0.1212,
+  "names": [
+   "bullet_ember",
+   "bullet_coal",
+   "bullet_steam",
+   "bullet_card",
+   "bullet_chip",
+   "bullet_shard",
+   "bullet_spade",
+   "bullet_spike"
+  ]
+ }
+}

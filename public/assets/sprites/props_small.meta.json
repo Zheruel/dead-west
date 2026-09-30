@@ -1,0 +1,21 @@
+{
+ "props_small": {
+  "file": "sprites/props_small.png",
+  "frameWidth": 96,
+  "frameHeight": 96,
+  "frames": 8,
+  "mode": "grid",
+  "anchor": "bottom",
+  "scale": 0.218,
+  "names": [
+   "potion_bottle",
+   "card_back",
+   "card_face",
+   "chip_stack",
+   "heart_container",
+   "wanted_poster",
+   "chalk_x",
+   "rock_chunk"
+  ]
+ }
+}

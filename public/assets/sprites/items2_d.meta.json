@@ -1,0 +1,21 @@
+{
+ "items2_d": {
+  "file": "sprites/items2_d.png",
+  "frameWidth": 96,
+  "frameHeight": 96,
+  "frames": 8,
+  "mode": "grid",
+  "anchor": "center",
+  "scale": 0.2044,
+  "names": [
+   "nitro_jelly",
+   "short_cylinder",
+   "hellfire_round",
+   "carousel_slug",
+   "widowmaker",
+   "ten_gauge_hammer",
+   "pawn_ticket",
+   "dynamite_crate"
+  ]
+ }
+}

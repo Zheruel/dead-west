@@ -6,6 +6,8 @@ import.meta.glob('./types/*.js', { eager: true });
 
 export { registerBoss, bossMeta, BOSS_META } from './registry.js';
 export { default as Boss } from './Boss.js';
+export { default as MiniBoss } from './MiniBoss.js';
+export { MINI_IDS, FINAL_BOSS } from './registry.js';
 
 /** Spawn boss `id`; unimplemented bosses use the generic Boss (fan + ring) with their design metadata. */
 export function spawnBoss(scene, id, x, y, opts = {}) {

@@ -1,0 +1,21 @@
+{
+ "haz_f5": {
+  "file": "sprites/haz_f5.png",
+  "frameWidth": 96,
+  "frameHeight": 96,
+  "frames": 8,
+  "mode": "grid",
+  "anchor": "center",
+  "scale": 0.2067,
+  "names": [
+   "rail_h",
+   "rail_v",
+   "rail_cross",
+   "rail_end",
+   "steam_pipe",
+   "signal_lamp_off",
+   "signal_lamp_on",
+   "coal_pile_decor"
+  ]
+ }
+}

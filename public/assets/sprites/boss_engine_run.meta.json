@@ -1,0 +1,12 @@
+{
+ "boss_engine_run": {
+  "file": "sprites/boss_engine_run.png",
+  "frameWidth": 512,
+  "frameHeight": 320,
+  "frames": 4,
+  "mode": "grid",
+  "anchor": "bottom",
+  "scale": 0.6856,
+  "names": []
+ }
+}

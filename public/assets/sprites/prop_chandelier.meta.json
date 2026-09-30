@@ -1,0 +1,16 @@
+{
+ "prop_chandelier": {
+  "file": "sprites/prop_chandelier.png",
+  "frameWidth": 192,
+  "frameHeight": 192,
+  "frames": 3,
+  "mode": "grid",
+  "anchor": "center",
+  "scale": 0.2648,
+  "names": [
+   "intact",
+   "falling",
+   "wreck"
+  ]
+ }
+}

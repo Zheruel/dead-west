@@ -1,6 +1,8 @@
 // Base class for item companions / attachments (spirit lantern, crow, shield pip, dead-eye reticle...).
 // Contract with Player: player.addFamiliar(f) -> f.update(dt, player) every frame; Player.destroy() -> f.destroy().
 // Bullets.js also reads optional f.blocksBullets / f.x / f.y / f.radius / f.onBlock(bullet) for enemy-bullet blocking.
+// `isFamiliar` marks bullets fired with `source: familiar`: Bullets applies stats.familiarMult (damage) and stats.spectralFamiliars (pass rocks), and
+// Pack Leader's status inheritance. Subclasses scale their own cooldowns with `this.cdMult` (stats.familiarCd).
 // Cleanup: every display object created through own() is (a) excluded from room-transition snapshots, (b) faded out when the
 // player dies, (c) destroyed on destroy() / scene shutdown. Familiars persist across rooms and floors; they snap to the player
 // after a room slide (see follow()).
@@ -13,10 +15,16 @@ export default class Familiar {
     this.x = player.x;
     this.y = player.y;
     this.alive = true;
+    this.isFamiliar = true;
     this.objs = [];
     this.appear = 0; // 0..1 fade-in after (re)spawn / snap
     this.offDied = bus.scoped(this.scene, 'player:died', () => this.onOwnerDied());
   }
+
+  /** Cooldown multiplier from Pack Leader and friends (< 1 = faster). */
+  get cdMult() { return this.player.stats.familiarCd || 1; }
+  /** Damage multiplier applied by Bullets to this familiar's shots (for familiars that hurt directly instead of firing bullets). */
+  get power() { return this.player.stats.familiarMult || 1; }
 
   /** Register a display object: hidden from room snapshots, cleaned up automatically. */
   own(o) { o.__noSnap = true; this.objs.push(o); return o; }

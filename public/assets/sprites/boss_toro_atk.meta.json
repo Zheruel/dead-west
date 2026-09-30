@@ -1,0 +1,12 @@
+{
+ "boss_toro_atk": {
+  "file": "sprites/boss_toro_atk.png",
+  "frameWidth": 320,
+  "frameHeight": 320,
+  "frames": 4,
+  "mode": "strip",
+  "anchor": "bottom",
+  "scale": 0.6208,
+  "names": []
+ }
+}

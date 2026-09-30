@@ -1,0 +1,21 @@
+{
+ "fx_items": {
+  "file": "sprites/fx_items.png",
+  "frameWidth": 128,
+  "frameHeight": 128,
+  "frames": 8,
+  "mode": "grid",
+  "anchor": "center",
+  "scale": 0.2515,
+  "names": [
+   "fx_firepool",
+   "fx_holy_pillar",
+   "fx_shock_ring",
+   "fx_toxic_cloud",
+   "fx_dust_cloud",
+   "fx_mark",
+   "fx_ice_burst",
+   "fx_nova"
+  ]
+ }
+}

@@ -1,0 +1,21 @@
+{
+ "obst_f6": {
+  "file": "sprites/obst_f6.png",
+  "frameWidth": 96,
+  "frameHeight": 96,
+  "frames": 8,
+  "mode": "grid",
+  "anchor": "bottom",
+  "scale": 0.2086,
+  "names": [
+   "block_a",
+   "block_b",
+   "breakable",
+   "breakable_broken",
+   "pit",
+   "spikes",
+   "decor_a",
+   "decor_b"
+  ]
+ }
+}

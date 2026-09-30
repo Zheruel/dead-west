@@ -4,7 +4,7 @@ import { DEPTH, ROOM, FONT_BODY } from '../config.js';
 import { Assets } from '../core/Assets.js';
 import { tryBuy } from './Shop.js';
 
-const TEXT = { heart_full: '+1 HEART', heart_half: '+1/2 HEART', heart_tin: '+TIN', coin: '+1', coin_nickel: '+5', key: '+1 KEY', dynamite: '+1 DYNAMITE' };
+const TEXT = { heart_full: '+1 HEART', heart_half: '+1/2 HEART', heart_tin: '+TIN', heart_container: '+1 HEART CONTAINER', coin: '+1', coin_nickel: '+5', key: '+1 KEY', dynamite: '+1 DYNAMITE' };
 
 export default class Pickup extends Actor {
   /** o: {price (base price in coins), from:{x,y}, pop:boolean, vx, vy} */
@@ -18,8 +18,11 @@ export default class Pickup extends Actor {
     this.settled = true;
     this.age = 0;
     this.denyCd = 0;
-    this.sprite = Assets.makeCell(scene, x, y, 'pickups', type, 0.5);
-    this.sprite.setScale(type.startsWith('heart') || type === 'dynamite' ? 0.95 : 0.9);
+    // heart_container has no art of its own: a gold-tinted, larger full heart (real art can be added to the pickups sheet later)
+    const container = type === 'heart_container';
+    this.sprite = Assets.makeCell(scene, x, y, 'pickups', container && !Assets.names('pickups').includes(type) ? 'heart_full' : type, 0.5);
+    this.sprite.setScale(container ? 1.15 : type.startsWith('heart') || type === 'dynamite' ? 0.95 : 0.9);
+    if (container && !Assets.names('pickups').includes(type)) this.sprite.setTint(0xffd860);
     if (o.pop) {
       const a = Math.random() * Math.PI * 2;
       const sp = 90 + Math.random() * 130;
@@ -92,6 +95,7 @@ export default class Pickup extends Actor {
     const txt = TEXT[this.type];
     if (txt) s.fx.text(this.x, this.y - 40, txt, { size: 22, color: this.type.startsWith('heart') ? '#ff8a7a' : '#f0e0a0' });
     const heart = this.type.startsWith('heart');
+    if (this.type === 'heart_container') s.fx.ringPulse(this.x, this.y, 0xf0d060, 90, 500, 0.8);
     s.fx.burst(this.x, this.y - 16, { color: heart ? [0xff8a7a, 0xffd8c8, 0xffffff] : this.type === 'key' ? [0xf0e0a0, 0xffffff] : this.type === 'dynamite' ? [0xff7a30, 0xffd060] : [0xffe090, 0xf0c040, 0xffffff], count: heart ? 8 : 6, speed: [40, 160], life: [250, 500], scale: [1.2, 2.6], gravity: heart ? -80 : 60, blend: 'ADD' });
     s.tweens.add({ targets: this.sprite, y: this.sprite.y - 30, alpha: 0, scale: 1.3, duration: 220, onComplete: () => this.destroy() });
     if (this.label) this.label.destroy();

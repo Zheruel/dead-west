@@ -1,0 +1,13 @@
+Input images: Image 1: STYLE REFERENCE (match its ink outline weight, cross-hatch shading, muted palette, chunky cartoon readability exactly; do not copy its layout or characters).
+Use: 2D game achievement-category badge atlas for a dark occult western Isaac-like game. Each badge is a round TIN MEDAL: the SAME base for all eight (a thick round disc of dull blue-grey tin/pewter with a beaded rim, four small rivets, a subtle top-left highlight, a thick black ink outline about 4-5% of the badge diameter, and a recessed inner circle) with ONE bold embossed symbol in the centre, drawn in simple big shapes that read at 64 px. Front-on flat view, light from top-left, flat muted fills with cross-hatch shading. All eight badges exactly the SAME diameter (each fills about 82% of an imaginary square cell), same base colour, same outline, centred.
+Layout: a clean grid of 4 columns by 2 rows, exactly 8 separate round medals, evenly spaced on an invisible regular grid with WIDE clear empty gaps (gap at least 20% of badge diameter), nothing overlapping or touching, nothing cropped, no labels, no cell borders, no floor. Row-major order (left to right, top row first):
+Row 1, col 1: COMBAT - two steel REVOLVERS crossed in an X (grips down, barrels up), steel grey with brass details.
+Row 1, col 2: BOSS - a big bone-white horned SKULL front-on with black eye sockets and a red glow in the sockets, small horns.
+Row 1, col 3: RIDE - a brass cowboy boot SPUR with a big star-shaped rowel, seen from the side, a short leather strap, brass gold with highlight.
+Row 1, col 4: SKILL - a BULLSEYE target: concentric rings of bone white and dried-blood red with a brass bullet hole dead centre and a small arrow-less crosshair.
+Row 2, col 1: ECONOMY - a short stack of three chunky gold COINS (stacked at a slight angle) with a fourth coin leaning against them, ochre gold with bright highlights.
+Row 2, col 2: RELIC - a small closed wooden treasure CHEST with iron bands and a gold lock, a faint gold glow above it.
+Row 2, col 3: RIDER - a wide-brim cowboy HAT front-on, sepia brown with a black band and a small white bull-skull pin.
+Row 2, col 4: SECRET - a big bold QUESTION MARK (a shape, not lettering) in sickly green (#8fc23f) with a dark outline and a faint green glow, dot below.
+All eight must obviously be one family: identical tin base, only the symbol changes. Transparent background between medals.
+Avoid: cast shadow, ground plane, background, text, letters, numbers, watermark, logos, photorealism, thin outlines, gradients that blur the outline, tiny fussy details.

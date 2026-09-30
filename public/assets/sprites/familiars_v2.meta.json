@@ -1,0 +1,21 @@
+{
+ "familiars_v2": {
+  "file": "sprites/familiars_v2.png",
+  "frameWidth": 64,
+  "frameHeight": 64,
+  "frames": 8,
+  "mode": "grid",
+  "anchor": "bottom",
+  "scale": 0.1402,
+  "names": [
+   "bone_hound_a",
+   "bone_hound_b",
+   "tumble_pal_a",
+   "tumble_pal_b",
+   "coffin_pal_a",
+   "coffin_pal_b",
+   "halo_a",
+   "halo_b"
+  ]
+ }
+}

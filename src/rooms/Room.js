@@ -1,12 +1,17 @@
-// Runtime room: background, obstacle tiles, doors, collision, encounter waves, pickups/pedestals/chests, decals.
+// Runtime room: background, obstacle tiles, doors, collision, encounter waves, pickups/pedestals/chests, decals, plus the v2 layer:
+// room-type dispatch (ROOM_TYPES), controllers (event / champion / vault / crossroads / secret variants), hazard + modifier hosting,
+// elite rolls, mini-boss rewards and the chapter-2 reward economy.
 // One Room instance is built each time the player enters a room; persistent data lives in `state` (owned by RoomManager).
 import Phaser from 'phaser';
-import { ROOM, TILE, DOORS, DIRS, DEPTH, actorDepth, tileToWorld, FLOORS, COLS, ROWS, FONT_BODY, OPPOSITE, ENEMY_DEFAULTS, SPAWN_SAFE_DIST, ROOM_REWARD } from '../config.js';
-import { Assets } from '../core/Assets.js';
+import {
+  ROOM, TILE, DOORS, DIRS, DEPTH, actorDepth, tileToWorld, FLOORS, COLS, ROWS, FONT_BODY, FONT_TITLE, OPPOSITE, SPAWN_SAFE_DIST, ROOM_REWARD,
+  ROOM_TYPES, VARIETY, MAX_FLOOR, floorInfo, floorBgKey, rewardFor,
+} from '../config.js';
+import { Assets, SPEC, IMAGE_SPEC } from '../core/Assets.js';
 import { Sfx } from '../core/Audio.js';
 import { bus } from '../core/events.js';
-import { RNG, rng } from '../core/rng.js';
-import Templates from '../gen/Templates.js';
+import { RNG, rng, subRng } from '../core/rng.js';
+import Templates, { parseTemplate } from '../gen/Templates.js';
 import Door from './Door.js';
 import Pickup from '../entities/Pickup.js';
 import Pedestal from '../entities/Pedestal.js';
@@ -14,9 +19,30 @@ import Chest from '../entities/Chest.js';
 import Trapdoor from '../entities/Trapdoor.js';
 import { spawnEnemy, enemyPool, enemyMeta } from '../enemies/index.js';
 import { spawnBoss } from '../bosses/index.js';
+import { getItem } from '../items/registry.js';
+import { runHooks, CTX } from '../items/hooks.js';
+import { explode } from '../systems/Explosions.js';
+import { Affixes } from '../enemies/Affixes.js';
+import { Crossroads } from '../systems/Crossroads.js';
+import { Boons } from '../systems/Boons.js';
+import { Hazards } from './hazards/index.js';
+import { Modifiers } from './special/modifiers/index.js';
+import ChampionRoom from './special/ChampionRoom.js';
+import EventRoom from './special/EventRoom.js';
+import VaultRoom from './special/VaultRoom.js';
+import CrossroadsRoom from './special/CrossroadsRoom.js';
+
+// Secret-room variant controllers + door tells (FE-V1). Optional: the room still builds with the plain stash layout when the file is absent.
+const SECRETS = Object.values(import.meta.glob('./special/SecretVariants.js', { eager: true }))[0] || {};
 
 const BIG = 400;
-const OBST_KEYS = { 1: 'obst_f1', 2: 'obst_f2', 3: 'obst_f3' };
+/** Tile types nothing may drop onto / spawn from (walkableNear, safe spawns): they hurt or hold whoever stands there. */
+const NO_DROP = new Set(['spikes', 'lava', 'quicksand', 'vent', 'rspikes', 'pit']);
+/** Template chars that only Hazards.build draws (Room registers them as tiles and draws nothing). */
+const FLOOR_HAZARD = { L: 'lava', V: 'vent', '=': 'rail', '|': 'rail', r: 'roulette', k: 'roulette', Q: 'quicksand', s: 'rspikes' };
+const BARREL = { radius: 130, damage: 60, playerDamage: 2, patches: 3, spread: 90, chainMs: 110 }; // EVENTS 6.2 powder barrel `Z`
+const SHOP_BASE = { passive: [10, 15], active: [10, 15], heart_full: 3, heart_tin: 5, key: 5, dynamite: 5, heart_half: 2 };
+const MINI_REWARD = { itemChance: 0.5, itemChanceF1: 0.65, heartChance: 0.3, suppliesChanceF1: 0.05 }; // remainder = 2 keys + 1 dynamite (EVENTS 4.2)
 
 export default class Room {
   constructor(scene, def, state, floorData) {
@@ -26,7 +52,9 @@ export default class Room {
     this.floorData = floorData;
     this.floor = floorData.floor;
     this.type = def.type;
-    this.tpl = Templates.get(def.template);
+    this.info = ROOM_TYPES[def.type] || ROOM_TYPES.normal;
+    this.pocket = !!def.pocket;
+    this.tpl = Templates.get(def.template) || fallbackTemplate(def);
     this.objs = [];
     this.decalSprites = [];
     this.tiles = [];
@@ -36,38 +64,49 @@ export default class Room {
     this.pedestals = [];
     this.chests = [];
     this.props = [];
+    this.rings = []; // HoldRings (entities/HoldRing.js register themselves here)
+    this.controllers = [];
+    this.roles = {}; // controller by role: champion | event | vault | xroads | variant | tells
     this.trapdoor = null;
     this.locked = false;
     this.mode = 'idle'; // idle | combat | done
     this.waves = [];
     this.waveIdx = -1;
+    this.waveEnemies = [];
     this.pending = 0;
     this.waveDelay = 0;
     this.age = 0;
+    this.combatAge = 0; // seconds since the encounter started (doors locked)
     this.boss = null;
+    this.mod = def.mod || null; // room modifier id (curse_dark may add 'darkness' in buildContents)
+    this.hurtInRoom = false;
     this.enteredVia = null;
     this.rng = new RNG(def.seed || 1);
     this.spikeCd = 0;
+    this.hazardWalk = false; // room has tiles walkers must route around (lava, retracting spikes)
     this.destroyed = false;
+    this.offHurt = bus.scoped(scene, 'player:hurt', () => { this.hurtInRoom = true; });
     this.build();
   }
 
   track(obj) { this.objs.push(obj); return obj; }
   get center() { return { x: ROOM.cx, y: ROOM.cy }; }
+  /** Controller hosted under `role`, or null. */
+  controller(role) { return this.roles[role] || null; }
 
   // ================================================================================================ build
   build() {
     const s = this.scene;
-    const fi = FLOORS[this.floor] || FLOORS[1];
-    // background
+    const kind = this.info;
+    const fi = floorInfo(this.floor);
+    // background: image key from the ROOM_TYPES row ('floor' = this room's a/b/c variant), falling back to the floor's own backgrounds
     let keys;
-    if (this.type === 'shop') keys = ['bg_shop'];
-    else if (this.type === 'treasure') keys = ['bg_treasure'];
-    else if (this.type === 'boss') keys = [fi.bgBoss, fi.bgA];
-    else keys = this.def.bg === 'b' ? [fi.bgB, fi.bgA] : [fi.bgA, fi.bgB];
-    const key = keys.find((k) => Assets.has(k)) || keys[0];
-    this.bg = Assets.makeImage(s, ROOM.cx, ROOM.bgY + 432, key).setDepth(DEPTH.bg);
-    if (this.type === 'secret') this.bg.setTint(0xb0b0c0);
+    if (kind.bg === 'floor') keys = [floorBgKey(this.floor, this.def.bg), fi.bgA, fi.bgB];
+    else if (kind.bg === 'bgB') keys = [fi.bgB, fi.bgA];
+    else if (kind.bg === 'bgBoss') keys = [fi.bgBoss, fi.bgA];
+    else keys = [kind.bg, fi.bgA];
+    this.bg = this.makeBg(keys.filter(Boolean)).setDepth(DEPTH.bg);
+    if (kind.tint) this.bg.setTint(kind.tint);
     this.track(this.bg);
 
     this.buildTiles();
@@ -79,6 +118,14 @@ export default class Room {
     this.hintText();
   }
 
+  /** Background image: real art, the round-1 placeholder (floors 1-3, shop, treasure) or a code-drawn floor for keys that have neither. */
+  makeBg(keys) {
+    const s = this.scene;
+    const key = keys.find((k) => Assets.has(k)) || keys.find((k) => IMAGE_SPEC[k]);
+    if (key) return Assets.makeImage(s, ROOM.cx, ROOM.bgY + 432, key);
+    return s.add.image(ROOM.cx, ROOM.bgY + 432, placeholderBg(s, keys[0], floorInfo(this.floor).tint));
+  }
+
   /** Ambient light life: F3 lanterns pulse green, F2 gets a faint candle-warm flicker over the whole room. Flicker is driven from update(). */
   buildLights() {
     const s = this.scene;
@@ -88,12 +135,19 @@ export default class Room {
       this.track(im);
       this.lights.push({ im, base: alpha, sx, sy, speed, ph: Math.random() * 6.28 });
     };
+    if (this.pocket) return;
     if (this.floor === 3) {
       for (const row of this.tiles) for (const t of row) {
         if (t.type === 'decor' && t.decorName === 'decor_b' && t.sprite) add(t.sprite.x, t.sprite.y - 26, 0x7fdc3a, 1.5, 1.2, 0.34, 2.2);
       }
     } else if (this.floor === 2 && this.type !== 'shop') {
       add(ROOM.cx, ROOM.cy, 0xffa050, 9.4, 5.2, 0.05, 5);
+    } else if (this.floor === 4) {
+      add(ROOM.cx, ROOM.cy, 0xff8a30, 9.4, 5.2, 0.06, 4.2); // warm orange flicker
+    } else if (this.floor === 5) {
+      add(ROOM.cx, ROOM.cy, 0xd63a2a, 9.4, 5.2, 0.05, 1.3); // slow red signal blink
+    } else if (this.floor === 6) {
+      add(ROOM.cx, ROOM.cy, 0xf0a640, 9.4, 5.2, 0.06, 6); // gold candle flicker
     }
   }
   updateLights() {
@@ -108,7 +162,8 @@ export default class Room {
   buildTiles() {
     const s = this.scene;
     const tpl = this.tpl;
-    const obst = OBST_KEYS[this.floor] || 'obst_f1';
+    const want = floorInfo(this.floor).obst || `obst_f${this.floor}`;
+    const obst = Assets.has(want) || SPEC[want] ? want : 'obst_f3'; // floors without obstacle art yet reuse the mine set
     const broken = this.state.broken || (this.state.broken = {});
     const r = new RNG(this.def.seed ^ 0x9e37);
     this.tiles = [];
@@ -127,6 +182,20 @@ export default class Room {
           t.type = 'breakable'; t.solid = true; t.hp = 2; name = 'breakable';
           if (broken[`${col},${row}`]) { t.broken = true; t.solid = false; name = 'breakable_broken'; }
         } else if (ch === 'd') { t.type = 'decor'; name = r.chance(0.5) ? 'decor_a' : 'decor_b'; t.decorName = name; }
+        else if (ch === 'Z') { // explosive powder barrel: breakable by one hit, chain-detonates (breakTile)
+          t.type = 'breakable'; t.barrel = true; t.solid = true; t.hp = 1;
+          if (broken[`${col},${row}`]) { t.broken = true; t.solid = false; }
+          t.sprite = this.hazardSprite(x, bottom, t.broken ? 'rubble' : 'powder_barrel', t.broken);
+        } else if (ch === 'G') { // gravestone: solid, blocks bullets (ambush handled by Hazards)
+          t.type = 'block'; t.grave = true; t.solid = true;
+          t.sprite = this.hazardSprite(x, bottom, 'gravestone', false);
+        } else if (ch === 'T') { t.type = 'block'; t.pipe = true; t.solid = true; } // steam pipe (Hazards draws it and owns the jet)
+        else if (FLOOR_HAZARD[ch]) {
+          t.type = FLOOR_HAZARD[ch];
+          if (t.type === 'rail') t.dir = ch === '=' ? 'h' : 'v';
+          else if (t.type === 'roulette') t.color = ch;
+          if (t.type === 'lava' || t.type === 'rspikes') this.hazardWalk = true;
+        }
         if (name) {
           t.sprite = Assets.makeCell(s, x, bottom, obst, name, 1);
           const flat = t.type === 'pit' || t.type === 'spikes' || t.broken;
@@ -138,8 +207,8 @@ export default class Room {
       this.tiles.push(line);
     }
     this.mergePits();
-    // sprinkle decor on free tiles (not near doors / spawn slots)
-    const decorN = this.type === 'normal' || this.type === 'start' ? 3 : 1;
+    // sprinkle decor on free tiles (not near doors / spawn slots); special rooms keep their floor clear for props
+    const decorN = this.type === 'normal' || this.type === 'start' ? 3 : this.info.grid === false || this.type === 'event' || this.type === 'supersecret' ? 0 : 1;
     let placed = 0, guard = 0;
     while (placed < decorN && guard++ < 40) {
       const col = r.int(1, COLS - 2), row = r.int(1, ROWS - 2);
@@ -153,6 +222,16 @@ export default class Room {
       this.track(t.sprite);
       placed++;
     }
+    Hazards.build(this);
+  }
+
+  /** Obstacle-like hazard tile art: `obst_hazards` cell when the art exists, otherwise a code-drawn 96 px placeholder. */
+  hazardSprite(x, bottom, name, flat) {
+    const s = this.scene;
+    const im = Assets.has('obst_hazards') ? Assets.makeCell(s, x, bottom, 'obst_hazards', name, 1) : s.add.image(x, bottom, hazardTexture(s, name)).setOrigin(0.5, 1);
+    im.setDepth(flat ? DEPTH.floor : actorDepth(bottom));
+    this.track(im);
+    return im;
   }
 
   /** True if the template pit at (c,r) touches another pit (those are drawn as one merged hole by mergePits instead of one sprite per tile). */
@@ -167,7 +246,7 @@ export default class Room {
     const joined = [];
     for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) if (pit(c, r) && this.pitJoined(c, r)) joined.push(this.tiles[r][c]);
     if (!joined.length) return;
-    const pal = { 1: [0xa8783c, 0x5a3418], 2: [0x6e4c2c, 0x2e1c10], 3: [0x6a5a4c, 0x261c18] }[this.floor] || [0xa8783c, 0x5a3418];
+    const pal = { 1: [0xa8783c, 0x5a3418], 2: [0x6e4c2c, 0x2e1c10], 3: [0x6a5a4c, 0x261c18], 4: [0x6a2a1c, 0x2a0c08], 5: [0x3a4658, 0x141a24], 6: [0x6a1a2a, 0x2a0810] }[this.floor] || [0xa8783c, 0x5a3418];
     const layers = [[3, pal[0], 0], [9, pal[1], 0], [17, 0x22140b, 5], [28, 0x0a0604, 9]]; // [inset px, colour, downward shift: shows the far cliff wall]
     const gfx = this.track(this.scene.add.graphics().setDepth(DEPTH.floor));
     const half = TILE / 2;
@@ -226,40 +305,59 @@ export default class Room {
     });
   }
 
+  /** Big timed banner (event names, modifier names, vault plate). One reusable text per room. */
+  banner(text, { color = '#e8dcc0', hold = 1600, size = 44, y = 262 } = {}) {
+    const s = this.scene;
+    let t = this.bannerText;
+    if (!t) {
+      t = this.bannerText = this.track(s.add.text(ROOM.cx, y, '', { fontFamily: FONT_TITLE, fontSize: `${size}px`, color, stroke: '#120c0a', strokeThickness: 8, align: 'center' }).setOrigin(0.5).setDepth(DEPTH.overlay - 10));
+    }
+    s.tweens.killTweensOf(t);
+    t.setText(text).setColor(color).setFontSize(size).setY(y).setAlpha(0);
+    s.tweens.add({ targets: t, alpha: 1, duration: 220, onComplete: () => { if (t.scene) s.tweens.add({ targets: t, alpha: 0, delay: hold, duration: 420 }); } });
+    return t;
+  }
+
   // ================================================================================================ contents
   buildContents() {
     const st = this.state;
     const tpl = this.tpl;
+    const def = this.def;
+    const RW = rewardFor(this.floor);
     if (!st.populated) {
       st.populated = true;
       st.pickups = st.pickups || [];
       st.pedestals = st.pedestals || [];
       st.chests = st.chests || [];
       const items = this.scene.items;
-      const r = rng.game;
+      const r = subRng('room', def.seed); // deterministic per room and seed, independent of how the run played out (daily fairness)
+      const roll = (pool, slot, o) => items.roll(pool, subRng('item', def.seed, slot), o); // ARCH D15
       if (this.type === 'treasure') {
         const group = tpl.pickOne ? 1 : null;
-        for (const p of tpl.slots.I) {
-          const id = items.roll('treasure', r);
+        tpl.slots.I.forEach((p, i) => {
+          const id = roll('treasure', i);
           if (id) st.pedestals.push({ ...tileToWorld(p.c, p.r), itemId: id, price: null, group, taken: false });
           else st.pickups.push({ type: r.pick(['heart_tin', 'heart_full', 'key']), ...tileToWorld(p.c, p.r) }); // item pool exhausted: never leave the reward spot empty
-        }
+        });
       } else if (this.type === 'shop') {
+        const P = { ...SHOP_BASE, ...(RW.shop || {}) };
         const slots = tpl.slots.H;
-        const item = items.roll('shop', r);
-        if (item) st.pedestals.push({ ...tileToWorld(slots[0].c, slots[0].r), itemId: item, price: r.int(10, 15), group: null, taken: false });
-        else { const t = r.pick(['heart_full', 'key', 'dynamite', 'heart_tin']); st.pickups.push({ type: t, ...tileToWorld(slots[0].c, slots[0].r), price: t === 'heart_full' ? 3 : 5 }); } // item pool exhausted
+        const item = roll('shop', 0);
+        if (item) {
+          const range = getItem(item) && getItem(item).type === 'active' ? P.active : P.passive;
+          st.pedestals.push({ ...tileToWorld(slots[0].c, slots[0].r), itemId: item, price: r.int(range[0], range[1]), group: null, taken: false });
+        } else { const t = r.pick(['heart_full', 'key', 'dynamite', 'heart_tin']); st.pickups.push({ type: t, ...tileToWorld(slots[0].c, slots[0].r), price: P[t] }); } // item pool exhausted
         const kind2 = r.chance(0.7) ? 'heart_full' : 'heart_tin';
-        st.pickups.push({ type: kind2, ...tileToWorld(slots[1].c, slots[1].r), price: kind2 === 'heart_full' ? 3 : 5 });
+        st.pickups.push({ type: kind2, ...tileToWorld(slots[1].c, slots[1].r), price: P[kind2] });
         const kind3 = r.pick(['key', 'dynamite', 'key', 'dynamite', 'heart_half']);
-        st.pickups.push({ type: kind3, ...tileToWorld(slots[2].c, slots[2].r), price: kind3 === 'heart_half' ? 2 : 5 });
-      } else if (this.type === 'secret') {
+        st.pickups.push({ type: kind3, ...tileToWorld(slots[2].c, slots[2].r), price: P[kind3] });
+      } else if (this.type === 'secret' && (!def.variant || def.variant === 'stash')) {
         for (const p of tpl.slots.C) {
           const w = tileToWorld(p.c, p.r);
           st.pickups.push({ type: this.rollPickup(1.2, true), ...w });
         }
         if (r.chance(0.4)) {
-          const id = items.roll('secret', r);
+          const id = roll('secret', 0);
           const p = tpl.slots.I[0];
           if (id && p) st.pedestals.push({ ...tileToWorld(p.c, p.r), itemId: id, price: null, group: null, taken: false });
         }
@@ -267,7 +365,7 @@ export default class Room {
     }
     for (const rec of st.pedestals || []) this.makePedestal(rec);
     for (const rec of st.pickups || []) this.pickups.push(new Pickup(this.scene, rec.type, rec.x, rec.y, { price: rec.price }));
-    for (const rec of st.chests || []) this.chests.push(new Chest(this.scene, rec, this));
+    for (const rec of st.chests || []) this.makeChest(rec);
     if (this.type === 'shop' && tpl.slots.K.length) {
       const k = tileToWorld(tpl.slots.K[0].c, tpl.slots.K[0].r);
       const ped = Assets.makeCell(this.scene, k.x, k.y + 50, 'props', 'peddler', 1).setDepth(actorDepth(k.y + 50));
@@ -275,9 +373,50 @@ export default class Room {
       this.peddler = ped;
     }
     if (st.trapdoor) { this.trapdoor = new Trapdoor(this.scene, st.trapdoor, this); this.props.push(this.trapdoor); }
+    if (this.type === 'boss' && !this.pocket && typeof Crossroads.restoreGate === 'function') Crossroads.restoreGate(this.scene, this);
+    // modifiers: template/floor-gen modifier, or the curse of the dark (deterministic per room seed)
+    if (!this.mod && this.type === 'normal' && typeof Boons.darkRoomMod === 'function') this.mod = Boons.darkRoomMod(this.scene.player, def) || null;
+    if (this.mod) Modifiers.build(this);
+    this.buildControllers();
     // encounter plan
-    st.cleared = st.cleared ?? !(this.type === 'normal' || this.type === 'boss');
+    st.cleared = st.cleared ?? !!this.info.cleared;
     if (!st.cleared) this.planEncounter();
+  }
+
+  /** Host the controller(s) this room needs. A controller that throws is dropped (logged once) instead of taking the room down. */
+  buildControllers() {
+    const st = this.state, def = this.def;
+    const ctl = st.ctl || (st.ctl = {});
+    const add = (role, C, state) => {
+      if (!C) return null;
+      let c = null;
+      try { c = new C(this, def, state); c.role = role; c.build(); } catch (e) { console.error(`[Room] ${role} controller failed to build`, e); return null; }
+      this.controllers.push(c);
+      this.roles[role] = c;
+      return c;
+    };
+    if (this.type === 'champion') add('champion', ChampionRoom, ctl);
+    else if (this.type === 'event') add('event', EventRoom, st.event || (st.event = { id: def.event, uses: 0, net: 0, done: false, data: {} }));
+    else if (this.type === 'supersecret') add('vault', VaultRoom, ctl);
+    else if (this.type === 'crossroads') add('xroads', CrossroadsRoom, ctl);
+    else if (this.type === 'secret' && def.variant && def.variant !== 'stash' && SECRETS.VARIANTS) add('variant', SECRETS.VARIANTS[def.variant], ctl);
+    if (SECRETS.Tells && this.secretDoors().length) add('tells', SECRETS.Tells, ctl.tells || (ctl.tells = {}));
+  }
+
+  /** Unrevealed secret doors of this room that carry a tell (crack / knock / chalk). */
+  secretDoors() {
+    const out = [];
+    for (const d of Object.values(this.doors)) if (d.kind === 'secret' && !d.data.revealed && d.data.tell) out.push(d);
+    return out;
+  }
+
+  /** Run `fn(controller)` on every hosted controller, isolating failures. */
+  eachController(name, arg) {
+    for (let i = 0; i < this.controllers.length; i++) {
+      const c = this.controllers[i];
+      if (c.failed) continue;
+      try { c[name](arg); } catch (e) { c.failed = true; console.error(`[Room] ${c.role} controller ${name} failed`, e); }
+    }
   }
 
   makePedestal(rec) {
@@ -292,38 +431,70 @@ export default class Room {
   resolveGroup(group, except) {
     for (const p of this.pedestals) if (p !== except && p.rec.group === group) p.vanish();
   }
+  makeChest(rec) {
+    const c = new Chest(this.scene, rec, this);
+    this.chests.push(c);
+    return c;
+  }
 
   // ================================================================================================ encounters
   planEncounter() {
     const tpl = this.tpl;
     const r = new RNG(this.def.seed ^ 0x51ed);
     const pool = enemyPool(this.floor);
-    const pick = () => (pool.length ? r.weighted(pool.map((id) => ({ id, w: (enemyMeta(id) || {}).weight ?? 1 })), (o) => o.w).id : 'outlaw');
-    const cursedChance = ENEMY_DEFAULTS.cursedChance; // 8% elite
-    if (this.type === 'boss') {
+    const pickFrom = (rr) => (pool.length ? rr.weighted(pool.map((id) => ({ id, w: (enemyMeta(id) || {}).weight ?? 1 })), (o) => o.w).id : 'outlaw');
+    const pick = () => pickFrom(r);
+    if (this.type === 'boss' || this.type === 'champion') {
       this.waves = [];
       return;
     }
     const waves = [];
     const digits = Object.keys(tpl.slots.waves).sort();
+    // r.next() where the round-1 code rolled the 8 % `cursed` flag: keeps wave composition of existing seeds unchanged (elites use their own stream below)
     for (const dgt of digits) {
       const positions = tpl.slots.waves[dgt];
       const list = tpl.waves[dgt] || [];
-      waves.push(positions.map((p, i) => ({ id: list[i] || pick(), ...tileToWorld(p.c, p.r), cursed: r.chance(cursedChance) })));
+      waves.push(positions.map((p, i) => { const id = list[i] || pick(); r.next(); return { id, ...tileToWorld(p.c, p.r) }; }));
     }
     // template `air` spawns: flyers that may hover over pits/obstacles, added to the wave with that digit
     for (const [dgt, list] of Object.entries(tpl.air || {})) {
       const w = waves[digits.indexOf(dgt)];
-      if (w) for (const [c, rr, id] of list) w.push({ id, ...tileToWorld(c, rr), cursed: r.chance(cursedChance), air: true });
+      if (w) for (const [c, rr, id] of list) { r.next(); w.push({ id, ...tileToWorld(c, rr), air: true }); }
     }
     if (tpl.slots.E.length) {
-      const extra = tpl.slots.E.map((p) => ({ id: pick(), ...tileToWorld(p.c, p.r), cursed: r.chance(cursedChance) }));
+      const extra = tpl.slots.E.map((p) => { const id = pick(); r.next(); return { id, ...tileToWorld(p.c, p.r) }; });
       if (waves.length) waves[0].push(...extra); else waves.push(extra);
     }
     // gentle start: rooms right next to the start room only get their first wave
     if (this.def.dist <= 1 && waves.length > 1) waves.length = 1;
+    // difficulty: Hell adds one more enemy to a wave with probability diff.extraEnemy (own stream: never shifts the composition above)
+    const diff = this.scene.diff;
+    if (diff && diff.extraEnemy > 0) this.addExtraEnemies(waves, new RNG(this.def.seed ^ 0xD1FF), diff.extraEnemy, pickFrom);
     if (!waves.length) this.state.cleared = true;
+    else this.rollElites(waves);
     this.waves = waves;
+  }
+
+  /** One extra enemy per wave with probability `p`, on a random free floor tile (safeSpawns still keeps it away from the player). */
+  addExtraEnemies(waves, xr, p, pickFrom) {
+    const free = [];
+    const doorTiles = new Set(DIRS.flatMap((d) => [DOORS[d].tile.join(','), DOORS[d].front.join(',')]));
+    for (const row of this.tiles) for (const t of row) if (t.ch === '.' && !t.type && !doorTiles.has(`${t.c},${t.r}`)) free.push(t);
+    if (!free.length) return;
+    for (const w of waves) {
+      if (!w.length || !xr.chance(p)) continue;
+      const t = xr.pick(free);
+      w.push({ id: pickFrom(xr), x: t.x, y: t.y });
+    }
+  }
+
+  /** Elite affixes (D3): one dedicated stream over every wave record in wave order; Affixes sets rec.affixes[] / rec.cursed. */
+  rollElites(waves) {
+    if (typeof Affixes.rollWave !== 'function') return;
+    const records = [];
+    for (const w of waves) for (const rec of w) records.push(rec);
+    const sc = this.scene;
+    Affixes.rollWave(new RNG(this.def.seed ^ 0xE11E), records, { floor: this.floor, diff: sc.diff, player: sc.player, allCursed: !!(sc.mut && sc.mut.allCursed) });
   }
 
   /** Called by RoomManager once the player has walked in. */
@@ -333,17 +504,32 @@ export default class Room {
     const first = !st.entered;
     st.entered = true;
     st.visited = true;
-    this.scene.player.onRoomEntered();
+    const p = this.scene.player;
+    p.onRoomEntered();
+    this.hookRoom('roomEnter');
     bus.emit('room:entered', { room: this, roomId: this.def.id, type: this.type, first });
+    if (first && this.type === 'secret') bus.emit('secret:found', { variant: this.def.variant || 'stash' });
+    if (first && this.type === 'supersecret') bus.emit('supersecret:entered', {});
+    this.eachController('onEnter');
     if (!st.cleared) this.startEncounter();
-    else if (this.type === 'boss' && st.trapdoor) { /* already beaten */ }
+  }
+
+  /** Item hooks roomEnter / wave / roomClear through the shared context object (no allocation). */
+  hookRoom(name) {
+    const p = this.scene.player;
+    if (!p) return;
+    const c = CTX.room;
+    c.room = this; c.perfect = !this.hurtInRoom; c.enemies = this.waveEnemies.length;
+    runHooks(p, name, c);
   }
 
   startEncounter() {
     if (this.mode !== 'idle') return;
     this.mode = 'combat';
+    this.combatAge = 0;
     this.lock();
     if (this.type === 'boss') { this.startBoss(); return; }
+    if (this.type === 'champion') { this.startMini(); return; }
     this.waveIdx = -1;
     this.waveDelay = 0.35;
     this.pending = 0;
@@ -353,6 +539,7 @@ export default class Room {
     this.locked = true;
     for (const d of Object.values(this.doors)) d.refresh();
     this.buildWallRects();
+    Modifiers.onLock(this);
     bus.emit('room:locked', { room: this });
   }
   unlock() {
@@ -365,6 +552,9 @@ export default class Room {
     this.waveIdx++;
     if (this.waveIdx >= this.waves.length) { this.clearRoom(); return; }
     const wave = this.safeSpawns(this.waves[this.waveIdx]);
+    const spawned = [];
+    this.waveEnemies = spawned;
+    let left = wave.length;
     for (const w of wave) {
       this.scene.fx.spawn(w.x, w.y, Math.max(0.8, (enemyMeta(w.id)?.r ?? 30) / 34));
       bus.emit('spawn:telegraph', { x: w.x, y: w.y });
@@ -372,7 +562,9 @@ export default class Room {
       this.scene.time.delayedCall(560, () => {
         this.pending--;
         if (this.destroyed || this.scene.room !== this) return;
-        spawnEnemy(this.scene, w.id, w.x, w.y, { cursed: w.cursed, floor: this.floor });
+        const e = spawnEnemy(this.scene, w.id, w.x, w.y, { cursed: !!w.cursed, affixes: w.affixes, floor: this.floor });
+        if (e) spawned.push(e);
+        if (--left === 0) { bus.emit('room:wave', { room: this, enemies: spawned }); this.hookRoom('wave'); }
       });
     }
   }
@@ -398,7 +590,7 @@ export default class Room {
         const fly = !!(enemyMeta(w.id) || {}).flying;
         let best = null, bestScore = Infinity, far = null, farD = -1;
         for (const row of this.tiles) for (const t of row) {
-          if (t.type === 'spikes' || (t.solid && !(fly && t.type === 'pit')) || doorTiles.has(`${t.c},${t.r}`)) continue;
+          if ((NO_DROP.has(t.type) && t.type !== 'pit') || (t.solid && !(fly && t.type === 'pit')) || doorTiles.has(`${t.c},${t.r}`)) continue;
           if (used.some((u) => Math.hypot(u.x - t.x, u.y - t.y) < 70)) continue;
           const d = minD(t.x, t.y);
           if (d > farD) { farD = d; far = t; }
@@ -413,9 +605,8 @@ export default class Room {
     return out;
   }
 
-  startBoss() {
-    const tpl = this.tpl;
-    const slot = tpl.slots.waves['1'][0];
+  /** Spawn position for the '1' slot of a boss / champion template: mirrored away from the entry door, pushed off the door axis. */
+  entrySlotPos(slot) {
     let { x, y } = tileToWorld(slot.c, slot.r);
     const via = this.enteredVia;
     if (via === 'up' && y < ROOM.cy) y = 2 * ROOM.cy - y;
@@ -425,24 +616,85 @@ export default class Room {
     // vertical entrances: push the boss further from the door
     if (via === 'up') y = Math.max(y, ROOM.cy + 60);
     if (via === 'down') y = Math.min(y, ROOM.cy - 60);
+    return { x, y };
+  }
+
+  startBoss() {
+    const tpl = this.tpl;
+    const { x, y } = this.entrySlotPos(tpl.slots.waves['1'][0]);
     this.boss = spawnBoss(this.scene, tpl.boss, x, y, { floor: this.floor });
     this.scene.beginBossIntro(this.boss);
+  }
+
+  /** Champion room: spawn the mini-boss (invulnerable until the WANTED card ends, ChampionRoom.intro then calls startFight). */
+  startMini() {
+    const tpl = this.tpl;
+    const id = this.def.mini || (tpl.waves['1'] || [])[0];
+    const slot = (tpl.slots.waves['1'] || [])[0];
+    if (!id || !slot) { console.error(`[Room] champion room ${this.def.id} has no mini / '1' slot`); this.clearRoom({ boss: true }); return; }
+    const { x, y } = this.entrySlotPos(slot);
+    this.boss = spawnBoss(this.scene, id, x, y, { floor: this.floor });
+    const c = this.controller('champion');
+    if (c) c.intro(this.boss);
+    else { this.scene.time.delayedCall(1000, () => { if (this.boss && this.boss.alive) this.boss.startFight(); }); }
   }
 
   onBossDefeated(boss) {
     // kill leftover adds silently
     for (const e of [...this.scene.enemies]) if (e !== boss && e.alive) { e.hp = 0; e.die({ silent: true }); }
     this.scene.bullets.enemy.clear();
-    const pos = { x: ROOM.cx, y: ROOM.cy };
     const st = this.state;
-    st.trapdoor = this.floor < 3 ? { x: pos.x, y: pos.y + 40 } : null;
+    if (this.floor >= MAX_FLOOR) { this.clearRoom({ boss: true }); return; } // the final boss ends the run (flow.js), no reward
+    const pos = { x: ROOM.cx, y: ROOM.cy };
+    st.trapdoor = { x: pos.x, y: pos.y + 40 };
     st.pedestals = st.pedestals || [];
     st.pickups = st.pickups || [];
-    const id = this.scene.items.roll('boss', rng.game);
-    if (id) this.spawnPedestal({ x: pos.x, y: pos.y - 110, itemId: id, price: null, group: null, taken: false });
-    else this.dropPickup('heart_tin', pos.x, pos.y - 110, { pop: true }); // item pool exhausted
+    // reward (CHAPTER2 s7): Undertaker and Engine offer a pick-one pair, the others a single boss-pool item; plus a heart and the trapdoor
+    const pair = this.floor === 3 || this.floor === 5;
+    const seed = this.def.seed;
+    const spots = pair ? [pos.x - 90, pos.x + 90] : [pos.x];
+    spots.forEach((px, i) => {
+      const id = this.scene.items.roll('boss', subRng('item', seed, i));
+      if (id) this.spawnPedestal({ x: px, y: pos.y - 110, itemId: id, price: null, group: pair ? 'boss' : null, taken: false });
+      else this.dropPickup('heart_tin', px, pos.y - 110, { pop: true }); // item pool exhausted
+    });
     this.dropPickup('heart_full', pos.x + 130, pos.y + 40, { pop: true });
-    if (st.trapdoor) { this.trapdoor = new Trapdoor(this.scene, st.trapdoor, this); this.props.push(this.trapdoor); }
+    this.trapdoor = new Trapdoor(this.scene, st.trapdoor, this); this.props.push(this.trapdoor);
+    if (this.floor <= 5 && typeof Crossroads.onBossDefeated === 'function') Crossroads.onBossDefeated(this.scene, this);
+    this.clearRoom({ boss: true });
+  }
+
+  /**
+   * Champion reward (EVENTS 4.2), rolled with subRng('mini', floor): bounty coins (bounty / 5 nickels), a free gold chest and ONE bonus:
+   * item pedestal (treasure pool) / heart container / keys + dynamite. `mini:defeated` is emitted by MiniBoss itself.
+   */
+  onMiniDefeated(mini) {
+    const st = this.state;
+    if (st.miniDone) return;
+    st.miniDone = true;
+    for (const e of [...this.scene.enemies]) if (e !== mini && e.alive) { e.hp = 0; e.die({ silent: true }); }
+    this.scene.bullets.enemy.clear();
+    const r = subRng('mini', this.floor);
+    const meta = (mini && mini.meta) || {};
+    const bounty = meta.bounty ?? 10 + 5 * this.floor;
+    const cx = ROOM.cx, cy = ROOM.cy;
+    st.pedestals = st.pedestals || [];
+    st.chests = st.chests || [];
+    const nick = Math.max(1, Math.round(bounty / 5));
+    for (let i = 0; i < nick; i++) this.dropPickup('coin_nickel', cx + (i - (nick - 1) / 2) * 34, cy + 70, { pop: true });
+    this.spawnChest('chest_gold', cx - 170, cy + 10, { free: true });
+    const f1 = this.floor === 1;
+    const roll = r.next();
+    const itemP = f1 ? MINI_REWARD.itemChanceF1 : MINI_REWARD.itemChance;
+    const supplyP = f1 ? MINI_REWARD.suppliesChanceF1 : 1 - MINI_REWARD.itemChance - MINI_REWARD.heartChance;
+    const spot = { x: cx, y: cy - 110 };
+    if (roll < itemP) {
+      const id = this.scene.items.roll('treasure', subRng('item', this.def.seed, 0));
+      if (id) this.spawnPedestal({ x: spot.x, y: spot.y, itemId: id, price: null, group: null, taken: false });
+      else this.dropPickup('heart_container', spot.x, spot.y, { pop: true }); // pool empty: the heart container instead
+    } else if (roll < 1 - supplyP) this.dropPickup('heart_container', spot.x, spot.y, { pop: true });
+    else { this.dropPickup('key', spot.x - 30, spot.y, { pop: true }); this.dropPickup('key', spot.x + 30, spot.y, { pop: true }); this.dropPickup('dynamite', spot.x, spot.y + 30, { pop: true }); }
+    this.eachController('onMiniDefeated', mini);
     this.clearRoom({ boss: true });
   }
 
@@ -454,16 +706,26 @@ export default class Room {
     this.unlock();
     if (this.scene.run) this.scene.run.roomsCleared++;
     bus.emit('room:cleared', { room: this, roomId: this.def.id, type: this.type });
+    this.hookRoom('roomClear');
+    Modifiers.onClear(this);
+    this.eachController('onCleared');
     if (!o.boss) { this.scene.fx.ringPulse(ROOM.cx, ROOM.cy + 20, 0xf0d080, 420, 700, 0.3); this.scene.fx.flash(0xf0d080, 0.1); } // room-clear chime flourish (doors swing open via Door.juice)
     const p = this.scene.player;
     const r = rng.game;
     if (!o.boss) {
       // reward drop
       const luck = p.stats.luck;
-      // reward curve (config ROOM_REWARD): harder templates pay slightly more, and a drop is guaranteed after a dry streak
-      const RW = ROOM_REWARD;
+      // reward curve (config ROOM_REWARD, chapter-2 overrides via rewardFor): harder templates pay slightly more, a drop is guaranteed after a dry streak,
+      // elites (+0.25, guaranteed from 2) and modifier rooms (+0.08 / blood moon guaranteed) pay extra; Hell lowers the base chance and stretches the streak
+      const RW = rewardFor(this.floor);
+      const diff = this.scene.diff;
       const sc = this.scene.run || this.scene; // per-run counter (scene objects are reused between runs)
-      const drop = r.chance(RW.dropChance + luck * RW.luckBonus + ((this.tpl.tier || 1) - 1) * RW.tierBonus) || (sc.dryClears || 0) >= RW.pityRooms;
+      const pity = diff && diff.pityRooms ? Math.max(1, diff.pityRooms - (ROOM_REWARD.pityRooms - RW.pityRooms)) : RW.pityRooms;
+      const elites = st.eliteKills || 0;
+      const mb = Modifiers.clearBonus(this) || (this.mod ? { drop: VARIETY.mod.clearBonus } : null);
+      const chance = (diff && diff.dropChance != null ? diff.dropChance : RW.dropChance) + luck * RW.luckBonus + ((this.tpl.tier || 1) - 1) * RW.tierBonus + (elites >= 1 ? 0.25 : 0) + (mb && mb.drop ? mb.drop : 0);
+      const sure = elites >= 2 || (mb && mb.guaranteed);
+      const drop = sure || r.chance(chance) || (sc.dryClears || 0) >= pity;
       if (drop) { sc.dryClears = 0; this.dropPickup(this.rollPickup(), ROOM.cx, ROOM.cy, { pop: true }); }
       else {
         sc.dryClears = (sc.dryClears || 0) + 1;
@@ -477,11 +739,13 @@ export default class Room {
     if (p.stats.roomClearKeyChance && r.chance(p.stats.roomClearKeyChance)) this.dropPickup('key', ROOM.cx, ROOM.cy + 90, { pop: true });
   }
 
-  spawnChest(type, x, y) {
+  /** `o.free` = gold chest that opens without a key (mini-boss reward). */
+  spawnChest(type, x, y, o = {}) {
     ({ x, y } = this.walkableNear(x, y));
     const rec = { x, y, type, opened: false };
+    if (o.free) rec.free = true;
     this.state.chests.push(rec);
-    this.chests.push(new Chest(this.scene, rec, this));
+    return this.makeChest(rec);
   }
 
   aliveCount() {
@@ -495,20 +759,40 @@ export default class Room {
     const p = this.scene.player;
     const hurt = p.hp < p.maxHp;
     const lk = Math.max(0, p.stats.luck || 0); // luck shifts drops toward the good stuff (nickels, hearts, tin)
-    const items = [
-      { t: 'coin', w: 40 * (p.stats.coinMult > 1 ? 1.4 : 1) }, { t: 'coin_nickel', w: 6 + bonus * 3 + lk },
-      { t: 'heart_full', w: 7 + lk * 0.7 + (hurt ? 9 : 0) }, { t: 'heart_half', w: 14 + (hurt ? 10 : 0) }, { t: 'heart_tin', w: 3 + bonus + lk * 0.4 },
-      { t: 'key', w: 12 }, { t: 'dynamite', w: 12 },
-    ];
-    return rng.game.weighted(items, (o) => o.w).t;
-  }
-  /** Nearest spot a pickup / chest can actually be reached from: drops over a pit / rock / spikes (room centre of pit templates, flyers dying over pits) were unreachable. */
-  walkableNear(x, y) {
-    const ok = (t) => t && !t.solid && t.type !== 'spikes';
-    if (!this.probe(x, y, 18)) {
-      const c = Math.floor((x - ROOM.x) / TILE), r = Math.floor((y - ROOM.y) / TILE);
-      if (ok(this.tiles[r] && this.tiles[r][c])) return { x, y };
+    const RW = rewardFor(this.floor);
+    const W = RW.pickupWeights; // chapter-2 table (CHAPTER2 s7), absent on floors 1-3
+    const cm = p.stats.coinMult > 1 ? 1.4 : 1;
+    const items = W
+      ? [
+        { t: 'coin', w: W.coin * cm }, { t: 'coin_nickel', w: W.coin_nickel + bonus * 3 + lk },
+        { t: 'heart_full', w: W.heart_full + lk * 0.7 + (hurt ? 9 : 0) }, { t: 'heart_half', w: W.heart_half + (hurt ? 10 : 0) }, { t: 'heart_tin', w: W.heart_tin + bonus + lk * 0.4 },
+        { t: 'key', w: W.key }, { t: 'dynamite', w: W.dynamite },
+      ]
+      : [
+        { t: 'coin', w: 40 * cm }, { t: 'coin_nickel', w: 6 + bonus * 3 + lk },
+        { t: 'heart_full', w: 7 + lk * 0.7 + (hurt ? 9 : 0) }, { t: 'heart_half', w: 14 + (hurt ? 10 : 0) }, { t: 'heart_tin', w: 3 + bonus + lk * 0.4 },
+        { t: 'key', w: 12 }, { t: 'dynamite', w: 12 },
+      ];
+    const mut = this.scene.mut;
+    const diff = this.scene.diff;
+    let list = items;
+    if (mut && (mut.noHearts || mut.noCoinDrops)) {
+      list = items.filter((o) => !(mut.noHearts && o.t.startsWith('heart')) && !(mut.noCoinDrops && (o.t === 'coin' || o.t === 'coin_nickel' || o.t === 'key')));
+      if (!list.length) list = items;
     }
+    const g = rng.game;
+    let t = g.weighted(list, (o) => o.w).t;
+    if (t === 'heart_full' && diff && diff.heartDowngrade > 0 && g.chance(diff.heartDowngrade)) t = 'heart_half'; // Hell: fewer full hearts
+    return t;
+  }
+  tileAt(x, y) {
+    const c = Math.floor((x - ROOM.x) / TILE), r = Math.floor((y - ROOM.y) / TILE);
+    return (this.tiles[r] && this.tiles[r][c]) || null;
+  }
+  /** Nearest spot a pickup / chest can actually be reached from: drops over a pit / rock / spikes / lava / quicksand were unreachable or punishing. */
+  walkableNear(x, y) {
+    const ok = (t) => t && !t.solid && !NO_DROP.has(t.type);
+    if (!this.probe(x, y, 18) && ok(this.tileAt(x, y))) return { x, y };
     let best = null, bd = Infinity;
     for (const row of this.tiles) for (const t of row) {
       if (!ok(t)) continue;
@@ -517,6 +801,7 @@ export default class Room {
     }
     return best ? { x: best.x, y: best.y } : { x, y };
   }
+  reachableSpot(x, y) { return this.walkableNear(x, y); }
   dropPickup(type, x, y, o = {}) {
     ({ x, y } = this.walkableNear(x, y));
     const pk = new Pickup(this.scene, type, x, y, { pop: true, ...o });
@@ -526,6 +811,36 @@ export default class Room {
   removePickup(pk) {
     const i = this.pickups.indexOf(pk);
     if (i >= 0) this.pickups.splice(i, 1);
+  }
+
+  // ================================================================================================ fire / lanes (Hazards facade)
+  /** FirePatch (D2): circle r, life `dur`; o = {dmg = 1, team = 'enemy'|'player', dps}. */
+  addFire(x, y, r, dur, o) { return Hazards.addFire(this, x, y, r, dur, o); }
+  /** Several patches around (x, y): o = {r, life, count, spread}. */
+  ignite(x, y, o) { return Hazards.ignite(this, x, y, o); }
+  /** Lane sweep (cart / ghost / herd): {axis, index, dir, speed, kind, dmg, w, tell}. */
+  spawnLane(o) { return Hazards.spawnLane(this, o); }
+  /** Lava tile graph for magma_eel (BFS over lava tiles only). */
+  lavaPath() { return Hazards.lavaPath(this); }
+
+  /** Called by explode(): player dynamite (and o.fire === true blasts) leave four fire patches within 0.8 R. */
+  onExplosion(x, y, radius, o = {}) {
+    const src = o.source;
+    const so = src && src.o;
+    const playerBlast = o.fire === true || (so && !so.from && so.hurtEnemies !== false && src.fuse !== undefined);
+    if (o.fire === false || !playerBlast) return;
+    this.ignite(x, y, { r: 44, life: 3.5, count: 4, spread: radius * 0.8 });
+  }
+
+  /** A player bullet died on the room bounds at (x, y): brittle secret doors ("crack" tell) open after VARIETY.secret.brittleHits hits nearby. */
+  onWallHit(x, y) {
+    for (const d of Object.values(this.doors)) {
+      if (d.kind !== 'secret' || d.data.revealed || !d.data.brittle) continue;
+      if (Math.hypot(d.geom.x - x, d.geom.y - y) > 130) continue;
+      d.data.hits = (d.data.hits || 0) + 1;
+      this.scene.fx.burst(x, y, { color: [0x8a7a68, 0xb8a888], count: 4, speed: [30, 120], life: [200, 420], gravity: 160 });
+      if (d.data.hits >= VARIETY.secret.brittleHits) this.revealDoor(d);
+    }
   }
 
   // ================================================================================================ decals
@@ -589,7 +904,10 @@ export default class Room {
     if (a.hit) { const l = Math.hypot(a.hnx, a.hny); if (l > 0.001) { a.hnx /= l; a.hny /= l; } }
   }
 
-  /** True if a circle at (x,y,r) would overlap a solid obstacle tile (for steering probes). */
+  /**
+   * True if a circle at (x,y,r) would overlap a solid obstacle tile (for steering probes). With an `actor` on a room that has lava /
+   * retracting spikes, walkers also ask the hazards whether the spot is off limits (lava is not solid: the player may cross it).
+   */
   probe(x, y, r, actor) {
     if (actor && actor.flying) return false;
     const c0 = Math.floor((x - r - ROOM.x) / TILE), c1 = Math.floor((x + r - ROOM.x) / TILE);
@@ -598,7 +916,7 @@ export default class Room {
       if (rr < 0 || cc < 0 || rr >= ROWS || cc >= COLS) return true;
       if (this.tiles[rr][cc].solid) return true;
     }
-    return false;
+    return !!(actor && this.hazardWalk && Hazards.blocks(this, x, y, r, actor));
   }
 
   /** Tile blocking a bullet at (x,y,r): block or unbroken breakable. Pits and spikes are bullet-transparent. */
@@ -623,15 +941,35 @@ export default class Room {
     if (t.broken) return;
     t.broken = true; t.solid = false;
     (this.state.broken || (this.state.broken = {}))[`${t.c},${t.r}`] = true;
+    if (t.barrel) { this.detonateBarrel(t); return; }
     if (t.sprite) { t.sprite.setFrame(Assets.frame(t.obst, 'breakable_broken')).setDepth(DEPTH.floor); }
     this.scene.fx.burst(t.x, t.y, { color: [0x8a5a2a, 0x6b4423, 0xb8843f], count: 14, speed: [60, 260], gravity: 200 });
     this.scene.fx.dust(t.x, t.y + 20, 1.1);
     Sfx.play('bullet_hit_wall', { vol: 0.8, detune: -300 });
     if (rng.game.chance(ROOM_REWARD.breakableDrop + (this.scene.player ? this.scene.player.stats.luck : 0) * ROOM_REWARD.luckBonus * 0.5)) this.dropPickup(this.rollPickup(), t.x, t.y, { pop: true }); // luck-weighted
   }
+  /** Powder barrel: blast r130 (60 to enemies, 2 units to the player unless explosion-immune), three fire patches, neighbours chain-detonate. */
+  detonateBarrel(t) {
+    const s = this.scene;
+    if (t.sprite) {
+      const flat = Assets.has('obst_hazards');
+      if (flat) t.sprite.setFrame(Assets.frame('obst_hazards', 'rubble')); else t.sprite.setTexture(hazardTexture(s, 'rubble'));
+      t.sprite.setDepth(DEPTH.floor);
+    }
+    const p = s.player;
+    explode(s, t.x, t.y, { radius: BARREL.radius, damage: BARREL.damage, playerDamage: p && p.stats.explosionImmune ? 0 : BARREL.playerDamage, source: 'barrel' });
+    this.ignite(t.x, t.y, { r: 44, life: 3.5, count: BARREL.patches, spread: BARREL.spread });
+  }
+  /** Chain reaction: a barrel inside another blast goes off a beat later (never recursively inside the same call). */
+  armBarrel(t) {
+    if (t.armed || t.broken) return;
+    t.armed = true;
+    this.scene.time.delayedCall(BARREL.chainMs, () => { if (!this.destroyed && this.scene.room === this) this.breakTile(t); });
+  }
   explodeAt(x, y, radius) {
     for (const row of this.tiles) for (const t of row) {
-      if (t.type === 'breakable' && !t.broken && Math.hypot(t.x - x, t.y - y) < radius + TILE * 0.5) this.breakTile(t);
+      if (t.type !== 'breakable' || t.broken || Math.hypot(t.x - x, t.y - y) >= radius + TILE * 0.5) continue;
+      if (t.barrel) this.armBarrel(t); else this.breakTile(t);
     }
   }
   revealSecretsAt(x, y, radius) {
@@ -657,19 +995,24 @@ export default class Room {
   // ================================================================================================ update
   update(dt) {
     this.age += dt;
+    if (this.mode === 'combat') this.combatAge += dt;
     for (const p of [...this.pickups]) p.update(dt);
     for (const p of this.pedestals) p.update(dt);
     for (const c of this.chests) c.update(dt);
     for (const p of this.props) p.update(dt);
+    for (let i = this.rings.length - 1; i >= 0; i--) this.rings[i].update(dt);
     this.updateEncounter(dt);
     this.updateDoors(dt);
     if (this.destroyed) return; // a door transition just tore this room down: don't run spikes/lights against the dead room
     this.updateSpikes(dt);
+    if (this.controllers.length) this.eachController('update', dt);
+    Hazards.update(this, dt);
+    if (this.mod) Modifiers.update(this, dt);
     if (this.lights && this.lights.length) this.updateLights();
   }
 
   updateEncounter(dt) {
-    if (this.mode !== 'combat' || this.type === 'boss') return;
+    if (this.mode !== 'combat' || this.type === 'boss' || this.type === 'champion') return;
     if (this.pending > 0) return;
     if (this.aliveCount() === 0) {
       this.waveDelay -= dt;
@@ -705,6 +1048,7 @@ export default class Room {
             d.refresh(false);
             this.buildWallRects();
             s.fx.text(g.x - g.dx * 60, g.y - g.dy * 60, 'UNLOCKED', { color: '#e8c84a', size: 22 });
+            bus.emit('key:used', { room: this.def.id, door: g.dir });
           } else {
             Sfx.play('door_locked');
             s.fx.text(g.x - g.dx * 70, g.y - g.dy * 70, 'NEEDS A KEY', { color: '#e8c84a', size: 22 });
@@ -741,6 +1085,13 @@ export default class Room {
   destroy() {
     this.destroyed = true;
     this.snapshot();
+    if (this.offHurt) { this.offHurt(); this.offHurt = null; }
+    for (const c of this.controllers) { try { c.destroy(); } catch (e) { console.error('[Room] controller destroy failed', e); } }
+    this.controllers.length = 0;
+    this.roles = {};
+    for (let i = this.rings.length - 1; i >= 0; i--) this.rings[i].destroy();
+    try { if (this.mod) Modifiers.destroy(this); } catch (e) { console.error('[Room] modifier destroy failed', e); }
+    try { Hazards.dispose(this); } catch (e) { console.error('[Room] hazard dispose failed', e); }
     for (const o of this.objs) { try { o.destroy(); } catch (e) { /* */ } }
     for (const o of this.decalSprites) { try { o.destroy(); } catch (e) { /* */ } }
     this.decalSprites.length = 0;
@@ -751,4 +1102,68 @@ export default class Room {
     this.objs.length = this.pickups.length = this.pedestals.length = this.chests.length = this.props.length = 0;
     if (this.peddler) this.peddler = null;
   }
+}
+
+// ==================================================================================================== fallbacks
+const OPEN = ['.............', '.............', '.............', '.............', '.............', '.............', '.............'];
+const put = (rows, c, r, ch) => { rows[r] = rows[r].slice(0, c) + ch + rows[r].slice(c + 1); };
+
+/** Template used when `def.template` is not registered (new special rooms before their templates exist): an open arena with the marker slots. */
+function fallbackTemplate(def) {
+  const rows = [...OPEN];
+  const waves = {};
+  if (def.type === 'crossroads') { put(rows, 6, 1, 'K'); for (const c of [2, 6, 10]) put(rows, c, 3, 'I'); }
+  else if (def.type === 'event') { put(rows, 6, 2, 'K'); for (const c of [4, 8]) put(rows, c, 4, 'I'); for (const c of [2, 4, 6, 8, 10]) put(rows, c, 5, 'C'); }
+  else if (def.type === 'champion') { put(rows, 6, 2, '1'); for (const [c, r] of [[3, 2], [9, 2], [3, 4], [9, 4]]) put(rows, c, r, 'R'); if (def.mini) waves[1] = [def.mini]; }
+  else if (def.type === 'supersecret') { for (const c of [4, 8]) put(rows, c, 3, 'I'); }
+  else if (def.type === 'secret') { for (const c of [4, 6, 8]) put(rows, c, 3, 'C'); put(rows, 6, 2, 'I'); }
+  console.warn(`[Room] template '${def.template}' missing for ${def.type} room ${def.id}: using the built-in fallback layout`);
+  return parseTemplate({ id: `fallback_${def.type}`, kind: def.type, floors: [1, 2, 3, 4, 5, 6], layout: rows, waves });
+}
+
+/** Code-drawn background for keys with neither art nor a round-1 placeholder (floors 4-6, crossroads): dark floor + wall band in the floor's tint. */
+function placeholderBg(scene, key, tint) {
+  const k = `phbg_${key}`;
+  if (scene.textures.exists(k)) return k;
+  const crossroads = key === 'bg_crossroads';
+  const base = crossroads ? [42, 16, 20] : [(tint >> 16) & 255, (tint >> 8) & 255, tint & 255];
+  const rgb = (m, a = 1) => `rgba(${Math.round(base[0] * m)},${Math.round(base[1] * m)},${Math.round(base[2] * m)},${a})`;
+  const t = scene.textures.createCanvas(k, 1440, 864);
+  const c = t.getContext();
+  c.fillStyle = rgb(0.45); c.fillRect(0, 0, 1440, 864);
+  c.fillStyle = rgb(1.15); c.fillRect(96, 96, 1248, 672);
+  let seed = 11;
+  const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+  for (let i = 0; i < 700; i++) { c.fillStyle = `rgba(0,0,0,${0.05 + rnd() * 0.07})`; c.fillRect(96 + rnd() * 1248, 96 + rnd() * 672, 4 + rnd() * 20, 2); }
+  for (let i = 0; i < 400; i++) { c.fillStyle = `rgba(255,255,255,${0.02 + rnd() * 0.04})`; c.fillRect(96 + rnd() * 1248, 96 + rnd() * 672, 3, 3); }
+  c.strokeStyle = 'rgba(0,0,0,0.5)'; c.lineWidth = 6; c.strokeRect(96, 96, 1248, 672);
+  const g = c.createRadialGradient(720, 432, 260, 720, 432, 900);
+  g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(0,0,0,0.5)');
+  c.fillStyle = g; c.fillRect(0, 0, 1440, 864);
+  t.refresh();
+  return k;
+}
+
+/** Code-drawn 96 px placeholders for the obstacle-like hazard tiles (powder barrel, gravestone, rubble), generated once per texture manager. */
+function hazardTexture(scene, name) {
+  const k = `ph_${name}`;
+  if (scene.textures.exists(k)) return k;
+  const t = scene.textures.createCanvas(k, 96, 96);
+  const c = t.getContext();
+  c.lineJoin = 'round'; c.lineWidth = 4; c.strokeStyle = '#120c0a';
+  if (name === 'powder_barrel') {
+    c.fillStyle = '#7a4a22'; c.beginPath(); c.roundRect(22, 22, 52, 66, 12); c.fill(); c.stroke();
+    c.fillStyle = '#3a2418'; c.fillRect(22, 38, 52, 6); c.fillRect(22, 68, 52, 6);
+    c.fillStyle = '#c0392b'; c.beginPath(); c.arc(48, 55, 9, 0, 7); c.fill(); c.stroke();
+    c.strokeStyle = '#e8c84a'; c.lineWidth = 3; c.beginPath(); c.moveTo(48, 22); c.quadraticCurveTo(58, 8, 66, 12); c.stroke();
+  } else if (name === 'gravestone') {
+    c.fillStyle = '#8a8a88'; c.beginPath(); c.moveTo(24, 90); c.lineTo(24, 36); c.arc(48, 36, 24, Math.PI, 0); c.lineTo(72, 90); c.closePath(); c.fill(); c.stroke();
+    c.strokeStyle = '#3a3a3a'; c.lineWidth = 5; c.beginPath(); c.moveTo(48, 36); c.lineTo(48, 70); c.moveTo(38, 46); c.lineTo(58, 46); c.stroke();
+  } else { // rubble
+    c.fillStyle = '#4a3a30';
+    for (const [x, y, r] of [[34, 78, 12], [56, 80, 10], [46, 70, 9], [70, 84, 7], [24, 84, 7]]) { c.beginPath(); c.arc(x, y, r, 0, 7); c.fill(); }
+    c.fillStyle = '#120c0a'; c.globalAlpha = 0.35; c.beginPath(); c.ellipse(48, 82, 34, 9, 0, 0, 7); c.fill();
+  }
+  t.refresh();
+  return k;
 }

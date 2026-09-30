@@ -1,0 +1,21 @@
+{
+ "obst_hazards": {
+  "file": "sprites/obst_hazards.png",
+  "frameWidth": 96,
+  "frameHeight": 96,
+  "frames": 8,
+  "mode": "grid",
+  "anchor": "bottom",
+  "scale": 0.2434,
+  "names": [
+   "quicksand",
+   "gravestone",
+   "spikes_ret_down",
+   "spikes_ret_warn",
+   "spikes_ret_up",
+   "powder_barrel",
+   "rubble",
+   "scorch"
+  ]
+ }
+}

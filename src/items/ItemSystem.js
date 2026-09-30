@@ -1,32 +1,112 @@
-// Item pools, no-duplicates-in-run, pickup flow. scene.items.
-//  * roll(pool)   : weighted unused item from a pool ('treasure'|'shop'|'boss'|'secret'); if that pool is exhausted it falls back to the
-//                   other pools (so a shop / treasure / boss slot is never empty while any item is left); null = everything is taken
-//                   (callers then drop consumables).
+// Item pools, no-duplicates-in-run, pickup flow, hook wiring. scene.items.
+//  * roll(pool, rng, {type, floor, fallback}) : weighted unused item from a pool ('treasure'|'shop'|'boss'|'secret'|'crossroads'). Candidates pass the gate
+//                   (Save.itemUnlocked), the c2 marker (floor >= 4), minFloor and charOnly; weight = def.weight x tier multiplier x build-coherence bias
+//                   (x1.15 shares a tag with an owned item, x1.30 would activate a synergy). A non-crossroads pool that is exhausted falls back to the
+//                   other pools (a slot is never empty while any item is left); crossroads never falls back. null = sold out.
 //  * pickup()     : gives the item, records it, emits 'item:picked' (HUD banner + jingle via AudioHooks) and plays the "hold it up" flourish.
+//  * canPay/pay   : crossroads `deal.pay` costs (static and instance).
+//  * bus -> hooks : room:entered / room:wave / room:cleared / floor:changed run the item hooks (a same-frame duplicate from Room is dropped by hooks.js).
 import Phaser from 'phaser';
 import { allItems, getItem } from './registry.js';
+import { CTX, runHooks, hasHook } from './hooks.js';
+import { wouldComplete } from './synergies.js';
+import { ownedIds } from './tags.js';
+import { tierMult } from './baseStats.js';
 import { bus } from '../core/events.js';
 import { Save } from '../core/Save.js';
 import { rng } from '../core/rng.js';
 import { Assets } from '../core/Assets.js';
 import { DEPTH } from '../config.js';
 
-const FALLBACK_ORDER = ['treasure', 'shop', 'boss', 'secret'];
+const FALLBACK_ORDER = ['treasure', 'shop', 'boss', 'secret']; // never crossroads
+const BIAS_TAG = 1.15, BIAS_SYN = 1.3;
+
+const unlocked = (id) => { try { return typeof Save.itemUnlocked === 'function' ? Save.itemUnlocked(id) !== false : true; } catch (e) { return true; } };
+
+/** Can `player` pay `def.deal.pay` ({container, coins, keys, tin, dynamite})? Returns true, or the reason string. */
+export function canPay(player, def) {
+  const pay = def && def.deal && def.deal.pay;
+  if (!pay) return true;
+  if (pay.container && player.stats.maxHearts - pay.container < 1) return 'NEED MORE HEARTS';
+  if (pay.coins && player.coins < pay.coins) return 'NEED COINS';
+  if (pay.keys && player.keys < pay.keys) return 'NEED KEYS';
+  if (pay.dynamite && player.dynamite < pay.dynamite) return 'NEED DYNAMITE';
+  if (pay.tin && player.tin < pay.tin) return 'NEED TIN';
+  return true;
+}
+
+/** Deduct `def.deal.pay`. Returns the paid amounts object, or null when it cannot be paid. Emits `deal:paid` only with {emit:true} (the crossroads room emits its own). */
+export function payDeal(player, def, { emit = false } = {}) {
+  if (canPay(player, def) !== true) return null;
+  const pay = (def.deal && def.deal.pay) || {};
+  if (pay.container) player.loseMaxHeart(pay.container);
+  if (pay.coins) player.coins -= pay.coins;
+  if (pay.keys) player.keys -= pay.keys;
+  if (pay.dynamite) player.dynamite -= pay.dynamite;
+  if (pay.tin) player.tin -= pay.tin;
+  player.recomputeStats();
+  if (emit) bus.emit('deal:paid', { id: def.id, pay: { ...pay } });
+  return { ...pay };
+}
 
 export default class ItemSystem {
   constructor(scene) {
     this.scene = scene;
     this.taken = new Set(); // ids rolled or picked this run
+    this._hurt = false; // damage taken in the current room (roomClear `perfect`)
+    bus.scoped(scene, 'player:hurt', () => { this._hurt = true; });
+    bus.scoped(scene, 'room:entered', (p) => { this._hurt = false; this._fire('roomEnter', p && p.room); });
+    bus.scoped(scene, 'room:wave', (p) => this._fire('wave', p && p.room, p && p.enemies));
+    bus.scoped(scene, 'room:cleared', (p) => this._fire('roomClear', p && p.room));
+    bus.scoped(scene, 'floor:changed', (p) => {
+      const pl = scene.player;
+      if (pl && hasHook(pl, 'floor')) { CTX.floor.floor = (p && p.floor) || scene.floorNum || 1; runHooks(pl, 'floor', CTX.floor); }
+    });
   }
 
-  /** Roll an unused item from a pool. Marks it as claimed. Returns id or null. opts: {type:'passive'|'active', fallback:true} */
-  roll(pool, r = rng.game, { type, fallback = true } = {}) {
-    const order = fallback ? [pool, ...FALLBACK_ORDER.filter((p) => p !== pool)] : [pool];
+  /** Fire a room hook through the shared ctx. */
+  _fire(name, room, enemies) {
+    const pl = this.scene.player;
+    if (!pl || !hasHook(pl, name)) return;
+    const c = CTX.room;
+    c.room = room || this.scene.room || null; c.perfect = !this._hurt; c.enemies = enemies && enemies.length != null ? enemies.length : enemies || 0;
+    runHooks(pl, name, c);
+  }
+
+  canPay(player, def) { return canPay(player, def); }
+  pay(player, def, o) { return payDeal(player, def, o); }
+  static canPay(player, def) { return canPay(player, def); }
+  static pay(player, def, o) { return payDeal(player, def, o); }
+
+  /** Would owning `id` complete a synergy for the current player? (pool bias, pedestal spark) */
+  wouldComplete(id, player = this.scene.player) {
+    if (!player || !getItem(id)) return false;
+    return wouldComplete(ownedIds(player), id);
+  }
+
+  /** Roll an unused item from a pool. Marks it as claimed. Returns id or null. opts: {type:'passive'|'active', floor, fallback:true} */
+  roll(pool, r = rng.game, { type, floor, fallback = true } = {}) {
+    const fl = floor ?? this.scene.floorNum ?? 1;
+    const deals = pool === 'crossroads';
+    const order = deals || !fallback ? [pool] : [pool, ...FALLBACK_ORDER.filter((p) => p !== pool)];
+    const player = this.scene.player;
+    const owned = player ? ownedIds(player) : [];
+    const tags = player ? player.tagCounts || {} : {};
     const all = allItems();
     for (const p of order) {
-      const cands = all.filter((d) => d.pool.includes(p) && !this.taken.has(d.id) && (!type || d.type === type));
+      const cands = all.filter((d) => d.pool.includes(p) && !this.taken.has(d.id) && (!type || d.type === type)
+        && !(d.pool.includes('c2') && fl < 4) && fl >= (d.minFloor || 1) && (!d.charOnly || !player || d.charOnly === player.char) && unlocked(d.id));
       if (!cands.length) continue;
-      const def = r.weighted(cands, (d) => d.weight ?? 1);
+      const def = r.weighted(cands, (d) => {
+        let w = d.weight ?? 1;
+        if (deals) return w;
+        w *= tierMult(d.tier, fl);
+        if (player) {
+          if (owned.length && this.wouldComplete(d.id, player)) w *= BIAS_SYN;
+          else if (d.tags && d.tags.some((t) => tags[t] > 0 && !owned.includes(d.id))) w *= BIAS_TAG;
+        }
+        return w;
+      });
       this.taken.add(def.id);
       return def.id;
     }
