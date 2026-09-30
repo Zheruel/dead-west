@@ -14,13 +14,20 @@ import AchievementToast from '../ui/AchievementToast.js';
 import { chip } from '../ui/Silhouette.js';
 import { MenuList, parchment, title, body, inkText, INK, uiSfx, setOsCursor } from '../ui/UiKit.js';
 import OptionsPanel from '../ui/OptionsPanel.js';
+import { RNG } from '../core/rng.js';
+import { menuSubtitle, creditsRows, MUSIC_CREDITS_CH2 } from '../data/story/text.js';
+import TitleLayers from './MenuTitle.js';
 
+// Credits modal, page 1: the short list (round 1 + the chapter 2 tracks). Page 2 appends the STORY s14 rows (data/story/text.js CREDITS).
 const CREDITS = [
-  ['MUSIC', 'Kevin MacLeod (incompetech.com), CC BY 4.0\nSmoking Gun, Neo Western, Southern Gothic, Martian Cowboy, Witch Hunt, Final Count, Pale Rider, Darkness Speaks, Cowboy Sting'],
+  ['MUSIC', 'Kevin MacLeod (incompetech.com), CC BY 4.0\nSmoking Gun, Neo Western, Southern Gothic, Martian Cowboy, Witch Hunt, Final Count, Pale Rider, Darkness Speaks, Cowboy Sting\n' + MUSIC_CREDITS_CH2.join(' ')],
   ['SOUND EFFECTS', 'Freesound and Kenney contributors (CC0 / CC BY)\nfull list in assets/audio/CREDITS_sfx.md'],
   ['TYPEFACES', 'Rye and Special Elite (Google Fonts, SIL OFL)'],
   ['ENGINE', 'Phaser 3 + Vite'],
 ];
+const CREDIT_ROW_SKIP = new Set(['MUSIC', 'SOUND', 'TYPEFACES', 'ENGINE']); // already on page 1
+
+let launchSubtitle = null; // one subtitle per launch (per progress state), not per visit to the menu
 
 export default class MenuScene extends Phaser.Scene {
   constructor() { super('Menu'); }
@@ -30,8 +37,10 @@ export default class MenuScene extends Phaser.Scene {
     this.modal = null;
     setOsCursor(this.game, ''); // in-game crosshair mode is switched off again
     this.cameras.main.fadeIn(400, 13, 8, 6);
-    const bg = Assets.makeImage(this, W / 2, H / 2, 'title_bg');
-    this.tweens.add({ targets: bg, scale: 1.045, duration: 22000, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    const won = (Save.get().stats.wins || 0) > 0 || !!Save.flag('ending_a');
+    const trueEnding = !!Save.flag('ending_true');
+    this.title = new TitleLayers(this, { won, trueEnding }); // sky / town / foreground / rider parallax; falls back to `title_bg`
+    bus.scoped(this, 'title:hell', (p) => this.title.setHell(!!(p && p.on)));
     this.add.image(W / 2, H / 2, 'vignette').setDisplaySize(W, H).setTint(0x000000).setAlpha(0.28);
     playMusicFor('menu');
     this.embers();
@@ -47,7 +56,9 @@ export default class MenuScene extends Phaser.Scene {
       t.setShadow(0, 10, '#8a1c1c', 0, true, true);
       this.tweens.add({ targets: t, y: 248, duration: 2400, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
     }
-    this.add.text(W / 2, 398, 'CHAPTER I  -  PERDITION COUNTY', body(28, CSS.amber, { strokeThickness: 5 })).setOrigin(0.5);
+    const key = `${won ? 1 : 0}${trueEnding ? 1 : 0}`;
+    if (!launchSubtitle || launchSubtitle.key !== key) launchSubtitle = { key, text: menuSubtitle({ won, trueEnding }, new RNG(Date.now() >>> 0)) };
+    this.add.text(W / 2, 398, launchSubtitle.text, body(30, CSS.amber, { strokeThickness: 5, fontStyle: 'italic' })).setOrigin(0.5);
     const s = Save.get();
     if (s.stats.runs > 0) {
       const f = FLOORS[s.best.floor];
@@ -84,10 +95,21 @@ export default class MenuScene extends Phaser.Scene {
 
     this.toasts = new AchievementToast(this, {});
 
-    // ESC / Enter / click close a modal
-    const closeModal = () => { if (this.modal && performance.now() > this.modal.t0 + 200) this.closeModal(); };
-    this.input.keyboard.on('keydown', (e) => { if (['Escape', 'Enter', 'Space', 'NumpadEnter', 'Backspace'].includes(e.code)) closeModal(); });
-    this.input.on('pointerdown', () => closeModal());
+    // ESC / Enter / click close a modal (the credits modal has pages: arrows / Enter / click turn them, the last page closes)
+    this.input.keyboard.on('keydown', (e) => {
+      const m = this.modal;
+      if (!m || performance.now() < m.t0 + 200) return;
+      if (m.go) {
+        if (e.code === 'ArrowLeft' || e.code === 'KeyA') m.go(-1);
+        else if (['ArrowRight', 'KeyD', 'Enter', 'Space', 'NumpadEnter'].includes(e.code)) m.go(1);
+        else if (e.code === 'Escape' || e.code === 'Backspace') this.closeModal();
+      } else if (['Escape', 'Enter', 'Space', 'NumpadEnter', 'Backspace'].includes(e.code)) this.closeModal();
+    });
+    this.input.on('pointerdown', () => {
+      const m = this.modal;
+      if (!m || performance.now() < m.t0 + 200) return;
+      if (m.go) m.go(1); else this.closeModal();
+    });
     this.input.on('pointermove', (p) => { if (this.modal && this.modal.hover) this.modal.hover(p); });
   }
 
@@ -100,6 +122,8 @@ export default class MenuScene extends Phaser.Scene {
       scale: { start: 1.6, end: 0 }, alpha: { start: 0.8, end: 0 }, tint: [0xf0a640, 0xd63a2a, 0xe8dcc0], frequency: 260, blendMode: 'ADD',
     }).setDepth(2);
   }
+
+  update(time, delta) { if (this.title) this.title.update(time, delta); }
 
   /** Saved checkpoint (normal / hell runs only) or null. */
   checkpoint() {
@@ -140,6 +164,7 @@ export default class MenuScene extends Phaser.Scene {
     uiSfx.back();
   }
 
+  /** Credits modal: page 1 = the short list, page 2 = STORY s14 rows (design, art, words, riders, keepers, the House, thanks). */
   openCredits() {
     uiSfx.select();
     const add = this.beginModal();
@@ -147,13 +172,61 @@ export default class MenuScene extends Phaser.Scene {
     const panel = add(parchment(this, W / 2, H / 2, pw));
     const top = H / 2 - panel.displayHeight / 2;
     add(this.add.text(W / 2, top + 100, 'CREDITS', title(64, '#3a1a10', { stroke: '#e8d9b0', strokeThickness: 2 })).setOrigin(0.5));
-    add(this.add.text(W / 2, top + 156, 'Chapter I: Perdition County', inkText(28, INK, { fontStyle: 'italic' })).setOrigin(0.5));
-    let y = top + 214;
-    for (const [k, v] of CREDITS) {
-      add(this.add.text(W / 2, y, k, title(22, '#5a1a10', { strokeThickness: 0 })).setOrigin(0.5, 0));
-      const t = add(this.add.text(W / 2, y + 30, v, inkText(21, INK, { align: 'center', wordWrap: { width: 780 } })).setOrigin(0.5, 0));
-      y += 30 + t.height + 22;
+    const sub = add(this.add.text(W / 2, top + 156, '', inkText(28, INK, { fontStyle: 'italic' })).setOrigin(0.5));
+    const foot = add(this.add.text(W / 2, top + panel.displayHeight - 92, '', inkText(22, '#5a1a10')).setOrigin(0.5));
+    const rows2 = creditsRows('a', MUSIC_CREDITS_CH2).filter((r) => r.kind === 'text' || (r.kind === 'line' && !CREDIT_ROW_SKIP.has(r.label)));
+    const groups = [
+      { sub: 'Chapters I and II', rows: CREDITS.map(([k, v]) => ({ kind: 'line', label: k, text: v })), fs: 21, gap: 22 },
+      { sub: 'A Tale of Perdition County', rows: rows2, fs: 20, gap: 16 },
+    ];
+    const room = top + panel.displayHeight - 128;
+    const y0 = top + 206;
+    // paginate: a row that would cross the footer moves to the next page (measured once with a throwaway text)
+    const rowH = (r, G, add2) => {
+      if (r.kind === 'line') {
+        const h = add2(this.add.text(0, 0, r.text, inkText(G.fs, INK, { align: 'center', wordWrap: { width: 800 } })));
+        return 30 + h + G.gap;
+      }
+      return 6 + add2(this.add.text(0, 0, r.text, inkText(20, '#5a1a10', { align: 'center', fontStyle: 'italic', wordWrap: { width: 800 } }))) + 16;
+    };
+    const measure = (o) => { const h = o.height; o.destroy(); return h; };
+    const pages = [];
+    for (const G of groups) {
+      let cur = [], y = y0;
+      for (const r of G.rows) {
+        const h = rowH(r, G, measure);
+        if (cur.length && y + h > room) { pages.push({ sub: G.sub, rows: cur, G }); cur = []; y = y0; }
+        cur.push(r); y += h;
+      }
+      if (cur.length) pages.push({ sub: G.sub, rows: cur, G });
     }
-    add(this.add.text(W / 2, top + panel.displayHeight - 92, 'ESC  -  back', inkText(22, '#5a1a10')).setOrigin(0.5));
+    let page = -1, objs = [];
+    const show = (i) => {
+      for (const o of objs) o.destroy();
+      this.modal.objs = this.modal.objs.filter((o) => !objs.includes(o));
+      objs = [];
+      page = i;
+      const P = pages[i], G = P.G;
+      sub.setText(P.sub);
+      let y = y0;
+      const put = (o) => { o.setDepth(120 + objs.length); objs.push(o); this.modal.objs.push(o); return o; };
+      for (const r of P.rows) {
+        if (r.kind === 'line') {
+          put(this.add.text(W / 2, y, r.label, title(22, '#5a1a10', { strokeThickness: 0 })).setOrigin(0.5, 0));
+          const t = put(this.add.text(W / 2, y + 30, r.text, inkText(G.fs, INK, { align: 'center', wordWrap: { width: 800 } })).setOrigin(0.5, 0));
+          y += 30 + t.height + G.gap;
+        } else {
+          const t = put(this.add.text(W / 2, y + 6, r.text, inkText(20, '#5a1a10', { align: 'center', fontStyle: 'italic', wordWrap: { width: 800 } })).setOrigin(0.5, 0));
+          y += t.height + 22;
+        }
+      }
+      foot.setText(i < pages.length - 1 ? `ESC  back      RIGHT / ENTER  more   ${i + 1}/${pages.length}` : `ESC  back      LEFT  previous   ${i + 1}/${pages.length}`);
+    };
+    this.modal.go = (d) => {
+      const n = page + d;
+      if (n >= pages.length) this.closeModal();
+      else if (n >= 0) { uiSfx.move(); show(n); }
+    };
+    show(0);
   }
 }

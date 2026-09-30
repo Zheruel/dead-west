@@ -5,20 +5,11 @@ import { W, H, FONT_TITLE, FONT_BODY, CSS } from '../config.js';
 import { Assets } from '../core/Assets.js';
 import { Audio } from '../core/Audio.js';
 import { installAudioHooks } from '../core/AudioHooks.js';
+import { Save } from '../core/Save.js';
+import { BOOT_LINES, availableTips, featuresFromSave } from '../data/story/tips.js';
 
-const LINES = [
-  'Digging up old debts...', 'Loading the six-shooter...', 'Sharpening the noose...', 'Waking the dead...', 'Counting the bullets...',
-  'Feeding the buzzards...', 'Polishing the tin star...', 'Praying to a silent sky...', 'Reading the fine print of the contract...', 'Summoning the Devil\'s bookkeeper...',
-];
-const TIPS = [
-  'Every sixth bullet hits twice as hard and pierces.',
-  'Space rolls through bullets. The roll has a cooldown, so pick your moment.',
-  'Dynamite hurts you too. It also opens secret rooms.',
-  'Golden doors need a key. Somewhere on the floor, one is waiting.',
-  'Tin hearts are lost before your red ones.',
-  'Every attack is telegraphed. Watch for the wind-up pose.',
-  'Cleared rooms recharge your active item.',
-];
+// Lines and tips live in data/story/tips.js (STORY s12): the tip pool only holds tips for features this save has reached (`needs` filter).
+const features = () => { try { return featuresFromSave(Save.get()); } catch (e) { return ['core']; } };
 
 export default class BootScene extends Phaser.Scene {
   constructor() { super('Boot'); }
@@ -27,6 +18,8 @@ export default class BootScene extends Phaser.Scene {
     this.cameras.main.setBackgroundColor('#0d0806');
     this.pct = 0;
     this.shownPct = 0;
+    this.lines = BOOT_LINES;
+    this.tips = availableTips(features());
     const cx = W / 2;
     // Fonts + manifest in parallel (fonts: never block more than 1.5 s, fall back to Georgia/serif).
     const fonts = (async () => {
@@ -75,7 +68,7 @@ export default class BootScene extends Phaser.Scene {
       this.logo = this.add.text(cx, cy - 170, 'DEAD WEST', { fontFamily: FONT_TITLE, fontSize: '130px', color: CSS.bone, stroke: '#120c0a', strokeThickness: 14 }).setOrigin(0.5);
       this.logo.setShadow(0, 8, '#8a1c1c', 0, true, true);
     }
-    this.line = this.add.text(cx, cy + 40, LINES[Math.floor(Math.random() * LINES.length)], { fontFamily: FONT_BODY, fontSize: '28px', color: CSS.sand, stroke: '#120c0a', strokeThickness: 5 }).setOrigin(0.5);
+    this.line = this.add.text(cx, cy + 40, this.lines[Math.floor(Math.random() * this.lines.length)], { fontFamily: FONT_BODY, fontSize: '28px', color: CSS.sand, stroke: '#120c0a', strokeThickness: 5 }).setOrigin(0.5);
 
     // progress bar: dark wooden trough, blood-red fill with a brass round leading the way
     const barW = 720, barH = 26, bx = cx - barW / 2, by = cy + 100;
@@ -87,11 +80,11 @@ export default class BootScene extends Phaser.Scene {
     this.tip.setDepth(5);
     this.tweens.add({ targets: this.tip, angle: 360, duration: 1400, repeat: -1 });
     this.pctText = this.add.text(cx, by + 46, '0%', { fontFamily: FONT_BODY, fontSize: '22px', color: CSS.amber, stroke: '#120c0a', strokeThickness: 4 }).setOrigin(0.5);
-    this.tipText = this.add.text(cx, H - 90, `TIP  -  ${TIPS[Math.floor(Math.random() * TIPS.length)]}`, { fontFamily: FONT_BODY, fontSize: '22px', color: '#a48a5c', stroke: '#120c0a', strokeThickness: 4, align: 'center', wordWrap: { width: 1100 } }).setOrigin(0.5);
+    this.tipText = this.add.text(cx, H - 90, `TIP  -  ${this.tips[Math.floor(Math.random() * this.tips.length)]}`, { fontFamily: FONT_BODY, fontSize: '22px', color: '#a48a5c', stroke: '#120c0a', strokeThickness: 4, align: 'center', wordWrap: { width: 1100 } }).setOrigin(0.5);
 
     // rotate flavour line + tip
-    this.time.addEvent({ delay: 1500, loop: true, callback: () => this.swap(this.line, LINES, '') });
-    this.time.addEvent({ delay: 3200, loop: true, callback: () => this.swap(this.tipText, TIPS, 'TIP  -  ') });
+    this.time.addEvent({ delay: 1500, loop: true, callback: () => this.swap(this.line, this.lines, '') });
+    this.time.addEvent({ delay: 3200, loop: true, callback: () => this.swap(this.tipText, this.tips, 'TIP  -  ') });
     this.cameras.main.fadeIn(250, 13, 8, 6);
   }
 

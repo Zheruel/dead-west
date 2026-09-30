@@ -1,6 +1,8 @@
 // Floor 3 - Sundown Mine: collapsed silver mine. Enemy pool: possessed, skeleton, ghost, miner (slow armoured brute), bat (fast erratic flyer),
 // mole (burrower), coffin (hopper that releases bats). 16 normal templates. Art: R = boulder / minecart, B = ore crate, P = open mine shaft,
 // S = stalagmites, d = skull pile / lantern. Big enemies (miner, coffin: 80 px) get >= 2-tile gaps where possible. See floor1.js for conventions.
+// Round 2 hazards (EVENTS s6): s retracting spikes replace half of the S in f3_15, two ore crates become Z powder barrels in f3_08, `modBias: { rockfall: 3 }`
+// on f3_06 / f3_11 / f3_14 (the collapsed-tunnel rooms).
 export default [
   { // mine hall: lanterns in the corners
     id: 'f3_01', kind: 'normal', floors: [3], weight: 1, tier: 1,
@@ -79,6 +81,7 @@ export default [
       '..1.R...R.1..',
       '....R...R....',
     ],
+    modBias: { rockfall: 3 },
     waves: { 1: ['skeleton', 'skeleton', 'possessed', 'possessed'], 2: ['miner', 'ghost'] },
   },
   { // L-shaped cavern
@@ -100,7 +103,7 @@ export default [
       '.............',
       '..1.......1..',
       '.............',
-      '..BB.2.2.BB..',
+      '..BZ.2.2.ZB..',
       '.............',
       '..1.......1..',
       '.............',
@@ -144,6 +147,7 @@ export default [
       '...R......1..',
       '.............',
     ],
+    modBias: { rockfall: 3 },
     waves: { 1: ['skeleton', 'possessed', 'possessed', 'skeleton'], 2: ['bat', 'bat', 'ghost'] },
   },
   { // miner's gauntlet: three waves ending on the big one
@@ -183,17 +187,18 @@ export default [
       '..1.......1..',
       '.............',
     ],
+    modBias: { rockfall: 3 },
     waves: { 1: ['possessed', 'possessed', 'skeleton', 'skeleton'], 2: ['ghost', 'coffin', 'ghost'] },
   },
   { // spikes and shafts
     id: 'f3_15', kind: 'normal', floors: [3], weight: 1, tier: 3,
     layout: [
       '..1.......1..',
-      '...SS...SS...',
+      '...Ss...sS...',
       '...P.....P...',
       '.....2.2.....',
       '...P.....P...',
-      '...SS...SS...',
+      '...Ss...sS...',
       '..1.......1..',
     ],
     waves: { 1: ['skeleton', 'skeleton', 'possessed', 'possessed'], 2: ['ghost', 'miner'] },

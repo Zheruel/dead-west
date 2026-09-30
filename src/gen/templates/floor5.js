@@ -1,0 +1,238 @@
+// Floor 5 - Blood Rail: a haunted rail yard at night (CHAPTER2 s4, s6). Enemy pool: handcar_bandit (rail-bound shooter), signalman (ghost lamplighter,
+// flyer), steam_stoker (tank), crate_mimic (ambusher, never within 3 tiles of a door), rail_rat (packs of 5), chain_gang (one slot = four linked bodies),
+// skeleton and ghost (returning). 14 normal templates (tiers 4/6/4) + the Engine arena. Tiles: = | rail (walkable decor: every lane row / column is
+// painted with rails so the danger reads before it fires; a crossing tile is '='), T steam pipe (outer edge, jets 5 tiles inward), R stacked ties / coal
+// heap, B crate (mimic decoys), d signal post / hobo skull.
+// `lanes` (CHAPTER2 s2): period 5.5-8.0 s, first launch (`offset`) >= 2.0 s after the room locks, lane offsets >= 1.5 s apart, adjacent rows never share a
+// lane, no enemy digit on a rail tile, rails never on a door front tile. handcar_bandit slots sit next to a lane row / column (it locks to that lane).
+// Threat budget per template: tier 1 = 6-8, tier 2 = 9-12, tier 3 = 13-17 (handcar_bandit 2, signalman 2, steam_stoker 3, crate_mimic 2, rail_rat 0.5,
+// chain_gang 4, skeleton / ghost 1.5). Quotas: lanes in 10 templates, T in 4, lane handcar_bandit in 9. See floor1.js for the slot conventions.
+export default [
+  { // depot platform: luggage stacks at the corners, a rat pack on the second wave
+    id: 'f5_n01', kind: 'normal', floors: [5], weight: 1, tier: 1,
+    layout: [
+      '.............',
+      '..1.......1..',
+      '.RR.......RR.',
+      '....1...2....',
+      '.RR.......RR.',
+      '..2.2...2.2..',
+      '.............',
+    ],
+    waves: { 1: ['skeleton', 'skeleton', 'handcar_bandit'], 2: ['rail_rat', 'rail_rat', 'rail_rat', 'rail_rat', 'rail_rat'] },
+  },
+  { // single line: one cart lane across the room, the bandits ride it from the row below
+    id: 'f5_n02', kind: 'normal', floors: [5], weight: 1, tier: 1,
+    layout: [
+      '.............',
+      '.R.........R.',
+      '=============',
+      '..1.......1..',
+      '.............',
+      '..R.2...2.R..',
+      '.............',
+    ],
+    waves: { 1: ['handcar_bandit', 'handcar_bandit'], 2: ['skeleton', 'ghost'] },
+    lanes: [{ axis: 'h', index: 2, period: 7.5, offset: 3.5, dir: 1, kind: 'cart' }],
+  },
+  { // side track: a vertical lane on the right, a signalman and skeletons on the left, rats come in late
+    id: 'f5_n03', kind: 'normal', floors: [5], weight: 1, tier: 1,
+    layout: [
+      '.........|...',
+      '..1....2.|.2.',
+      '.....R...|...',
+      '.....1...|...',
+      '...R.....|...',
+      '..1....2.|.2.',
+      '.........|...',
+    ],
+    waves: { 1: ['signalman', 'skeleton', 'skeleton'], 2: ['rail_rat', 'rail_rat', 'rail_rat', 'rail_rat'] },
+    lanes: [{ axis: 'v', index: 9, period: 8, offset: 4, dir: -1, kind: 'cart' }],
+  },
+  { // crossfire: two parallel cart lanes, signalman above and bandits on the rows between them
+    id: 'f5_n04', kind: 'normal', floors: [5], weight: 1, tier: 2,
+    layout: [
+      '.......2.....',
+      '...1.....R...',
+      '=============',
+      '..1...R...1..',
+      '=============',
+      '...R.....R...',
+      '.......2.....',
+    ],
+    waves: { 1: ['signalman', 'handcar_bandit', 'handcar_bandit'], 2: ['steam_stoker', 'skeleton'] },
+    lanes: [
+      { axis: 'h', index: 2, period: 6.5, offset: 2.5, dir: 1, kind: 'cart' },
+      { axis: 'h', index: 4, period: 7, offset: 5, dir: -1, kind: 'cart' },
+    ],
+  },
+  { // steam and rats: two pipes jet down across both cart lanes, a rat pack floods in first
+    id: 'f5_n05', kind: 'normal', floors: [5], weight: 1, tier: 2,
+    layout: [
+      '...T.....T...',
+      '.1.1.....1.1.',
+      '=============',
+      '......1......',
+      '=============',
+      '..2.....2.2..',
+      '.............',
+    ],
+    waves: { 1: ['rail_rat', 'rail_rat', 'rail_rat', 'rail_rat', 'rail_rat'], 2: ['handcar_bandit', 'steam_stoker', 'signalman'] },
+    lanes: [
+      { axis: 'h', index: 2, period: 6.5, offset: 2.5, dir: 1, kind: 'cart' },
+      { axis: 'h', index: 4, period: 7, offset: 5.5, dir: -1, kind: 'cart' },
+    ],
+  },
+  { // two tracks: vertical lanes on the flanks, the middle is the safe strip; a mimic waits among the second wave
+    id: 'f5_n06', kind: 'normal', floors: [5], weight: 1, tier: 2,
+    layout: [
+      '...|.....|...',
+      '.2.|.....|.2.',
+      '..1|...R.|1..',
+      '...|..1.2|...',
+      '...|.R...|...',
+      '...|.....|...',
+      '...|.....|...',
+    ],
+    waves: { 1: ['handcar_bandit', 'handcar_bandit', 'skeleton'], 2: ['signalman', 'skeleton', 'crate_mimic'] },
+    lanes: [
+      { axis: 'v', index: 3, period: 6, offset: 2.5, dir: 1, kind: 'cart' },
+      { axis: 'v', index: 9, period: 7, offset: 4.5, dir: -1, kind: 'cart' },
+    ],
+  },
+  { // mimic yard: crates everywhere, two of them bite
+    id: 'f5_n07', kind: 'normal', floors: [5], weight: 1, tier: 2,
+    layout: [
+      '.............',
+      '..1.B...B.1..',
+      '...1.........',
+      '.....B.B.....',
+      '.........2...',
+      '..2.B...B.2..',
+      '.............',
+    ],
+    waves: { 1: ['skeleton', 'skeleton', 'crate_mimic'], 2: ['crate_mimic', 'ghost', 'handcar_bandit'] },
+  },
+  { // twin verticals: lanes at columns 4 and 8 leave a safe corridor down the middle, signalman crossfire
+    id: 'f5_n08', kind: 'normal', floors: [5], weight: 1, tier: 2,
+    layout: [
+      '....|...|....',
+      '...1|...|1...',
+      '....|R..|....',
+      '....|1.2|....',
+      '....|..R|....',
+      '..2.|...|.2..',
+      '....|...|....',
+    ],
+    waves: { 1: ['handcar_bandit', 'ghost', 'signalman'], 2: ['steam_stoker', 'skeleton', 'skeleton'] },
+    lanes: [
+      { axis: 'v', index: 4, period: 6, offset: 2.5, dir: 1, kind: 'cart' },
+      { axis: 'v', index: 8, period: 6.5, offset: 4.5, dir: -1, kind: 'cart' },
+    ],
+  },
+  { // boiler room: pipes on the side walls jet along the rows, one lane on row 4, stoker with a rat flank
+    id: 'f5_n09', kind: 'normal', floors: [5], weight: 1, tier: 2,
+    layout: [
+      '.............',
+      'T............',
+      '..1.1...1.1..',
+      '......1......',
+      '=============',
+      '..2.....2...T',
+      '.....2.......',
+    ],
+    waves: { 1: ['rail_rat', 'rail_rat', 'rail_rat', 'rail_rat', 'steam_stoker'], 2: ['handcar_bandit', 'skeleton', 'signalman'] },
+    lanes: [{ axis: 'h', index: 4, period: 6.5, offset: 3, dir: 0, kind: 'cart' }],
+  },
+  { // waiting room: benches (crates) and signal posts, no rails
+    id: 'f5_n10', kind: 'normal', floors: [5], weight: 1, tier: 1,
+    layout: [
+      '.............',
+      '..1.......1..',
+      '.d.B.....B.d.',
+      '.....2.2.....',
+      '.d.B.....B.d.',
+      '..1..........',
+      '.............',
+    ],
+    waves: { 1: ['handcar_bandit', 'handcar_bandit', 'skeleton'], 2: ['ghost', 'rail_rat'] },
+  },
+  { // crossing: an east-west cart lane and a north-south one cross at column 9
+    id: 'f5_n11', kind: 'normal', floors: [5], weight: 1, tier: 3,
+    layout: [
+      '.........|...',
+      '...1.....|.2.',
+      '=============',
+      '..1....1.|...',
+      '.........|1..',
+      '.R...2...|.2.',
+      '.........|...',
+    ],
+    waves: { 1: ['handcar_bandit', 'signalman', 'skeleton', 'handcar_bandit'], 2: ['ghost', 'steam_stoker', 'ghost'] },
+    lanes: [
+      { axis: 'h', index: 2, period: 6, offset: 2.5, dir: 1, kind: 'cart' },
+      { axis: 'v', index: 9, period: 6.5, offset: 4.5, dir: -1, kind: 'cart' },
+    ],
+  },
+  { // the mimic and the chain gang: fake cover turns hostile, steam pipes push you around; no rails
+    id: 'f5_n12', kind: 'normal', floors: [5], weight: 1, tier: 3,
+    layout: [
+      '..T..........',
+      '....2.....1..',
+      '..B.......B..',
+      '...1.....1...',
+      '..B.......B..',
+      '....2...2....',
+      '..........T..',
+    ],
+    waves: { 1: ['chain_gang', 'crate_mimic', 'crate_mimic'], 2: ['steam_stoker', 'skeleton', 'skeleton'] },
+  },
+  { // switching yard: a cart lane along row 4 and one down column 3, a pipe over the crossing side, three waves of everything
+    id: 'f5_n13', kind: 'normal', floors: [5], weight: 1, tier: 3,
+    layout: [
+      '...|.....T...',
+      '.1.|......1..',
+      '...|1......3.',
+      '...|..2......',
+      '=============',
+      '..2|.2..2..2.',
+      '...|...3.....',
+    ],
+    waves: { 1: ['signalman', 'signalman', 'handcar_bandit'], 2: ['steam_stoker', 'rail_rat', 'rail_rat', 'rail_rat', 'rail_rat'], 3: ['skeleton', 'ghost'] },
+    lanes: [
+      { axis: 'h', index: 4, period: 6, offset: 2.5, dir: 1, kind: 'cart' },
+      { axis: 'v', index: 3, period: 7, offset: 5, dir: -1, kind: 'cart' },
+    ],
+  },
+  { // midnight gauntlet: a cart lane on row 2 and a ghost lane on row 4, three waves ending on the stoker
+    id: 'f5_n14', kind: 'normal', floors: [5], weight: 1, tier: 3,
+    layout: [
+      '.............',
+      '....1.....2..',
+      '=============',
+      '..1..3.3..1..',
+      '=============',
+      '..2..R..R....',
+      '.............',
+    ],
+    waves: { 1: ['ghost', 'handcar_bandit', 'handcar_bandit'], 2: ['chain_gang', 'signalman'], 3: ['steam_stoker', 'ghost'] },
+    lanes: [
+      { axis: 'h', index: 2, period: 5.5, offset: 2.5, dir: 0, kind: 'cart' },
+      { axis: 'h', index: 4, period: 6.5, offset: 5.5, dir: 0, kind: 'ghost' },
+    ],
+  },
+  // ---- boss room: Engine No. 666. Depot in rows 0-1 (no rails, safe from the lanes), rails on rows 2, 4, 6, cover blocks on the safe strips of rows 3 and 5,
+  // decor pipes at the top corners. The '1' marker sits at (7,1): (6,1) is the door front tile, and the engine parks at its own fixed spot anyway. The engine fires its own lanes via room.spawnLane (no template `lanes`).
+  {
+    id: 'f5_boss', kind: 'boss', floors: [5], boss: 'engine', weight: 1,
+    layout: [
+      '.............',
+      'T......1....T',
+      '=============',
+      '..R.......R..',
+      '=============',
+      '..R.......R..',
+      '=============',
+    ],
+  },
+];

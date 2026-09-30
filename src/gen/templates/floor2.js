@@ -1,18 +1,21 @@
 // Floor 2 - Perdition: ghost town. Enemy pool: outlaw, rattlesnake, buzzard, possessed (melee lunger), skeleton (spinning gunner), dynamiter (lobber),
 // ghost (phasing flyer), scarecrow (stationary crow spawner). 16 normal templates. Art: R = crate stack / overturned table, B = powder barrel,
 // P = rotten floorboard hole, S = nail board, d = tombstone / broken chair. Waves list = reading order of that digit's slots. See floor1.js for conventions.
+// Round 2 hazards (EVENTS s6): s retracting spikes in f2_06, Z powder barrels (3 of the B) in f2_09 / f2_13, `graveAmbush: true` on f2_01/04/14/15 (their
+// corner d / R tiles are G gravestones; half of the rooms are rigged at build time, see rooms/hazards/GraveAmbush.js).
 export default [
   { // main street: open, tombstones in the corners
     id: 'f2_01', kind: 'normal', floors: [2], weight: 1, tier: 1,
     layout: [
-      '.d.........d.',
+      '.G.........G.',
       '.............',
       '..1.......1..',
       '.....2.2.....',
       '..1.......1..',
       '.............',
-      '.d.........d.',
+      '.G.........G.',
     ],
+    graveAmbush: true,
     waves: { 1: ['outlaw', 'outlaw', 'buzzard', 'possessed'], 2: ['skeleton', 'rattlesnake'] },
   },
   { // saloon: overturned tables to duck behind
@@ -45,13 +48,14 @@ export default [
     id: 'f2_04', kind: 'normal', floors: [2], weight: 1, tier: 2,
     layout: [
       '.............',
-      '.d..R...R..d.',
+      '.G..R...R..G.',
       '..1.......1..',
       '....d2.2d....',
       '..1.......1..',
-      '.d..R...R..d.',
+      '.G..R...R..G.',
       '.............',
     ],
+    graveAmbush: true,
     waves: { 1: ['ghost', 'skeleton', 'skeleton', 'ghost'], 2: ['possessed', 'possessed'] },
   },
   { // rotten floorboards: a hole in the middle, ghost drifts over it
@@ -73,9 +77,9 @@ export default [
     layout: [
       '.............',
       '..1.......1..',
-      '....SS.SS....',
+      '....Ss.sS....',
       '...2.....2...',
-      '....SS.SS....',
+      '....sS.Ss....',
       '..1.......1..',
       '.............',
     ],
@@ -112,9 +116,9 @@ export default [
     layout: [
       '.............',
       '..1.......1..',
-      '.....BBB.....',
+      '.....ZBZ.....',
       '...2.....2...',
-      '.....BBB.....',
+      '.....BZB.....',
       '..1.......1..',
       '.............',
     ],
@@ -164,11 +168,11 @@ export default [
     id: 'f2_13', kind: 'normal', floors: [2], weight: 1, tier: 2,
     layout: [
       '.............',
-      '.BBB.....BBB.',
+      '.BZB.....BZB.',
       '..1.......1..',
       '.....2.2.....',
       '..1.......1..',
-      '.BBB.....BBB.',
+      '.BZB.....BBB.',
       '.............',
     ],
     waves: { 1: ['outlaw', 'buzzard', 'buzzard', 'outlaw'], 2: ['dynamiter', 'possessed'] },
@@ -177,26 +181,28 @@ export default [
     id: 'f2_14', kind: 'normal', floors: [2], weight: 1, tier: 1,
     layout: [
       '.............',
-      '.d.........d.',
+      '.G.........G.',
       '..1.......1..',
       '....2...2....',
       '..1.......1..',
-      '.d.........d.',
+      '.G.........G.',
       '.............',
     ],
+    graveAmbush: true,
     waves: { 1: ['outlaw', 'buzzard', 'buzzard', 'outlaw'], 2: ['possessed', 'rattlesnake'] },
   },
   { // ghost hall: pillars, phasing ghosts and gunmen
     id: 'f2_15', kind: 'normal', floors: [2], weight: 1, tier: 3,
     layout: [
       '.............',
-      '.R.R.....R.R.',
+      '.G.R.....R.G.',
       '..1.......1..',
       '.....2.2.....',
       '..1.......1..',
-      '.R.R.....R.R.',
+      '.G.R.....R.G.',
       '.............',
     ],
+    graveAmbush: true,
     waves: { 1: ['ghost', 'skeleton', 'skeleton', 'ghost'], 2: ['possessed', 'possessed'] },
   },
   { // last stand: three waves

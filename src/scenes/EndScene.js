@@ -2,6 +2,9 @@
 // chapter-complete = the same poster in victory dress (sunrise art, green stamp, TO BE CONTINUED). Page 2 = THE LEDGER (Space / click, or on its own after a
 // few seconds): Notoriety bar + breakdown, unlocks, codex discoveries, contract / daily result, floor times, damage sources, seed (C copies it).
 // R / Enter = ride again (same rider and mode; a Daily replays the same date), ESC = menu, Left = back to the poster.
+// Round 2 words (STORY s4, s10): an epitaph under the WANTED heading (cause -> rider 25 % -> hard 35 % on Hell -> generic, never the same twice: Save flag
+// `lastEpitaph`), `causeOf` names from data/story/epitaphs.js, the CHAPTER II win poster (ending A / true), retry copy `R  -  DEAL ME IN AGAIN`. A death
+// arrives through the HUD's ink splatter and reveals the poster with it; retry covers the poster with ink (Transitions.ink).
 // Scene instances are reused: per-visit state is reset in init().
 import Phaser from 'phaser';
 import { W, H, FONT_TITLE, FONT_BODY, CSS, FLOORS } from '../config.js';
@@ -18,31 +21,11 @@ import { charDef } from '../data/characters.js';
 import { MUTATORS } from '../data/difficulty.js';
 import { title, body, inkText, INK, parchment, uiSfx, setOsCursor } from '../ui/UiKit.js';
 import { chip, riderToken, starIcon, itemIcon } from '../ui/Silhouette.js';
+import { causeOf, pickEpitaph } from '../data/story/epitaphs.js';
+import { WIN_POSTER, UI, CREDITS_TAIL } from '../data/story/text.js';
+import { subRng } from '../core/rng.js';
+import Transitions from '../ui/Transitions.js';
 
-const DEATH_LINES = [
-  'Hanged by the Devil\'s own noose.',
-  'Buried without a headstone. Again.',
-  'The vultures thank you for your service.',
-  'The debt remains unpaid.',
-  'Perdition County claims another soul.',
-  'Six feet under, and no whiskey.',
-  'Your boots were sold before you hit the dirt.',
-  'The Devil keeps very good books.',
-];
-// how the run ended -> what the poster says. Sources come from Player.die: enemyName || bullet/attack kind || 'dynamite' | 'the desert'
-const CAUSE = {
-  spikes: 'Rusty spikes', explosion: 'Dynamite', dynamite: 'Dynamite', 'the desert': 'The desert itself', enemy: 'A stray bullet', venom: 'Snake venom',
-  nail: 'A coffin nail', ghostfire: 'Ghostfire', rock: 'A falling rock', stick: 'A stick of dynamite', contact: 'A close encounter', dive: 'El Cascabel',
-  burst: 'A very angry mole', melee: 'A pickaxe', slam: 'Marshal Grimm', cascabel: 'El Cascabel', grimm: 'Marshal Grimm', undertaker: 'The Undertaker',
-  tumbleweed_mini: 'A tumbleweed', crow: 'A murder of crows',
-};
-function causeOf(k) {
-  if (!k) return 'Unknown causes';
-  if (CAUSE[k]) return CAUSE[k];
-  if (/[A-Z ]/.test(k)) return k; // already a proper name ("Marshal Grimm")
-  const w = k.replace(/_/g, ' ');
-  return `${/^[aeiou]/i.test(w) ? 'An' : 'A'} ${w.charAt(0).toUpperCase()}${w.slice(1)}`;
-}
 const money = (n) => `$${Math.round(n).toLocaleString('en-US')}`;
 
 export default class EndScene extends Phaser.Scene {
@@ -59,7 +42,8 @@ export default class EndScene extends Phaser.Scene {
     this.mode = (led && led.mode) || run.mode || this.data0.mode || 'normal';
     const won = variant === 'complete' || variant === 'contract';
     setOsCursor(this.game, '');
-    this.cameras.main.fadeIn(500, 13, 8, 6);
+    if (variant === 'death') this.cameras.main.fadeIn(80, 13, 8, 6); // the ink wipe below does the revealing
+    else this.cameras.main.fadeIn(500, 13, 8, 6);
     this.add.rectangle(W / 2, H / 2, W, H, 0x0d0806);
     if (Assets.has('title_bg')) {
       const bg = this.add.image(W / 2, H / 2, 'title_bg').setAlpha(won ? 0.62 : 0.3);
@@ -86,13 +70,19 @@ export default class EndScene extends Phaser.Scene {
     poster.add(panel);
     const T = (x, y, s, style, ox = 0.5, oy = 0.5) => { const t = this.add.text(x, y, s, style).setOrigin(ox, oy); poster.add(t); return t; };
     const ink = INK, red = '#6a1410';
-    const h1 = T(cx, 176, variant === 'complete' ? 'CHAPTER I' : variant === 'contract' ? 'CONTRACT' : 'WANTED', title(won ? 96 : 116, '#2a1810', { stroke: '#c9a56a', strokeThickness: 3 }));
+    const h1 = T(cx, 176, variant === 'complete' ? WIN_POSTER.h1 : variant === 'contract' ? 'CONTRACT' : 'WANTED', title(won ? 96 : 116, '#2a1810', { stroke: '#c9a56a', strokeThickness: 3 }));
     h1.setShadow(3, 4, '#00000055', 0, false, true);
-    const h2 = T(cx, 250, variant === 'complete' ? '-  PERDITION COUNTY  -' : variant === 'contract' ? '-  PAID  IN  FULL  -' : '-  DEAD  OR  ALIVE  -', inkText(38, red, { fontStyle: 'bold' }));
+    const h2 = T(cx, 250, variant === 'complete' ? WIN_POSTER.h2 : variant === 'contract' ? '-  PAID  IN  FULL  -' : '-  DEAD  OR  ALIVE  -', inkText(38, red, { fontStyle: 'bold' }));
     const rule = this.add.graphics(); rule.lineStyle(3, 0x2a1810, 0.85).lineBetween(cx - 470, 284, cx + 470, 284).lineStyle(1, 0x2a1810, 0.7).lineBetween(cx - 470, 290, cx + 470, 290);
     poster.add(rule);
-    const sub = variant === 'contract' ? 'The board pays out. The Devil still keeps the change.' : won ? 'The Devil\'s saloon lies just beyond the last door...' : DEATH_LINES[Math.floor(Math.random() * DEATH_LINES.length)];
-    T(cx, 320, sub, inkText(27, ink, { fontStyle: 'italic' }));
+    const ending = this.data0.ending || run.ending || null;
+    if (won) {
+      const sub = variant === 'contract' ? 'The board pays out. The Devil still keeps the change.' : (WIN_POSTER.sub[ending === 'true' ? 'true' : 'a']);
+      T(cx, 322, sub, inkText(27, ink, { fontStyle: 'italic' }));
+    } else {
+      if (this.mode === 'hell') T(cx, 306, UI.hellDead, inkText(21, red, { fontStyle: 'bold' }));
+      T(cx, this.mode === 'hell' ? 340 : 322, this.epitaph(run), inkText(27, ink, { fontStyle: 'italic' }));
+    }
     this.ribbon(poster);
 
     // portrait "photograph"
@@ -173,7 +163,15 @@ export default class EndScene extends Phaser.Scene {
     poster.add(stamp);
 
     // ------------------------------------------------------------------ prompts
-    const again = () => { if (this.leaving || !this.ready) return; this.leaving = true; Sfx.play('gun_cock', { vol: 0.7 }); this.cameras.main.fadeOut(300, 13, 8, 6); this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start('Game', this.rideData())); };
+    const again = () => {
+      if (this.leaving || !this.ready) return;
+      this.leaving = true;
+      Sfx.play('gun_cock', { vol: 0.7 });
+      let go = false;
+      const start = () => { if (go) return; go = true; this.scene.start('Game', this.rideData()); };
+      Transitions.ink(this, { ms: 400, hold: true, depth: 400, seed: (run.seed || 1) ^ 0x51, onDone: start });
+      this.time.delayedCall(700, start); // fail-safe (hidden tab: tweens may stall)
+    };
     const menu = () => { if (this.leaving || !this.ready) return; this.leaving = true; uiSfx.back(); this.cameras.main.fadeOut(300, 13, 8, 6); this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start('Menu')); };
     const btn = (x, y, label, fn, style) => {
       const t = this.add.text(x, y, label, style).setOrigin(0.5).setAlpha(0).setInteractive({ useHandCursor: true });
@@ -182,11 +180,11 @@ export default class EndScene extends Phaser.Scene {
       return t;
     };
     const prompt = won
-      ? this.add.text(W / 2, 888, variant === 'complete' ? 'TO BE CONTINUED...' : 'CONTRACT SETTLED', title(46, CSS.bone, { strokeThickness: 8 })).setOrigin(0.5).setAlpha(0)
-      : btn(W / 2, 888, 'Press R to ride again', again, title(40, CSS.bone, { strokeThickness: 7 }));
+      ? this.add.text(W / 2, 888, variant === 'complete' ? String(CREDITS_TAIL[ending === 'true' ? 'true' : 'a']).toUpperCase() : 'CONTRACT SETTLED', title(46, CSS.bone, { strokeThickness: 8 })).setOrigin(0.5).setAlpha(0)
+      : btn(W / 2, 888, UI.retry, again, title(40, CSS.bone, { strokeThickness: 7 }));
     this.pageBtn = btn(W / 2 - 300, 928, 'SPACE  THE LEDGER', () => this.flip(), body(22, CSS.sand));
     const sec = won
-      ? [this.pageBtn, btn(W / 2, 928, 'R  RIDE AGAIN', again, body(22, CSS.sand)), btn(W / 2 + 300, 928, 'ESC  MENU', menu, body(22, CSS.sand))]
+      ? [this.pageBtn, btn(W / 2, 928, 'R  DEAL ME IN AGAIN', again, body(22, CSS.sand)), btn(W / 2 + 300, 928, 'ESC  MENU', menu, body(22, CSS.sand))]
       : [this.pageBtn, btn(W / 2 + 200, 928, 'ESC  MENU', menu, body(22, CSS.sand))];
     if (!won) this.pageBtn.setX(W / 2 - 200);
     const kb = this.input.keyboard;
@@ -241,6 +239,7 @@ export default class EndScene extends Phaser.Scene {
     });
     // let impatient players skip straight to the prompts
     this.time.delayedCall(450, () => { this.ready = true; });
+    if (variant === 'death') Transitions.ink(this, { ms: 520, reverse: true, depth: 400, seed: (run.seed || 1) ^ 0x9e37 }); // the HUD's cover comes off with the same ink
   }
 
   /** Count a numeric stat up from 0 (value text keeps its original formatting). */
@@ -250,6 +249,16 @@ export default class EndScene extends Phaser.Scene {
   }
 
   // ------------------------------------------------------------------------------------------------ helpers
+  /** Epitaph for a death (seeded by the run, never equal to the previous one; remembered in Save flag lastEpitaph). */
+  epitaph(run) {
+    let last = null;
+    try { last = Save.flag('lastEpitaph') || null; } catch (e) { last = null; }
+    const rng = subRng('epitaph', run.seed ?? this.data0.seed ?? 0, run.floor, Math.floor(run.time || 0));
+    const text = pickEpitaph(run.killedBy, { char: this.char, hell: this.mode === 'hell', rng, last });
+    try { Save.setFlag('lastEpitaph', text); } catch (e) { /* storage is optional */ }
+    return text;
+  }
+
   /** Seed code shown on both pages: DW1-<seed>-<char>-<mode>. */
   code() { return `DW1-${(this.data0.run && this.data0.run.seed) ?? this.data0.seed ?? 0}-${this.char}-${this.mode}`; }
 

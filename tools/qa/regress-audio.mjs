@@ -53,5 +53,15 @@ await g.wait(500);
 ok('mute persisted after reload', await A(() => window.__dwAudio.Audio.muted) === true);
 await g.tap('KeyM');
 await g.wait(200);
+// 8. round 2 fallback layer (director routes / stems / empty-new-audio run: tools/qa/regress-audio-v2.mjs [--hidden]; static coverage: audio-coverage.mjs)
+const r2 = await A(async () => {
+  const { Sfx, Music, SFX_ALIAS } = window.__dwAudio;
+  const dead = Object.keys(SFX_ALIAS).filter((k) => !Sfx.canPlay(k));
+  let threw = false;
+  try { Sfx.play('no_such_key_xyz'); Sfx.loop('no_such_key_xyz').stop(); Music.play('mus_no_such_track', { fade: 100 }); Music.stop(100); } catch (e) { threw = true; }
+  return { dead, threw, unknown: Sfx.canPlay('no_such_key_xyz') };
+});
+ok('every SFX_ALIAS key makes a sound', r2.dead.length === 0, r2.dead.join(','));
+ok('unknown sfx / music keys are silent and never throw', !r2.threw && !r2.unknown);
 console.log('errors', g.errors.filter((e) => !/favicon|404/.test(e)));
 await g.close();

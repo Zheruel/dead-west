@@ -1,7 +1,7 @@
 import { registerItem } from '../registry.js';
 
-// Engine sample (FN-4): proves the chill / frozen / shatter pipeline with stats only. FE-I1 owns the final file.
-// 20% of shots chill; three chills freeze (Enemy.applyStatus), frozen foes take x1.4 and shatter into ice shards on death (items/fx/Kill.js).
+// 20% of shots chill (3 s, x0.7 speed, stacks to 3); the third chill freezes: stunned 1.2 s and x1.4 damage taken. A foe killed while frozen
+// shatters into 5 ice shards (40% of the killing blow, items/fx/Kill.js). Bosses only slow (x0.85), never freeze. Frame `bullet_ice`.
 registerItem({
   id: 'blue_norther', name: 'Blue Norther', desc: '20% of shots chill; three chills freeze', type: 'passive', pool: ['treasure', 'shop', 'boss'], weight: 0.8,
   icon: { sheet: 'items2_a', name: 'blue_norther' },

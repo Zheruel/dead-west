@@ -1,7 +1,11 @@
-// Start / treasure / shop / secret / boss templates shared by the floors (boss rooms are per floor).
+// Start / treasure / shop / secret / vault / boss templates shared by the floors (boss rooms are per floor; the F6 boss lives in floor6.js).
+// Everything except the boss rooms and `treasure_two` (F3 pick-one) is available on floors 1-6. Secret variants (EVENTS 8.1): `stash` = secret_a/b/c,
+// `dead_mans_hand` = secret_hand (5 C: one card survives), `cache` = secret_cache (8 B + 3 Z powder barrels in one chain), `shrine` = secret_shrine (ring of `s`
+// spikes round one pedestal). `vault_a` = the Dealer's Safe (supersecret: two pedestals, coins below).
 // Treasure: pedestal 'I' sits on the ring of the treasure bg (tile 6,3). Shop: rug spans tiles 2..10 x 1..5, keeper 'K' on the back row, items 'H' on the rug.
 // Secret: 'C' = pickup, 'I' = 40% item pedestal. Boss: '1' = boss spawn (mirrored away from the entry door at runtime), obstacles are cover
 // for the boss's bullet patterns and are kept away from the centre lane the boss needs.
+const FLOORS_ALL = [1, 2, 3, 4, 5, 6];
 const EMPTY = [
   '.............',
   '.............',
@@ -12,9 +16,9 @@ const EMPTY = [
   '.............',
 ];
 export default [
-  { id: 'start_a', kind: 'start', floors: [1, 2, 3], weight: 1, layout: EMPTY },
+  { id: 'start_a', kind: 'start', floors: FLOORS_ALL, weight: 1, layout: EMPTY },
   {
-    id: 'start_b', kind: 'start', floors: [1, 2, 3], weight: 1,
+    id: 'start_b', kind: 'start', floors: FLOORS_ALL, weight: 1,
     layout: [
       '.............',
       '..d.......d..',
@@ -26,7 +30,7 @@ export default [
     ],
   },
   {
-    id: 'start_c', kind: 'start', floors: [1, 2, 3], weight: 1,
+    id: 'start_c', kind: 'start', floors: FLOORS_ALL, weight: 1,
     layout: [
       '.............',
       '.R.........R.',
@@ -39,7 +43,7 @@ export default [
   },
   // ---- treasure
   {
-    id: 'treasure_a', kind: 'treasure', floors: [1, 2, 3], weight: 1,
+    id: 'treasure_a', kind: 'treasure', floors: FLOORS_ALL, weight: 1,
     layout: [
       '.............',
       '.d.........d.',
@@ -51,7 +55,7 @@ export default [
     ],
   },
   {
-    id: 'treasure_b', kind: 'treasure', floors: [1, 2, 3], weight: 1,
+    id: 'treasure_b', kind: 'treasure', floors: FLOORS_ALL, weight: 1,
     layout: [
       '.............',
       '..R.......R..',
@@ -63,7 +67,7 @@ export default [
     ],
   },
   {
-    id: 'treasure_c', kind: 'treasure', floors: [1, 2, 3], weight: 1,
+    id: 'treasure_c', kind: 'treasure', floors: FLOORS_ALL, weight: 1,
     layout: [
       '.............',
       '.............',
@@ -75,7 +79,7 @@ export default [
     ],
   },
   {
-    id: 'treasure_d', kind: 'treasure', floors: [1, 2, 3], weight: 1,
+    id: 'treasure_d', kind: 'treasure', floors: FLOORS_ALL, weight: 1,
     layout: [
       '.............',
       '.............',
@@ -101,7 +105,7 @@ export default [
   },
   // ---- shop
   {
-    id: 'shop_a', kind: 'shop', floors: [1, 2, 3], weight: 1,
+    id: 'shop_a', kind: 'shop', floors: FLOORS_ALL, weight: 1,
     layout: [
       '.............',
       '.............',
@@ -113,7 +117,7 @@ export default [
     ],
   },
   {
-    id: 'shop_b', kind: 'shop', floors: [1, 2, 3], weight: 1,
+    id: 'shop_b', kind: 'shop', floors: FLOORS_ALL, weight: 1,
     layout: [
       '.............',
       '.R.........R.',
@@ -125,7 +129,7 @@ export default [
     ],
   },
   {
-    id: 'shop_c', kind: 'shop', floors: [1, 2, 3], weight: 1,
+    id: 'shop_c', kind: 'shop', floors: FLOORS_ALL, weight: 1,
     layout: [
       '.............',
       '.............',
@@ -138,7 +142,7 @@ export default [
   },
   // ---- secret
   {
-    id: 'secret_a', kind: 'secret', floors: [1, 2, 3], weight: 1,
+    id: 'secret_a', kind: 'secret', floors: FLOORS_ALL, weight: 1,
     layout: [
       '.............',
       '.............',
@@ -150,7 +154,7 @@ export default [
     ],
   },
   {
-    id: 'secret_b', kind: 'secret', floors: [1, 2, 3], weight: 1,
+    id: 'secret_b', kind: 'secret', floors: FLOORS_ALL, weight: 1,
     layout: [
       '.............',
       '.d.........d.',
@@ -162,7 +166,7 @@ export default [
     ],
   },
   {
-    id: 'secret_c', kind: 'secret', floors: [1, 2, 3], weight: 1,
+    id: 'secret_c', kind: 'secret', floors: FLOORS_ALL, weight: 1,
     layout: [
       '.............',
       '.............',
@@ -171,6 +175,56 @@ export default [
       '.............',
       '.............',
       '.............',
+    ],
+  },
+  // ---- secret variants (rolled by floorgen, see Variety.js; SecretVariants.js hosts the behaviour)
+  { // dead man's hand: five face-down cards in a fan, take ONE (the others burn). Slots are sorted left to right by the controller.
+    id: 'secret_hand', kind: 'secret', variant: 'dead_mans_hand', floors: FLOORS_ALL, weight: 1,
+    layout: [
+      '.............',
+      '.d.........d.',
+      '......C......',
+      '....C...C....',
+      '..C.......C..',
+      '.d.........d.',
+      '.............',
+    ],
+  },
+  { // cache: a plus of 8 crates and a chain of 3 powder barrels through the middle row; one dynamite (or careful fire) clears it, distance is safe
+    id: 'secret_cache', kind: 'secret', variant: 'cache', floors: FLOORS_ALL, weight: 1,
+    layout: [
+      '.............',
+      '.d.........d.',
+      '.....BBB.....',
+      '....BZZZB....',
+      '.....BBB.....',
+      '.d.........d.',
+      '.............',
+    ],
+  },
+  { // shrine: one pedestal ringed by retracting spikes (1 gap tile per 2.8 s window); the reward is guaranteed, the crossing costs 1 unit at worst
+    id: 'secret_shrine', kind: 'secret', variant: 'shrine', floors: FLOORS_ALL, weight: 1,
+    layout: [
+      '.............',
+      '..d.......d..',
+      '.....sss.....',
+      '.....sIs.....',
+      '.....sss.....',
+      '..d.......d..',
+      '.............',
+    ],
+  },
+  // ---- super-secret: the Dealer's Safe (left pedestal = crossroads-pool item, right = treasure-pool item; VaultRoom sorts I left to right, coins drop below)
+  {
+    id: 'vault_a', kind: 'supersecret', floors: FLOORS_ALL, weight: 1,
+    layout: [
+      '.d.........d.',
+      '.............',
+      '.............',
+      '....I...I....',
+      '.............',
+      '.............',
+      '.d.........d.',
     ],
   },
   // ---- boss rooms
