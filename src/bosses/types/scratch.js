@@ -1,4 +1,4 @@
-// BOSS 6 - OL' SCRATCH, THE DEALER "The House Always Wins" (floor 6 final boss, HP 1500, 4 phases). CHAPTER2 s5 boss 6, STORY 6.6 / 5.3.
+// BOSS 6 - OL' SCRATCH, THE DEALER "The House Always Wins" (floor 6 final boss, HP 1700, 4 phases). CHAPTER2 s5 boss 6, STORY 6.6 / 5.3.
 // Sprites: boss_scratch_idle / _atk (human: 0 card fan raised, 1 throwing, 2 arms wide, 3 chip lobbed) and boss_scratch_true_idle / _atk (true form:
 // 0 hands clasped with fire, 1 casting hellfire, 2 roar arms wide, 3 contract raised). `formKey` picks the sheet (Boss.js has no formKey yet: local shim).
 // Arena f6_boss: dealer's rail (720, 380); roulette region r/k on cols 3-9 x rows 2-4 (own RouletteZone: a stand-in arena gets a code-drawn one).
@@ -760,6 +760,6 @@ class Scratch extends Boss {
 }
 
 registerBoss('scratch', Scratch, {
-  hp: 1500, r: 62, foot: 50, scale: 0.85, hitR: 70, speed: 0, name: "OL' SCRATCH", title: 'The House Always Wins', music: 'boss6', final: true,
+  hp: 1700, r: 62, foot: 50, scale: 0.85, hitR: 70, speed: 0, name: "OL' SCRATCH", title: 'The House Always Wins', music: 'boss6', final: true,
   barks: BARKS,
 });

@@ -105,7 +105,7 @@ export function installPeddler(scene) {
     scene.time.delayedCall(0, () => s.destroy());
     drop();
   });
-  const tick = (t, ms) => { const dt = Math.min(ms, 100) / 1000; if (denyCd > 0) denyCd -= dt; if (sp) sp.update(dt); };
+  const tick = (t, ms) => { const dt = Math.min(ms, 100) / 1000; if (denyCd > 0) denyCd -= dt; if (sp) { if (!sp.text || !sp.text.active || !sp.tag || !sp.tag.active) { sp = null; room = null; } else sp.update(dt); } };
   scene.events.on('update', tick);
   const off = () => { scene.events.off('update', tick); scene.events.off('shutdown', off); scene.events.off('destroy', off); drop(); };
   scene.events.once('shutdown', off);

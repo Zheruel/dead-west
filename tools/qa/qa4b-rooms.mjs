@@ -14,6 +14,8 @@ const sample = async (label) => { const heap = await g.heap(); const p = await g
   const row = { label, heap, busTotal: p.busTotal, gev: p.gev, tex: p.tex, ...e, ch: p.scenes.Game ? p.scenes.Game.ch : -1, gev2: p.scenes.Game ? p.scenes.Game.ev : -1, tw: p.scenes.Game ? p.scenes.Game.tw : -1, timers: p.scenes.Game ? p.scenes.Game.timers : -1 };
   rows.push(row); console.log(label, fmt(heap), JSON.stringify({ ...row, heap: undefined, label: undefined })); return { row, p }; };
 const first = await sample('start');
+const keys0 = await g.eval(() => Object.keys(window.__game.textures.list));
+let keys1 = keys0;
 const MODS = ['darkness', 'fog', 'dust_storm', 'blood_moon', 'stampede', 'rockfall', 'hellfire', 'lurch'];
 let hop = 0, floorIdx = 0;
 while (hop < N) {
@@ -54,6 +56,7 @@ while (hop < N) {
       await g.eval(() => { window.__wake(); window.__dw.scene.roomMgr.leavePocket(); }); let still = true; for (let k = 0; k < 20 && still; k++) { await sleep(500); still = await g.eval(() => window.__dw.scene.roomMgr.inPocket); } if (still) fail.push(`pocket F${f} leave failed`);
       await g.eval(() => window.__ff(30)); hop++;
     }
+    if (hop % 100 === 0) { keys1 = await g.eval(() => Object.keys(window.__game.textures.list)); }
     if (hop % 25 === 0) { await g.eval(() => window.__wake()); await sleep(200); await sample('hop' + hop); }
   }
 }
@@ -62,7 +65,8 @@ const last = await sample('final'); const base = rows[2] || rows[0];
 const pct = (a, b) => +(((b - a) / a) * 100).toFixed(1);
 for (const [name, b] of [['start', first.row], ['hop50', base]]) console.log(`GROWTH ${name}->final`, JSON.stringify({ heapPct: pct(b.heap, last.row.heap), heapMB: +((last.row.heap - b.heap) / 1048576).toFixed(2), bus: last.row.busTotal - b.busTotal, gev: last.row.gev - b.gev, tex: last.row.tex - b.tex, glTex: last.row.glTex - b.glTex, glFb: last.row.glFb - b.glFb, glBuf: last.row.glBuf - b.glBuf, ch: last.row.ch - b.ch, tw: last.row.tw - b.tw, ev: last.row.gev2 - b.gev2 }));
 const growers = Object.keys(last.p.busCounts).filter((k) => (last.p.busCounts[k] || 0) > (first.p.busCounts[k] || 0)).map((k) => `${k}:${first.p.busCounts[k] || 0}->${last.p.busCounts[k]}`);
-console.log('bus growers', growers); console.log('typeHits', JSON.stringify(typeHits), 'modHits', JSON.stringify(modHits));
+console.log('bus growers', growers);
+const kf = await g.eval(() => Object.keys(window.__game.textures.list)); const added = kf.filter((k) => !keys0.includes(k)); const norm = (k) => k.replace(/\d+/g, '#'); const grp = {}; for (const k of added) grp[norm(k)] = (grp[norm(k)] || 0) + 1; console.log('tex added', added.length, JSON.stringify(Object.entries(grp).sort((a, b) => b[1] - a[1]).slice(0, 25))); console.log('tex sample', added.slice(0, 40).join(',')); console.log('typeHits', JSON.stringify(typeHits), 'modHits', JSON.stringify(modHits));
 console.log('fails', fail.slice(0, 20), 'nFail', fail.length);
 console.log('errors', g.errors.filter((e) => !/favicon/.test(e)).slice(0, 5), 'rej', (await g.rejections()).slice(0, 3), 'warns', [...new Set(g.warns.filter((w) => !/GL Driver|GPU stall/.test(w)))].slice(0, 8));
 await g.close();

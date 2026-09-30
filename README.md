@@ -2,9 +2,9 @@
 
 A top-down twin-stick roguelike shooter in the vein of *The Binding of Isaac*, set in a dark occult western. You are a dead gunslinger dragged out of your grave by a debt signed in blood; shoot through Perdition County, floor by floor, to the saloon where the Devil keeps your contract.
 
-**Chapter 1** (playable, complete): 3 procedurally generated floors (Dry Gulch, Perdition, Sundown Mine), 3 bosses (El Cascabel, Marshal Grimm, The Undertaker), 16 enemy types, 28 items (24 passives + 4 actives), 65 hand-authored room templates, shops, treasure rooms, secret rooms, permadeath.
+**v2 - Chapters 1 and 2 (playable, complete)**: 6 floors and 6 bosses across two chapters (Perdition County, then the Brimstone Bluffs, the Blood Rail and the Last Chance Saloon against Ol' Scratch), 4 playable riders (Gunslinger, Preacher, Hunter, Queen), 25 enemy types, 6 mini-boss champions, 74 items with 26 synergies, six random events, the Crossroads (devil's deals), elite affixes and room modifiers, hazards (lava, steam, rails, roulette), a Codex, Bounty Board, achievements and Notoriety meta-progression, Hell on Earth mode, a Daily Ride, a full story with cutscenes and two endings.
 
-Phaser 3.90 + Vite 7, vanilla JavaScript (ES modules), no TypeScript. Runs in the browser; ~18 MB built.
+Phaser 3.90 + Vite 7, vanilla JavaScript (ES modules), no TypeScript. Runs in the browser; ~50 MB built, about 13 MB before the menu (the rest streams in as you play).
 
 ![menu](art/screens/01_menu.png)
 ![floor 1](art/screens/02_floor1_combat.png)
@@ -49,6 +49,10 @@ Menu: W/S or arrows + Enter, or mouse.
 |---|---|
 | `?debug=1` | Debug overlay + keys: F1 next floor, F2 full heal, F3 random passive, F4 +99 coins/keys/dynamite, F5 kill all, F6 teleport to boss room, F7 god mode. Also exposes `window.__game` and `window.__dw.api` (spawn, giveItem, setFloor, teleport, killAll, state ...; see `docs/ARCHITECTURE.md`) |
 | `?seed=N` | Deterministic run (same floors, same drops) |
+| `?floor=N` | Start on floor 1-6 (debug runs) |
+| `?char=ID&mode=hell` | Start as a rider (`gunslinger`, `preacher`, `hunter`, `queen`) and/or in Hell on Earth (debug runs) |
+| `?unlockall=1` | Treat every rider, mode and gate as unlocked (Meta progress is not recorded) |
+| `?cutscene=ID` / `?credits=a` | Play a cutscene / the credits standalone |
 | `?noassets=1` | Ignore the manifest: everything is a generated placeholder (proves the game runs with no art/audio) |
 | `?dropassets=N` | Randomly drop ~N % of manifest entries (tests missing-asset paths) |
 | `?selftest=1` | Validate all templates and 100 seeds of floor generation, result in the console |
@@ -74,10 +78,10 @@ vite.config.js        base './', phaser vendor chunk, strips dev-only files from
 src/
   main.js config.js   Phaser boot; ALL tunables (sizes, stats, floor gen, enemy defaults, rewards)
   core/               rng, event bus, assets/manifest, audio (mixer, director, lazy loader), input, save, debug API
-  gen/                floor generator, ASCII room templates (65), template validator, selftest
+  gen/                floor generator, ASCII room templates (130+), template validator, selftest
   rooms/ entities/    Room + RoomManager + Door; Player, Pickup, Pedestal, Chest, Dynamite, Shop, Trapdoor
   enemies/ bosses/    registry + base class + one file per type (auto-registered via import.meta.glob)
-  items/ systems/     28 item defs, familiars, bullet-time; bullets, explosions, fx
+  items/ systems/     74 item defs, tags + synergies, familiars, bullet-time; bullets, explosions, fx
   scenes/ ui/         Boot, Menu, Game, HUD, Pause, End scenes; HUD widgets and menu kit
 public/assets/        sprites/ images/ audio/ + manifest.json (generated), CREDITS_*.md
 docs/                 GAME_DESIGN.md (intent), ARCHITECTURE.md (APIs, how-tos, QA), ART_BIBLE.md, ASSET_SPEC.md

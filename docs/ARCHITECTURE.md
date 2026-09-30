@@ -145,7 +145,7 @@ Keys: F1 next floor, F2 heal, F3 random passive, F4 +99 coins/keys/dynamite, F5 
 * QA: the throw-away `feel-*` scripts were pruned; use `smoke.mjs`, `bot.mjs` (autoplay through all floors) and the fast-forward pattern in `fuzz-run.mjs` (note: Phaser tweens still run on real time, so wait real ms for tween-driven visuals).
 
 
-## Round 2 (in progress)
+## Round 2 (complete: v2 design and file map in docs/v2/ARCH_V2.md)
 DEAD WEST v2 (floors 4-6, 3 new riders, 46 items, events, meta, story) is planned in `docs/v2/`: `ARCH_V2.md` (engineering, ids, ownership), `WORK_PLAN.md` (workflows and jobs), `ASSET_SPEC_V2.md`, `AUDIO_SPEC_V2.md`, plus the designer docs. This file describes round 1 until QA-7 replaces this section with the final file map.
 
 ### Room / flow API notes (round 2)

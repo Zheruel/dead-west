@@ -1,4 +1,19 @@
-# DEAD WEST - Status (Chapter 1, v0.1.0)
+# DEAD WEST - Status (v2.0, Chapters 1 and 2)
+
+## Added in v2 (Chapter 2 and the "real game" pass)
+
+* **Chapter 2 (floors 4-6)**: Brimstone Bluffs (lava, vents, hellhounds, El Toro Infernal), Blood Rail (lane hazards, steam, ghost carts, Engine No. 666), Last Chance Saloon (chandeliers, roulette, Ol' Scratch, the Dealer). 18 new enemies + duelist, 3 bosses, 45 new room templates, interlude and arrival cutscenes.
+* **Riders**: Gunslinger, Preacher (faith / sanctified shotgun), Hunter (wanted marks), Queen (dual guns, coin damage); unlocked through play.
+* **Items**: 74 total (46 new: passives, actives, 10 devil deals), 8 item tags, 26 synergies with toasts and a BUILD panel, cylinder 3-8 slots.
+* **Run variety**: 6 mini-boss champions, 6 random events + secret variants + vault, the Crossroads (devil gates, deals, curses, blessings, pacts), 8 elite affixes, 8 room modifiers, new hazards.
+* **Meta**: Save v2 + migration, checkpoint CONTINUE from F4, Notoriety ranks, 44+ achievements, 30 Bounty Board contracts, 15 mutators, Codex (6 tabs), Daily Ride (seeded), Hell on Earth mode, two endings (Take the Chair / The Sixth Bullet), credits.
+* **Presentation**: ~24 story panels, title parallax, chapter/boss/mini cards, phase banners, death epitaphs, loading tips; ~92 new SFX keys, 17 music tracks, 4 ambience beds.
+* **Load**: ~13 MB blocking boot (cutscene/later-floor art lazy-loaded), ~50 MB total.
+* **QA**: 5-way QA pass (bots, visual, robustness, spec audit) and fixes; reports in `docs/v2/qa/`. Headless fps could not be measured (shared machine): profile on real hardware.
+
+---
+Chapter 1 status (still accurate):
+
 
 ## Implemented (Chapter 1 "Perdition County")
 

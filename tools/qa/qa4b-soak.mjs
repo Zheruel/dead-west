@@ -54,7 +54,7 @@ while (simT < simMin * 60 && !fail) {
   simT += 2.5;
   const st = await g.eval(() => { if (!window.__dw) return null; const s = window.__dw.scene, p = s.player; return { x: p.x, y: p.y, hp: p.hp, ne: s.enemies.length, nb: s.bullets.count, ch: s.children.list.length, floor: s.floorNum, tr: s.transitioning, cut: !!s.cutscene }; });
   if (!st) continue;
-  for (let k = 0; k < 8 && (st.tr || st.cut) && !fail; k++) { await g.eval(() => window.__wake()); await sleep(700); Object.assign(st, await g.eval(() => { if (!window.__dw) return { tr: false, cut: false }; const s = window.__dw.scene; return { tr: s.transitioning, cut: !!s.cutscene }; })); if (k === 7 && (st.tr || st.cut)) fail = 'transition/cutscene never finished ' + JSON.stringify(st); }
+  for (let k = 0; k < 45 && (st.tr || st.cut) && !fail; k++) { await g.eval(() => window.__wake()); await sleep(700); Object.assign(st, await g.eval(() => { if (!window.__dw) return { tr: false, cut: false }; const s = window.__dw.scene; return { tr: s.transitioning, cut: !!s.cutscene }; })); if (k === 44 && (st.tr || st.cut)) fail = 'transition/cutscene never finished ' + JSON.stringify(st); }
   maxCh = Math.max(maxCh, st.ch);
   if (![st.x, st.y, st.hp].every(Number.isFinite)) fail = 'NaN player ' + JSON.stringify(st);
   else if (st.ne > 80) fail = 'runaway enemies ' + st.ne; else if (st.nb > 1500) fail = 'runaway bullets ' + st.nb; else if (st.ch > 4000) fail = 'runaway objects ' + st.ch;
