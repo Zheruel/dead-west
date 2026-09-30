@@ -8,11 +8,11 @@ export { shopPrice };
 export function tryBuy(scene, player, price, at) {
   if (player.coins >= price) {
     player.coins -= price;
-    bus.emit('shop:bought', { price });
+    bus.emit('shop:bought', { price, type: at && at.type ? at.type : 'item' });
     if (at) scene.fx.text(at.x, at.y - 60, `-${price}c`, { color: '#e8b83a' });
     return true;
   }
-  bus.emit('pickup:denied', { price });
+  bus.emit('pickup:denied', { price, type: at && at.type ? at.type : 'item' });
   if (at) scene.fx.text(at.x, at.y - 60, `NEED ${price}c`, { color: '#d63a2a', size: 22 });
   return false;
 }

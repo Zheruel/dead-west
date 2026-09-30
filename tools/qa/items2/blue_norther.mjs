@@ -8,12 +8,13 @@ export default {
       const I = window.__fei1, dw = window.__dw, p = dw.player, o = {};
       const { bus } = await import('/src/core/events.js');
       I.give('blue_norther'); o.chance = p.stats.chillChance;
-      I.prep(); p.stats.chillChance = 1;
+      I.prep(); p.crng.chance = () => true; // every roll succeeds (stats.chillChance is capped at 0.6 and a poked stat is lost on any recompute)
       const e = I.dummy(300, 0);
       I.shoot(1, 0); I.sim(1); o.c1 = e.status.chill && e.status.chill.stacks;
       I.shoot(1, 0); I.sim(1); o.c2 = e.status.chill && e.status.chill.stacks;
       I.shoot(1, 0); I.sim(1); o.frozen = !!e.status.frozen; o.stun = !!e.status.stun; o.chillCleared = !e.status.chill;
       const h0 = e.hp; e.takeHit(10, {}); o.frozenDmg = h0 - e.hp;
+      delete p.crng.chance;
       // shatter: kill a frozen foe with a bullet
       I.prep(); const k = I.dummy(300, 0, { hp: 4 });
       for (let i = 0; i < 3; i++) k.applyStatus('chill', { t: 3 });

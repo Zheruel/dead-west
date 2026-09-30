@@ -11,6 +11,7 @@ const SLIDE_MS = 380;
 const POCKET_ID = 'xroads';
 const POCKET_ENTRY = { x: 720, y: 790 }; // where the player appears in the crossroads pocket room (below the return portal at tile (6,5))
 const FADE_MS = 400;
+const IRIS_MS = 500; // ui/Transitions.js HudTransitions closes the trapdoor iris in 500 ms
 
 export default class RoomManager {
   constructor(scene) {
@@ -20,6 +21,7 @@ export default class RoomManager {
     this.room = null;
     this.currentId = null;
     this.mapVer = 0; // bumped whenever minimap-relevant data changes (visited rooms, revealed secrets, new floor)
+    this.revealed = new Set(); // room ids shown on the minimap without a visit (dowsing rod); cleared on every loadFloor
   }
   touchMap() { this.mapVer++; }
 
@@ -35,6 +37,7 @@ export default class RoomManager {
     this.floor = generateFloor(n, getSeed());
     this.floor.byId = Object.fromEntries(this.floor.rooms.map((r) => [r.id, r]));
     this.states = {}; // also drops the crossroads pocket state of the previous floor
+    this.revealed.clear();
     this.touchMap();
     s.floorNum = n;
     s.chapter = CHAPTER_OF(n);
@@ -196,7 +199,10 @@ export default class RoomManager {
   get inPocket() { return this.currentId === POCKET_ID; }
 
   // ------------------------------------------------------------------------------------------------ descend
-  /** Trapdoor: drop to the next floor. After the chapter-1 boss the interlude chain runs first (flow.js), then floor 4 loads. */
+  /**
+   * Trapdoor: drop to the next floor. Emits `trapdoor:descend {x, y}` (the HUD iris closes on the player and holds black until `floor:changed`); without a
+   * HUD scene the camera fades instead. After the chapter-1 boss the interlude chain runs first (flow.js), then floor 4 loads.
+   */
   descend() {
     const s = this.scene;
     if (s.transitioning) return;
@@ -204,9 +210,12 @@ export default class RoomManager {
     s.player.locked = true;
     Sfx.play('trapdoor');
     const cam = s.cameras.main;
+    bus.emit('trapdoor:descend', { x: s.player.x, y: s.player.y });
     s.tweens.add({ targets: s.player.sprite, scale: 0.2, alpha: 0, duration: 450 }); // the player drops into the hole
-    cam.fadeOut(600, 13, 8, 6);
-    cam.once('camerafadeoutcomplete', () => {
+    let went = false;
+    const go = () => {
+      if (went) return;
+      went = true;
       const from = s.floorNum;
       const n = Math.min(MAX_FLOOR, from + 1);
       s.player.sprite.setScale(1).setAlpha(1);
@@ -218,7 +227,9 @@ export default class RoomManager {
         flow.afterFloorIntro(s, { from, floor: n });
       };
       flow.beforeDescend(s, from, n, arrive);
-    });
+    };
+    if (s.scene.isActive('HUD')) s.time.delayedCall(IRIS_MS + 60, go); // the HUD iris is black by then
+    else { cam.fadeOut(600, 13, 8, 6); cam.once('camerafadeoutcomplete', go); }
   }
 
   // ------------------------------------------------------------------------------------------------ queries for HUD/debug
@@ -238,6 +249,20 @@ export default class RoomManager {
     }
     // fix up visited flag for rooms discovered earlier as neighbours
     for (const [id, v] of out) v.visited = !!(this.states[id] && this.states[id].visited);
+    for (const id of this.revealed) if (!out.has(id) && this.floor.byId[id]) out.set(id, { def: this.floor.byId[id], visited: false, dowsed: true });
     return out;
+  }
+
+  /** Show room(s) on the minimap without visiting them (id or ids). Returns how many were new. Secret rooms show without a connector until their door opens. */
+  reveal(ids) {
+    if (!this.floor) return 0;
+    let n = 0;
+    for (const id of Array.isArray(ids) ? ids : [ids]) if (this.floor.byId[id] && !this.revealed.has(id)) { this.revealed.add(id); n++; }
+    if (n) this.touchMap();
+    return n;
+  }
+  /** Reveal every room of the given types (e.g. ['shop', 'treasure', 'boss', 'secret']). */
+  revealKinds(kinds) {
+    return this.floor ? this.reveal(this.floor.rooms.filter((r) => kinds.includes(r.type)).map((r) => r.id)) : 0;
   }
 }

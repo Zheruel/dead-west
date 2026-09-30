@@ -242,15 +242,13 @@ export function installAudioDirector(g) {
   bus.on('pocket:left', () => restoreFloor(1200));
 
   bus.on('player:died', () => { Music.play('mus_death', { fade: 300 }); Ambience.stop(500); });
-  bus.on('run:ended', ({ variant }) => { Music.play(variant === 'complete' ? 'mus_victory' : 'mus_death', { fade: 300 }); Ambience.stop(500); });
+  bus.on('run:ended', ({ variant }) => { Music.play(variant === 'complete' || variant === 'contract' ? 'mus_victory' : 'mus_death', { fade: 300 }); Ambience.stop(500); });
   // Ol' Scratch fell: fade everything out; the ending scenes bring their own music, mus_victory only plays after the credits
   bus.on('game:ending', () => { ending = true; Music.stop(1000); Ambience.stop(1000); });
 
-  // quick_draw duel: the music dips while the duelists wait for DRAW (FE-V1 may emit duel:start / duel:end; until then the bell sounds are the cue)
+  // quick_draw duel: the music dips while the duelists wait for DRAW (QuickDraw emits duel:start at the bell and duel:end at DRAW)
   bus.on('duel:start', () => Music.level('duel', DUEL_LEVEL, 500));
   bus.on('duel:end', () => Music.level('duel', 1, 600));
-  Sfx.watch('duel_start', () => Music.level('duel', DUEL_LEVEL, 500));
-  Sfx.watch('duel_draw', () => Music.level('duel', 1, 500));
   bus.on('player:died', () => Music.level('duel', 1, 300));
 
   // active item finished charging -> low cylinder click

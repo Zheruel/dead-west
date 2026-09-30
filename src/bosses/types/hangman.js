@@ -30,7 +30,7 @@ class Hangman extends MiniBase {
     const s = this.scene, p = this.player, arms = this.p2 ? 3 : 2;
     this.setPose('windup');
     this.pulse(0.7);
-    Sfx.play('lasso_swish', { rate: 0.7 });
+    Sfx.play('chain_whirl');
     yield 0.7;
     this.setPose('attack');
     const dir = this.rng.sign(), start = this.rng.float(0, 360);
@@ -39,11 +39,11 @@ class Hangman extends MiniBase {
       { count: 24, stepDeg: 17 * dir, interval: TICK, startAngle: start, arms },
     );
     this.track(spin, 2.5);
-    Sfx.play('lasso_swish', { rate: 0.55, vol: 0.9 });
+    Sfx.play('chain_whirl', { rate: 0.8, vol: 0.9 });
     let whirl = 0;
     yield* this.hold(2.0, (e) => {
       this.moveToward(p.x, p.y, 60);
-      if (e >= whirl) { whirl += 0.5; Sfx.play('lasso_swish', { rate: 0.6, vol: 0.5 }); }
+      if (e >= whirl) { whirl += 0.5; Sfx.play('chain_whirl', { rate: 0.85, vol: 0.5 }); }
     });
     this.stop();
     this.setPose('move');

@@ -30,7 +30,12 @@ await ev(() => window.__dw.api.input(null));
 console.log('boss', JSON.stringify(await ev(() => { const b = window.__dw.scene.enemies.find((e) => e.isBoss); return b ? { hp: b.hp, max: b.maxHp, fear: !!b.status.fear, phase: b.phase } : null; })));
 // death -> restart
 const before = await ev(() => ({ fam: window.__dw.player.familiars.length, children: window.__dw.scene.children.list.length }));
-await ev(() => { window.__dw.api.godMode(false); window.__dw.player.roomShield = 0; window.__dw.player.shieldLeft = 0; window.__dw.player.items = window.__dw.player.items.filter((i) => i !== 'duster_coat'); window.__dw.player.recomputeStats(); window.__dw.api.die(); });
+await ev(() => { // strip everything that can stop a lethal hit (revives, halo, shields, dodge-style hurt cancels) so the death -> restart path is exercised for real
+  const dw = window.__dw, p = dw.player, SAVERS = new Set(['duster_coat', 'black_cat_bone', 'lazarus_pact', 'saints_halo']);
+  dw.api.godMode(false); p.items = p.items.filter((i) => !SAVERS.has(i)); p.reviveCharges = 0; p.haloLeft = 0; p.shieldLeft = 0; p.recomputeStats(); p.haloLeft = 0; p.shieldLeft = 0; p.hurtT = 0; p.entryInv = 0;
+  dw.api.die();
+  if (!p.dead) p.die({}); // a remaining `hurt` hook cancelled the hit: end the run directly
+});
 await g.wait(6000);
 console.log('after death scene', JSON.stringify(await ev(() => window.__game.scene.scenes.map((s) => s.scene.key + ':' + s.scene.isActive()).join(' '))));
 await g.tap('Enter', 80); await g.wait(800); await g.tap('KeyR', 80);

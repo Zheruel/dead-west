@@ -229,7 +229,7 @@ export default class CutsceneScene extends Phaser.Scene {
   // ------------------------------------------------------------------------------------------------ start / panels
   start() {
     const cs = this.cs;
-    if (cs.music && !cs.keepMusic) Music.play(cs.music, { fade: 600 });
+    if (cs.music && (!cs.keepMusic || !this.overlay)) Music.play(cs.music, { fade: 600 });
     this.tweens.add({ targets: [this.barT], y: LB / 2, duration: 450, ease: 'Cubic.easeOut' });
     this.tweens.add({ targets: [this.barB], y: H - LB / 2, duration: 450, ease: 'Cubic.easeOut' });
     this.grad.setVisible(true);
@@ -625,7 +625,7 @@ export default class CutsceneScene extends Phaser.Scene {
     this.handed = true;
     const n = this.sd.next || null;
     this.releaseGame();
-    if (!this.overlay && this.cs && !this.cs.keepMusic) { try { Music.play('mus_menu', { fade: 800 }); } catch (e) { /* */ } }
+    if (!this.overlay && this.cs) { try { Music.play('mus_menu', { fade: 800 }); } catch (e) { /* */ } }
     this.callDone(skipped);
     if (!this.overlay && n && n.scene) { // standalone: continue to the next scene
       try { this.scene.start(n.scene, n.data); } catch (e) { console.warn('[Cutscene] next scene failed', e); this.scene.start('Menu'); }

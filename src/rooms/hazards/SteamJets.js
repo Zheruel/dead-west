@@ -1,6 +1,6 @@
 // Steam pipes `T` (F5): a pipe on an outer-edge tile jets along its row / column inward, 5 tiles long, 88 px wide. 4.4 s cycle: idle 2.0 s ->
 // warn 0.9 s (white puffs, hiss) -> jet 1.5 s. No damage: everything inside is pushed along the jet (player 300 px/s via player.env.push, rolls ignore it;
-// ground enemies 200 px/s). Jets stay on in cleared rooms.
+// ground enemies 200 px/s). Jets stay on in cleared rooms. Boss rooms (f5_boss pipes) keep the pipes as decor only: the Engine fight is jet-free.
 import { TILE, COLS, ROWS, DEPTH, actorDepth } from '../../config.js';
 import { Assets } from '../../core/Assets.js';
 import { Sfx } from '../../core/Audio.js';
@@ -46,9 +46,11 @@ export class SteamField {
     this.room = hz.room;
     this.scene = hz.scene;
     this.jets = tiles.map((t) => new Jet(this, t));
+    this.decor = this.room.type === 'boss';
   }
 
   update(dt) {
+    if (this.decor) return;
     const s = this.scene, p = s.player, clock = this.hz.clock;
     const env = p ? envOf(s) : null;
     const dark = this.room.darkMask;

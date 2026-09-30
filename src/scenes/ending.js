@@ -14,6 +14,7 @@ import { bus } from '../core/events.js';
 import { Save } from '../core/Save.js';
 import { qs, flag } from '../core/util.js';
 import { CUTSCENE_IDS } from '../data/story/cutscenes.js';
+import { SCRATCH_BARKS } from '../data/story/bosslines.js';
 import CutsceneScene from './CutsceneScene.js';
 import CreditsScene from './CreditsScene.js';
 
@@ -111,7 +112,7 @@ export function trueFinale(scene) {
 
   const actor = scratchActor(scene);
   const page = makePage(scene);
-  const bark = FIX(scene.add.text(PAGE.x, 222, 'Nobody hurts a man who holds the paper!', { fontFamily: FONT_BODY, fontSize: '30px', color: '#e8dcc0', stroke: '#120c0a', strokeThickness: 6 }).setOrigin(0.5).setDepth(DEPTH.ui - 30).setAlpha(0));
+  const bark = FIX(scene.add.text(PAGE.x, 222, SCRATCH_BARKS.finale, { fontFamily: FONT_BODY, fontSize: '30px', color: '#e8dcc0', stroke: '#120c0a', strokeThickness: 6 }).setOrigin(0.5).setDepth(DEPTH.ui - 30).setAlpha(0));
   const six = FIX(scene.add.text(PAGE.x, 800, 'SIX.', { fontFamily: FONT_TITLE, fontSize: '110px', color: '#e8dcc0', stroke: '#120c0a', strokeThickness: 14 }).setOrigin(0.5).setDepth(DEPTH.ui - 30).setAlpha(0));
   const gold = FIX(scene.add.rectangle(W / 2, H / 2, W, H, 0xffd060, 0).setDepth(DEPTH.ui - 5));
   const white = FIX(scene.add.rectangle(W / 2, H / 2, W, H, 0xffffff, 0).setDepth(DEPTH.ui - 4));
@@ -178,6 +179,7 @@ export function trueFinale(scene) {
     torn = true;
     Sfx.play('contract_tear', { vol: 1, gap: 0 });
     Sfx.play('page_burn', { vol: 0.9, gap: 0 });
+    Sfx.play('piano_sting', { vol: 0.7, rate: 0.5, gap: 0 }); // the one held chord after the two seconds of nothing
     page.setVisible(false);
     for (const dir of [-1, 1]) { // two halves fly apart and burn out
       const h = FIX(scene.add.rectangle(PAGE.x + dir * 54, PAGE.y, 140, 358, 0xd9c39a).setDepth(DEPTH.fx + 40).setStrokeStyle(4, 0x3a2418));

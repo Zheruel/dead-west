@@ -5,6 +5,6 @@ registerItem({
   id: 'fan_the_hammer', name: 'Fan the Hammer', desc: 'Fire much faster, but shots stray', type: 'passive', pool: ['treasure', 'boss'],
   icon: { sheet: 'items_passive_c', name: 'fan_the_hammer' },
   tags: ['rapid', 'sixth'], tier: 3,
-  lore: "Speed over sense.",
+  lore: 'Speed is nothing without accuracy. Speed is still fun.',
   apply(player, { stats, count }) { stats.fireDelay *= 0.55; stats.inaccuracy = Math.max(stats.inaccuracy, 8 + (count - 1) * 2); },
 });

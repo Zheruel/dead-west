@@ -147,3 +147,9 @@ Keys: F1 next floor, F2 heal, F3 random passive, F4 +99 coins/keys/dynamite, F5 
 
 ## Round 2 (in progress)
 DEAD WEST v2 (floors 4-6, 3 new riders, 46 items, events, meta, story) is planned in `docs/v2/`: `ARCH_V2.md` (engineering, ids, ownership), `WORK_PLAN.md` (workflows and jobs), `ASSET_SPEC_V2.md`, `AUDIO_SPEC_V2.md`, plus the designer docs. This file describes round 1 until QA-7 replaces this section with the final file map.
+
+### Room / flow API notes (round 2)
+- Room: `controller(role)` (special-room controller), `banner(text, {color, hold})`, `onMiniDefeated(mini)` (champion reward), `onBossDefeated(boss)` (reward + trapdoor floors 1-5 + gate), `onExplosion(x, y, r, o)` (fire patches for player blasts that can hurt their owner; `o.fire === false` opts out), `onWallHit(x, y)` (brittle secret doors), `rings` (HoldRings ticked by Room), `combatAge` (s since lock), `capEnemy` (per-room enemy cap). Tile flags: `barrel`, `grave`, `pipe`, `bb` (bullet-blocking).
+- RoomManager: `reveal(ids)` / `revealKinds(kinds)` mark rooms as dowsed on the minimap (cleared on `loadFloor`); `descend()` emits `trapdoor:descend {x,y}` and waits for the HUD iris (`IRIS_MS`).
+- Boss: `boss:intro` payload `ms` is authoritative (boss 2900, Scratch 4600, mini 1500); `boss:intro:skip` releases the freeze. `boss:defeated {boss,id,floor,fightTime,noHit}`; one phase per `advancePhase` call; `brng` = seeded AI stream.
+- flow: `isContractGoal(scene)` / `endContract(scene, boss)` end a contract run at `run.maxFloor` with `run.goalReached` then `endRun('contract')`.

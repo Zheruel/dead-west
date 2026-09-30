@@ -13,7 +13,7 @@
 // Pure logic: everything except openGate/restoreGate (which need a live scene) runs in plain node (tools/qa/xroads-sim.mjs).
 import * as CFG from '../config.js';
 import { subRng } from '../core/rng.js';
-import { Boons, emit, sfx } from './Boons.js';
+import { Boons, emit, sfx, addPact } from './Boons.js';
 import { getItem } from '../items/registry.js';
 
 const X = () => CFG.VARIETY.xroads;
@@ -113,14 +113,15 @@ export const PACT_IDS = Object.keys(PACTS);
 export const PACT_NUM = { dollarCoins: 40, dollarKeys: 2, dollarDynamite: 2, hideTin: 6, aceHp: 6 };
 
 const has = (p, k) => !!(p && p[k] && p[k].length);
-const hasPact = (player, id) => !!(player.pacts && player.pacts.includes(id));
+/** ace_in_hole charge held right now (Player.reviveCharges; `aceCharges` is the pre-engine fallback name). */
+const aceHeld = (player) => !!(player && (player.reviveCharges > 0 || player.aceCharges > 0));
 
 /** Pact table for the R slot (D6 / EVENTS 2.4): absolution needs a curse (else its weight moves to iron_hide), ace_in_hole floors >= 2 and no charge held. */
 export function pactWeights(floor, player) {
   const w = {};
   for (const id of PACT_IDS) w[id] = floor >= PACTS[id].floors[0] ? PACTS[id].w : 0;
   if (!has(player, 'curses')) { w.iron_hide += w.absolution; w.absolution = 0; }
-  if (hasPact(player, 'ace_in_hole') || (player && player.aceCharges > 0)) { w.iron_hide += w.ace_in_hole; w.ace_in_hole = 0; }
+  if (aceHeld(player)) { w.iron_hide += w.ace_in_hole; w.ace_in_hole = 0; }
   return w;
 }
 
@@ -154,7 +155,7 @@ export function canAfford(player, offer) {
   if (c.dynamite && player.dynamite < c.dynamite) return `NEED ${c.dynamite} DYNAMITE`;
   if (c.tin && player.tin < c.tin) return 'NEED MORE TIN';
   if (offer.pact === 'absolution' && !has(player, 'curses')) return 'NO SINS TO WASH AWAY';
-  if (offer.pact === 'ace_in_hole' && (hasPact(player, 'ace_in_hole') || player.aceCharges > 0)) return 'ALREADY PROTECTED';
+  if (offer.pact === 'ace_in_hole' && aceHeld(player)) return 'ALREADY PROTECTED';
   return true;
 }
 
@@ -181,7 +182,7 @@ export function grantPact(player, id, rng) {
   const P = PACT_NUM;
   switch (id) {
     case 'glass_cannon':
-      (player.pacts || (player.pacts = [])).push('glass_cannon');
+      addPact(player, 'glass_cannon');
       if (player.recomputeStats) player.recomputeStats();
       return 'damage';
     case 'devils_dollar':
@@ -194,7 +195,7 @@ export function grantPact(player, id, rng) {
       return 'hide';
     case 'ace_in_hole':
       if (typeof player.grantRevive === 'function') player.grantRevive('ace_in_hole');
-      else { (player.pacts || (player.pacts = [])).push('ace_in_hole'); player.aceCharges = 1; }
+      else { addPact(player, 'ace_in_hole'); player.aceCharges = 1; }
       return 'ace';
     case 'absolution':
       Boons.removeCurse(player, rng);

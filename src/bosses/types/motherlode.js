@@ -73,7 +73,7 @@ class Motherlode extends MiniBase {
       pts.push(this.clampIn(p.x + Math.cos(a) * R, p.y + Math.sin(a) * R, 80));
     }
     for (const q of pts) {
-      this.zone(q.x, q.y, 70, { tell: 1.0, dmg: 1, kind: 'rock', fall: 'rock', fallDur: 0.4, sfx: 'bullet_hit_wall', burstColors: [0x8a7a68, 0xc8d0e0, 0xe8dcc0] });
+      this.zone(q.x, q.y, 70, { tell: 1.0, dmg: 1, kind: 'rock', fall: 'rock', fallDur: 0.4, sfx: 'rock_crumble', burstColors: [0x8a7a68, 0xc8d0e0, 0xe8dcc0] });
     }
     Sfx.play('explosion_2', { vol: 0.4, rate: 0.7 });
     if (p2) {

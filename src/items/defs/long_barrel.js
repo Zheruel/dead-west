@@ -4,6 +4,6 @@ registerItem({
   id: 'long_barrel', name: 'Long Barrel', desc: 'More range, faster bullets', type: 'passive', pool: ['treasure', 'shop', 'boss'],
   icon: { sheet: 'items_passive_a', name: 'long_barrel' },
   tags: ['ammo'], tier: 1,
-  lore: "Reach out and regret someone.",
+  lore: 'Reach out and touch someone, from a respectful distance.',
   apply(player, { stats }) { stats.range += 0.15; stats.shotSpeed += 120; },
 });

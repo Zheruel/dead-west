@@ -28,7 +28,8 @@ export async function install(ev) {
       prep(o = {}) {
         const d = dw(), p = d.player, sc = d.scene;
         d.api.killAll(); sc.bullets.player.clear(); sc.bullets.enemy.clear();
-        p.x = 500; p.y = 528; p.vx = p.vy = 0; p.rolling = false; p.hurtT = 0; p.entryInv = 0; p.spiritT = 0;
+        for (const dy of [...sc.dynamites]) dy.destroy(); sc.dynamites.length = 0; if (sc.room._hz && sc.room._hz.fires) sc.room._hz.fires.clear(); // a stray lit stick / fire patch from an earlier plugin would blast the parked player mid-test
+        p.x = 500; p.y = 528; p.vx = p.vy = 0; p.knock.x = p.knock.y = 0; p.rolling = false; p.hurtT = 0; p.entryInv = 0; p.spiritT = 0;
         if (sc._itemFx) sc._itemFx.clear(); sc.timeScale = 1; p.godMode = !!o.god; p.hp = p.maxHp; p.fireCd = 0; p.lastShotAt = -99; p._boomN = 0; p.cyl.pos = 0; p.forceSixth = 0;
         for (const pk of [...sc.room.pickups]) { pk.destroy && pk.destroy(); sc.room.removePickup(pk); }
         return true;

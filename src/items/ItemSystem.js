@@ -12,6 +12,7 @@ import { CTX, runHooks, hasHook } from './hooks.js';
 import { wouldComplete } from './synergies.js';
 import { ownedIds } from './tags.js';
 import { tierMult } from './baseStats.js';
+import { onRoomCleared, onFloorChanged } from './fx/synergyFx.js';
 import { bus } from '../core/events.js';
 import { Save } from '../core/Save.js';
 import { rng } from '../core/rng.js';
@@ -20,6 +21,7 @@ import { DEPTH } from '../config.js';
 
 const FALLBACK_ORDER = ['treasure', 'shop', 'boss', 'secret']; // never crossroads
 const BIAS_TAG = 1.15, BIAS_SYN = 1.3;
+const DOWSE_KINDS = ['shop', 'treasure', 'boss', 'secret']; // stats.dowse > 0 reveals these room icons on the minimap (unvisited)
 
 const unlocked = (id) => { try { return typeof Save.itemUnlocked === 'function' ? Save.itemUnlocked(id) !== false : true; } catch (e) { return true; } };
 
@@ -55,13 +57,25 @@ export default class ItemSystem {
     this.taken = new Set(); // ids rolled or picked this run
     this._hurt = false; // damage taken in the current room (roomClear `perfect`)
     bus.scoped(scene, 'player:hurt', () => { this._hurt = true; });
-    bus.scoped(scene, 'room:entered', (p) => { this._hurt = false; this._fire('roomEnter', p && p.room); });
+    bus.scoped(scene, 'player:stats', () => { if (scene.player && scene.player.stats.dowse > 0) this.syncMap(); }); // pickup / restore of a dowsing item on the current floor
+    bus.scoped(scene, 'room:entered', (p) => { this._hurt = false; this.syncMap(); this._fire('roomEnter', p && p.room); });
     bus.scoped(scene, 'room:wave', (p) => this._fire('wave', p && p.room, p && p.enemies));
-    bus.scoped(scene, 'room:cleared', (p) => this._fire('roomClear', p && p.room));
+    bus.scoped(scene, 'room:cleared', (p) => { try { onRoomCleared(scene); } catch (e) { console.error('[items] roomCleared fx', e); } this._fire('roomClear', p && p.room); });
     bus.scoped(scene, 'floor:changed', (p) => {
       const pl = scene.player;
+      this.syncMap();
+      try { onFloorChanged(scene, (p && p.floor) || scene.floorNum || 1); } catch (e) { console.error('[items] floor fx', e); }
       if (pl && hasHook(pl, 'floor')) { CTX.floor.floor = (p && p.floor) || scene.floorNum || 1; runHooks(pl, 'floor', CTX.floor); }
     });
+  }
+
+  /** stats.dowse (Dowsing Rod): shows every shop / treasure / boss / secret room on the minimap without visiting it (RoomManager.revealKinds; the reveal set is
+   *  cleared on every loadFloor, so this runs again on floor:changed / room:entered / pickup). Safe to call any time. */
+  syncMap() {
+    const sc = this.scene, m = sc.roomMgr, pl = sc.player;
+    if (!m || !pl || !(pl.stats.dowse > 0) || !m.revealKinds || !m.floor || this._dowseFloor === m.floor) return;
+    this._dowseFloor = m.floor; // once per built floor object (loadFloor clears the reveal set and makes a new one)
+    m.revealKinds(DOWSE_KINDS);
   }
 
   /** Fire a room hook through the shared ctx. */

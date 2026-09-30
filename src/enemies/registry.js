@@ -5,7 +5,7 @@
  * Design table (GAME_DESIGN.md, CHAPTER2 s3-s6, EVENTS s3.7/s5). hp is BASE hp (floor multiplier applied on spawn). r = body circle radius.
  * Optional fields: `weight` (random-fill weight, 0 = template/event only), `weights` (per-floor weight overrides, see `enemyWeight`), `flying`+`air` (hover height),
  * `ghost`, `tags` (`undead`, `fire`), `threat` (template budget cost, CHAPTER2 s6), `frame` (sprite frame px), `affixBan` (elite affixes it cannot roll,
- * EVENTS s5.2) and `noElite` (never becomes elite: adds, links, event fights).
+ * EVENTS s5.2) and `noElite` (never becomes elite: adds, links, event fights), `maxPerRoom` (wave-building cap, enforced by `spawnEnemy` / `capSubstitute`).
  */
 export const ENEMY_META = {
   // ---- chapter 1
@@ -36,7 +36,7 @@ export const ENEMY_META = {
 
   // ---- floor 5: Blood Rail (hpMult 2.9)
   handcar_bandit: { hp: 20, floors: [5], r: 34, speed: 180, laneSpeed: 260, weight: 2, threat: 2, frame: 160, affixBan: ['swift'] },
-  signalman: { hp: 14, floors: [5], r: 26, speed: 90, weight: 2, flying: true, air: 30, tags: ['undead'], threat: 2, frame: 128, affixBan: ['swift', 'armored', 'shielded'] },
+  signalman: { hp: 14, floors: [5], r: 26, speed: 90, weight: 2, flying: true, air: 30, tags: ['undead'], threat: 2, frame: 128, maxPerRoom: 2, affixBan: ['swift', 'armored', 'shielded', 'splitting'] },
   steam_stoker: { hp: 34, floors: [5], r: 42, speed: 65, weight: 1.5, threat: 3, frame: 160, affixBan: ['volatile'] },
   crate_mimic: { hp: 22, floors: [5], r: 34, speed: 0, hop: 400, weight: 1, threat: 2, frame: 128, affixBan: ['splitting', 'swift'] },
   rail_rat: { hp: 4, floors: [5], r: 16, speed: 290, weight: 3, threat: 0.5, frame: 64, affixBan: ['splitting', 'armored', 'shielded'] },
@@ -80,6 +80,25 @@ export function enemyWeight(id, floor) {
   const m = enemyMeta(id);
   if (!m) return 0;
   return (m.weights && m.weights[floor]) ?? m.weight ?? 1;
+}
+
+/**
+ * Wave-building cap (CHAPTER2 s4 #2: max 2 signalmen per room). `alive` = live enemies of the room (`scene.enemies`). Returns `id` when it may spawn,
+ * otherwise the heaviest random-fill enemy of `floor` that is not capped itself (deterministic, no rng draw).
+ */
+export function capSubstitute(id, alive, floor) {
+  const m = enemyMeta(id);
+  if (!m || !m.maxPerRoom) return id;
+  const count = (q) => { let n = 0; for (let i = 0; i < alive.length; i++) if (alive[i].id === q && alive[i].alive) n++; return n; };
+  if (count(id) < m.maxPerRoom) return id;
+  let best = null, bw = -1;
+  for (const q of enemyPool(floor)) {
+    const qm = enemyMeta(q);
+    if (q === id || !qm || qm.ambush || qm.maxPerRoom || !isImplemented(q)) continue;
+    const w = enemyWeight(q, floor);
+    if (w > bw) { bw = w; best = q; }
+  }
+  return best || id;
 }
 
 /** Ids that can appear as random fill on a floor (implemented or not). */

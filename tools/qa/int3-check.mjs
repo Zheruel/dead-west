@@ -1,0 +1,36 @@
+// INT-3 check: Pause BUILD tab, Codex REREAD + BIOS, CharSelect title:hell, contract poster. `node tools/qa/int3-check.mjs [query]`
+import { launch } from './harness.mjs';
+const g = await launch({ query: process.argv[2] || '?debug=1&seed=42&unlockall=1', name: 'int3' });
+const out = {};
+await g.startRun();
+await g.wait(800);
+await g.eval(() => window.__game.scene.getScene('Game').scene.launch('Pause'));
+await g.wait(600);
+await g.shot('int3-pause');
+await g.tap('Tab'); await g.wait(400);
+out.pauseBuild = await g.eval(() => { const p = window.__game.scene.getScene('Pause'); return { on: p.buildOn, has: !!p.build }; });
+await g.shot('int3-pause-build');
+await g.tap('Tab'); await g.wait(200);
+out.pauseBack = await g.eval(() => window.__game.scene.getScene('Pause').buildOn);
+// codex
+await g.eval(() => { const gm = window.__game; gm.scene.stop('Pause'); gm.scene.stop('HUD'); gm.scene.stop('Game'); gm.scene.start('Codex', { tab: 'lore' }); });
+await g.wait(800);
+await g.shot('int3-codex-lore');
+out.codex = await g.eval(() => { const c = window.__game.scene.getScene('Codex'); return { tab: c.tabId, n: c.entries.length, reread: c.entries.filter((e) => e.l && e.l.reread && e.stage >= 1).length }; });
+await g.eval(() => window.__game.scene.getScene('Codex').scene.restart({ tab: 'outlaws' }));
+await g.wait(700);
+await g.shot('int3-codex-outlaws');
+await g.eval(() => window.__game.scene.getScene('Codex').scene.restart({ tab: 'lore' }));
+await g.wait(700);
+await g.tap('Enter'); await g.wait(1500);
+out.reread = await g.eval(() => window.__game.scene.getScenes(true).map((s) => s.scene.key));
+await g.shot('int3-reread');
+await g.eval(() => window.__game.scene.start('CharSelect'));
+await g.wait(600);
+out.hell = [];
+await g.eval(() => { window.__hell = []; });
+await g.eval(() => window.__game.scene.getScene('CharSelect').setMode(1));
+await g.shot('int3-charselect-hell');
+console.log(JSON.stringify(out));
+console.log('errors', g.errors.length, g.errors.slice(0, 6));
+await g.close();

@@ -22,7 +22,7 @@ registerItem({
   id: 'lucky_deck', name: 'Lucky Deck', desc: 'Draw a card: coins, heart, key, dynamite or a damage boost.', type: 'active', charges: 3, pool: ['treasure', 'shop', 'secret'], weight: 0.7,
   icon: { sheet: 'items_active', name: 'lucky_deck' },
   tags: ['luck', 'gold'], tier: 2,
-  lore: "Fifty-two ways to lose. One to live.",
+  lore: 'Fifty-two cards, all marked. By whom is the question.',
   use(player, { scene }) {
     const options = CARDS.filter((c) => c.can(player));
     const card = rng.game.pick(options);

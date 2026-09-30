@@ -16,6 +16,7 @@ export const ITEM_BASE_V2 = {
   chillChance: 0, // [engine] chill status (3 stacks = frozen)
   smiteChance: 0, smiteRadius: 80, smiteMult: 2, // [engine] holy light on hit (0.4 s global cooldown)
   bulletFrame: '', // [engine] override sprite frame name (projectiles_v2)
+  dowse: 0, // [engine] > 0: minimap shows every shop / treasure / boss / secret room icon (ItemSystem.syncMap)
   // ---- status power ----
   burnVuln: 0, burnSpread: 0, burnDpsMult: 1, // [engine] burning foes take +N% / ignite neighbours on death (px) / burn dps multiplier
   poisonStackMax: 1, poisonCloud: 0, // [engine] poison stacks / toxic cloud radius on poisoned death

@@ -302,6 +302,7 @@ export default class Enemy extends Actor {
     dmg *= Affixes.onDamage(this, dmg, info); // armored / shielded (may absorb it entirely)
     this.hp -= dmg;
     if (!info.dot) {
+      if (dmg > 0) this.scene.fx.damageNumber(this.x, this.y - (this.hitRadius || 20) - 30, dmg, { crit: !!(info.sixth || info.deadEye) }); // settings.dmgNumbers
       this.flashT = 0.08;
       this.refreshTint();
       Sfx.play(this.isBoss ? 'boss_hit' : 'enemy_hit', { vol: 0.7, detune: (Math.random() - 0.5) * 300 });

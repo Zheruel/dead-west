@@ -12,20 +12,20 @@ let r = await ev(async () => {
   const dw = window.__dw, p = dw.player, f = p.familiars.find((x) => x.constructor.name === 'SpiritLantern');
   const e = dw.api.spawn('outlaw', f.x, f.y); e.contactDamage = 0; e.speed = 0; e.ai = () => {}; e.spawnT = 0;
   await new Promise((r) => setTimeout(r, 900));
-  const hp = e.hp;
+  const hp = e.hp, max = e.maxHp; // round-2 difficulty scaling: a floor-1 outlaw has 24 hp, so compare to the enemy's own max
   const b = dw.scene.bullets.enemy.fire({ x: f.x + 10, y: f.y, angle: 0, speed: 10, damage: 1 });
   await new Promise((r) => setTimeout(r, 300));
   const blocked = !b.active;
   e.hp = 0; e.die({});
-  return { hp, blocked };
+  return { hp, max, blocked };
 });
-ok('lantern damages enemy', r.hp < 16, JSON.stringify(r)); ok('lantern blocks bullet', r.blocked);
+ok('lantern damages enemy', r.hp < r.max, JSON.stringify(r)); ok('lantern blocks bullet', r.blocked);
 
 // crow
 await ev(() => { const dw = window.__dw; for (const f of [...dw.player.familiars]) f.destroy(); dw.scene.items.pickup(dw.player, 'crow_companion', 'debug'); const e = dw.api.spawn('outlaw', dw.player.x + 300, dw.player.y); e.contactDamage = 0; e.ai = () => {}; e.spawnT = 0; window.__crowTarget = e; });
-for (let i = 0; i < 25; i++) { await g.wait(1000); if (await ev(() => window.__crowTarget.hp < 16)) break; }
-r = await ev(() => ({ hp: window.__crowTarget.hp, alive: window.__crowTarget.alive, fam: window.__dw.player.familiars.length }));
-ok('crow damages enemy', r.hp < 16, JSON.stringify(r));
+for (let i = 0; i < 25; i++) { await g.wait(1000); if (await ev(() => window.__crowTarget.hp < window.__crowTarget.maxHp)) break; }
+r = await ev(() => ({ hp: window.__crowTarget.hp, max: window.__crowTarget.maxHp, alive: window.__crowTarget.alive, fam: window.__dw.player.familiars.length }));
+ok('crow damages enemy', r.hp < r.max, JSON.stringify(r));
 await ev(() => { window.__dw.api.killAll(); for (const f of [...window.__dw.player.familiars]) f.destroy(); });
 
 // silver bullets, statuses, dead eye
@@ -54,7 +54,7 @@ r = await ev(async () => {
   return out;
 });
 console.log(JSON.stringify(r));
-ok('silver x2 vs skeleton only', r.skelSilver === 2 * r.skelBase && r.outlawSilver === r.outlawBase);
+ok('silver x1.5 vs skeleton only (round 2: undeadDamageMult 1.5)', Math.abs(r.skelSilver - 1.5 * r.skelBase) < 1e-6 && r.outlawSilver === r.outlawBase);
 ok('status poison/burn/fear', ['poison', 'burn', 'fear'].every((k) => r.status.includes(k)));
 ok('dead eye x3 pierce then normal', r.deadEyeMult >= 3 && r.deadEyePierce >= 1 && r.secondMult < 3);
 

@@ -68,10 +68,11 @@ export default class Pickup extends Actor {
       }
     }
     this.sprite.setPosition(this.x, this.y - 14 - this.z - (this.settled ? Math.sin(this.age * 3 + this.x) * 2.5 : 0));
-    this.sprite.setDepth(DEPTH.pickups);
+    const fx = this.scene.fx;
+    this.sprite.setDepth(fx.lit(DEPTH.pickups)); // stays visible in darkness rooms
     this.shadow.setPosition(this.x, this.y + 12).setDepth(DEPTH.shadows);
     this.shadow.setScale(this.shadowScale * (1 - Math.min(0.5, this.z / 200)));
-    if (this.label) { this.label.setPosition(this.x, this.y + 40); this.refreshPrice(); }
+    if (this.label) { this.label.setPosition(this.x, this.y + 40).setDepth(fx.lit(DEPTH.pickups + 2)); this.refreshPrice(); }
     if (this.denyCd > 0) this.denyCd -= dt;
     // touch
     if (this.settled && this.age > 0.3 && p && !p.dead) {

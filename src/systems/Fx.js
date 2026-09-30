@@ -15,6 +15,7 @@ export default class Fx {
     this.emitters = new Map(); // burst emitter cache: config signature -> ParticleEmitter
     this.casings = []; // pooled shell casings (manual ballistic sprites)
     this.arcs = []; // pooled lightning arcs (Graphics)
+    this.nums = []; // pooled damage numbers (settings.dmgNumbers)
     this._mkStreak();
   }
 
@@ -165,7 +166,7 @@ export default class Fx {
     s.tweens.add({ targets: im, alpha: 0, duration: ms, onComplete: () => im.destroy() });
   }
   /** Per-frame simulation-time update (called from GameScene.update, so it respects hit-stop and slow-mo). */
-  update(dt) { this.updateCasings(dt); this._updateArcs(dt); }
+  update(dt) { this.updateCasings(dt); this._updateArcs(dt); this._updateNums(dt); }
 
   /** Code-drawn jagged lightning line (ITEMS 2.3 chain). Pooled Graphics, fades over `ms`. */
   arc(x1, y1, x2, y2, o = {}) {
@@ -201,6 +202,35 @@ export default class Fx {
       if (!a.on) continue;
       a.t += dt * 1000;
       if (a.t >= a.ms) { a.on = false; a.g.clear().setVisible(false); } else a.g.setAlpha(1 - a.t / a.ms);
+    }
+  }
+  /** Depth to draw a gameplay cue at: lifted above the LightMask (196) while the room is a darkness room (`room.darkMask`), otherwise unchanged. */
+  lit(depth) { const r = this.scene.room; return r && r.darkMask && depth < DEPTH.bullets + 2 ? DEPTH.bullets + 2 : depth; }
+  /** Damage number (settings.dmgNumbers, off by default). Pooled Text objects, simulation-time drift; o: {crit, color, heal}. */
+  damageNumber(x, y, amount, o = {}) {
+    if (!Save.settings().dmgNumbers) return null;
+    let n = null;
+    for (let i = 0; i < this.nums.length; i++) if (!this.nums[i].on && this.nums[i].t.scene) { n = this.nums[i]; break; }
+    if (!n) {
+      if (this.nums.length >= 24) return null;
+      const t = this.scene.add.text(0, 0, '', { fontFamily: FONT_BODY, fontSize: '20px', color: '#e8dcc0', stroke: '#120c0a', strokeThickness: 4 }).setOrigin(0.5).setDepth(DEPTH.fx + 21);
+      t.__noSnap = true;
+      n = { t, on: false, age: 0, life: 0.7, x: 0, y: 0, dx: 0 };
+      this.nums.push(n);
+    }
+    const v = Math.round(amount * 10) / 10;
+    n.t.setText(o.heal ? `+${v}` : `${v}`).setColor(o.color ?? (o.crit ? '#ffc040' : o.heal ? '#8fe08f' : '#f0e8d8')).setFontSize(o.crit ? 28 : 20).setAlpha(1).setVisible(true).setPosition(x, y);
+    n.on = true; n.age = 0; n.x = x; n.y = y; n.dx = ((this.nums.length * 37 + (v * 13)) % 21 - 10) * 1.4;
+    return n.t;
+  }
+  _updateNums(dt) {
+    for (let i = 0; i < this.nums.length; i++) {
+      const n = this.nums[i];
+      if (!n.on) continue;
+      n.age += dt;
+      if (n.age >= n.life) { n.on = false; n.t.setVisible(false); continue; }
+      const k = n.age / n.life;
+      n.t.setPosition(n.x + n.dx * n.age, n.y - 46 * (1 - (1 - k) * (1 - k))).setAlpha(k < 0.5 ? 1 : 2 - 2 * k);
     }
   }
   impact(x, y, angle = 0, scale = 1) { return this.play('fx_impact', x, y, { scale: 0.9 * scale, rotation: angle, fps: 26, depth: DEPTH.fx }); }
@@ -294,16 +324,21 @@ export default class Fx {
     return { destroy() { t.remove(); done(); } };
   }
 
+  /** Camera shake scaled by settings.shakeAmt (0 = off; the legacy `shake:false` boolean also disables it). */
   shake(intensity = 0.006, ms = 150) {
-    if (Save.settings().shake === false) return;
-    this.scene.cameras.main.shake(ms, intensity);
+    const st = Save.settings();
+    if (st.shake === false) return;
+    const k = st.shakeAmt == null ? 1 : Math.max(0, Math.min(1, st.shakeAmt));
+    if (k <= 0) return;
+    this.scene.cameras.main.shake(ms, intensity * k);
   }
   /** Freeze the simulation briefly (impact feel). */
   hitStop(ms = 40) {
     this.hitStopUntil = Math.max(this.hitStopUntil, performance.now() + ms);
   }
   get frozen() { return performance.now() < this.hitStopUntil; }
-  flash(color = 0xd63a2a, alpha = 0.5) { bus.emit('hud:flash', { color, alpha }); }
+  /** Screen flash (HUD vignette); honours settings.flash. Prefer this over emitting 'hud:flash' directly. */
+  flash(color = 0xd63a2a, alpha = 0.5) { if (Save.settings().flash === false) return; bus.emit('hud:flash', { color, alpha }); }
 
   /** Ambient floating dust motes over the room. */
   startMotes() {
@@ -334,5 +369,6 @@ export default class Fx {
     for (const em of this.emitters.values()) { try { em.killAll(); } catch (e) { /* */ } }
     for (const c of this.casings) if (c.on) { c.on = false; if (c.img.scene) c.img.setVisible(false).setActive(false); }
     for (const a of this.arcs) if (a.on) { a.on = false; if (a.g.scene) a.g.clear().setVisible(false); }
+    for (const n of this.nums) if (n.on) { n.on = false; if (n.t.scene) n.t.setVisible(false); }
   }
 }

@@ -6,13 +6,18 @@
 //   `yield <seconds>` waits (respects slow-mo/stun-free boss time); `yield () => cond` waits until cond() is true.
 // Phases: this.phases = [{ at: 0.5, name:'enrage', enter() {...} }] -> triggered when hp/maxHp <= at.
 // Poses: 'move' (= idle loop), 'windup' (atk frame 0), 'attack' (atk frame 1); atkFrame(i) picks any of the 4 atk frames.
+// `formKey` (default = id) picks the sheet pair `boss_<formKey>_idle/_atk` (Scratch swaps human -> true form). Attack picks use a seeded stream (`_brng`).
+// Death: `boss:defeated {boss, id, floor, fightTime, noHit}` (fight clock and hit counter are tracked here: `_fT`, `_hurts`).
 import Enemy from '../enemies/Enemy.js';
 import { spawnEnemy } from '../enemies/index.js';
 import { Assets } from '../core/Assets.js';
 import { Sfx } from '../core/Audio.js';
 import { Save } from '../core/Save.js';
 import { bus } from '../core/events.js';
+import { subRng } from '../core/rng.js';
 import { ROOM } from '../config.js';
+
+const PHASE_GAP = 1.6;
 
 export default class Boss extends Enemy {
   constructor(scene, x, y, opts = {}) {
@@ -20,7 +25,14 @@ export default class Boss extends Enemy {
     super(scene, x, y, { ...opts, meta, spriteKey: `boss_${opts.id}_idle` });
     this.isBoss = true;
     this.homeRoom = scene.room; // the room this boss lives in (guards delayed death callbacks after a debug jump)
+    this._fT = 0; // seconds of active fight (boss:defeated fightTime)
+    this._hurts = 0; // hits the player took during the fight (boss:defeated noHit)
+    this._phaseGap = 0; // spacing between two phase entries when one hit crossed several thresholds
+    this._offHurt = bus.scoped(scene, 'player:hurt', () => { if (this.active && !this.dying) this._hurts++; });
   }
+
+  /** Seeded stream for attack picks / delay jitter (never Math.random: fights are reproducible per seed). */
+  get brng() { return this._brng || (this._brng = subRng('bossai', this.id, this.floor)); }
 
   init(opts) {
     this.name = this.meta.name || this.id.toUpperCase();
@@ -57,15 +69,16 @@ export default class Boss extends Enemy {
     if (this.pose === p || !this.sprite) return;
     this.pose = p;
     if (p === 'move' || p === 'idle') {
-      const key = Assets.ensureAnim(this.scene, `boss_${this.id}_idle`, { start: 0, end: 3, fps: 6, name: 'idle' });
+      const key = Assets.ensureAnim(this.scene, `boss_${this.formKey ?? this.id}_idle`, { start: 0, end: 3, fps: 6, name: 'idle' });
       this.sprite.play(key, true);
     } else this.atkFrame(p === 'windup' ? 0 : p === 'attack' ? 1 : 2);
   }
   atkFrame(i) {
     this.pose = `atk${i}`;
     this.sprite.anims.stop();
-    Assets.tex(this.scene, `boss_${this.id}_atk`);
-    this.sprite.setTexture(`boss_${this.id}_atk`, i);
+    const k = `boss_${this.formKey ?? this.id}_atk`;
+    Assets.tex(this.scene, k);
+    this.sprite.setTexture(k, i);
   }
 
   // ------------------------------------------------------------------------------------------ intro / lifecycle
@@ -80,19 +93,29 @@ export default class Boss extends Enemy {
 
   onHit(dmg) {
     bus.emit('boss:hp', { hp: Math.max(0, this.hp), maxHp: this.maxHp, boss: this });
-    const frac = this.hp / this.maxHp;
-    while (this.phase < this.phases.length && frac <= this.phases[this.phase].at) {
-      const ph = this.phases[this.phase];
-      this.phase++;
-      bus.emit('boss:phase', { phase: this.phase, boss: this });
-      this.scene.fx.shake(0.01, 300);
-      if (ph.enter) ph.enter.call(this);
-    }
+    this.advancePhase();
+  }
+
+  /**
+   * Enter the next phase when hp crossed its threshold. One phase per call: a single hit that crosses two thresholds (debug hp jump) queues the
+   * second one `PHASE_GAP` s later (ai() retries), so the second roar never replaces the first one's summons.
+   */
+  advancePhase() {
+    if (this.dying || this.hp <= 0 || this.phase >= this.phases.length || this._phaseGap > 0) return;
+    const ph = this.phases[this.phase];
+    if (this.hp / this.maxHp > ph.at) return;
+    this.phase++;
+    this._phaseGap = PHASE_GAP;
+    bus.emit('boss:phase', { phase: this.phase, boss: this });
+    this.scene.fx.shake(0.01, 300);
+    if (ph.enter) ph.enter.call(this);
   }
 
   // ------------------------------------------------------------------------------------------ AI scheduler
   ai(dt) {
     if (!this.active || this.dying) { this.stop(); this.idleBob(dt); return; }
+    this._fT += dt;
+    if (this._phaseGap > 0) { this._phaseGap -= dt; if (this._phaseGap <= 0) this.advancePhase(); }
     this.idleBob(dt);
     if (this.gen) {
       if (typeof this.wait === 'function') { if (!this.wait()) return; this.wait = 0; }
@@ -119,7 +142,7 @@ export default class Boss extends Enemy {
     let pool = cands.filter((a) => a.name !== this.lastAttack);
     if (!pool.length) pool = cands;
     const total = pool.reduce((s, a) => s + a.weight, 0);
-    let r = Math.random() * total;
+    let r = this.brng.next() * total;
     let pick = pool[0];
     for (const a of pool) { r -= a.weight; if (r <= 0) { pick = a; break; } }
     this.lastAttack = pick.name;
@@ -151,7 +174,7 @@ export default class Boss extends Enemy {
   spawnAdds(id, n, { radius = 180, opts = {} } = {}) {
     const out = [];
     for (let i = 0; i < n; i++) {
-      const a = (i / n) * Math.PI * 2 + Math.random();
+      const a = (i / n) * Math.PI * 2 + this.brng.next();
       let x = this.x + Math.cos(a) * radius, y = this.y + Math.sin(a) * radius * 0.7;
       x = Math.max(ROOM.x + 60, Math.min(ROOM.right - 60, x));
       y = Math.max(ROOM.y + 60, Math.min(ROOM.bottom - 60, y));
@@ -209,8 +232,13 @@ export default class Boss extends Enemy {
     this.alive = false;
     this.destroy();
     bus.emit('enemy:died', { enemy: this, x: this.x, y: this.y, cursed: false, boss: true });
-    bus.emit('boss:defeated', { boss: this });
+    bus.emit('boss:defeated', { boss: this, id: this.id, floor: this.floor, fightTime: this._fT, noHit: this._hurts === 0 });
     if (s.run) s.run.bossesKilled++;
     s.onBossDefeated(this);
+  }
+
+  destroy() {
+    if (this._offHurt) { this._offHurt(); this._offHurt = null; }
+    super.destroy();
   }
 }

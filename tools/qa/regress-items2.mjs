@@ -1,5 +1,5 @@
 // REGRESSION (items round 2): engine seams for the new item system, in a private dev server.
-//   node tools/qa/regress-items2.mjs [--only <plugin id>] [?query]
+//   node tools/qa/regress-items2.mjs [--only <plugin id>[,<plugin id>...]] [?query]
 // Covers: hook dispatcher (all 19 hooks fire, hurt cancel), enemy statuses (chill x3 -> frozen, mark), tags and synergies (activate / lose / toast
 // once / quiet on restore), the cylinder axis 3..8 (Player + HUD), snapshot/restore round trip, tier/gate roll rules, HUNTED chip, the 3 FN-4 sample
 // defs, and a generic runtime pass over every registered NEW item (no console errors, finite stats, owned, banner, icon resolves).
@@ -11,7 +11,7 @@ import { boot, reporter, NEW_ITEMS } from './items2-lib.mjs';
 
 const args = process.argv.slice(2);
 const only = args.includes('--only') ? args[args.indexOf('--only') + 1] : null;
-const query = args.find((a) => a.startsWith('?')) || '?debug=1&seed=42';
+const query = args.find((a) => a.startsWith('?')) || '?debug=1&seed=42&unlockall=1'; // unlockall: every item gate open (the c2 / gated pools are part of the roll rules under test)
 const { ok, warn, r } = reporter();
 const g = await boot('items2', query);
 const ev = (fn, ...a) => g.eval(fn, ...a);
@@ -21,6 +21,7 @@ const errBase = () => g.errors.length;
 const reset = () => ev(() => {
   const dw = window.__dw, p = dw.player;
   dw.api.killAll(); for (const f of [...p.familiars]) f.destroy();
+  for (const dy of [...dw.scene.dynamites]) dy.destroy(); dw.scene.dynamites.length = 0; if (dw.scene.room._hz && dw.scene.room._hz.fires) dw.scene.room._hz.fires.clear(); // lit sticks / fire patches left by an earlier section would blast the next one
   p.restore({ items: [], active: null, hp: 99, tin: 0, coins: 0, keys: 0, dyn: 3 });
   p.godMode = true; p.hurtT = 0; p.entryInv = 0;
   window.__qa = { hooks: {}, syn: [], lost: [] };
@@ -153,7 +154,8 @@ out = await ev(async () => {
     p.cyl.pos = 0; p.forceSixth = 0;
     let sixths = 0, shots = n * 3;
     for (let i = 0; i < shots; i++) { p.lastShotAt = -99; p.fire({ x: 1, y: 0 }); const l = dw.scene.bullets.player.list; const b = l[l.length - 1]; if (b && b.sixth) sixths++; }
-    await new Promise((r) => setTimeout(r, 120));
+    // headless frame rate is low: wait for the HUD widget to catch up with the new chamber count (bounded)
+    for (let k = 0; k < 40 && cylW && cylW.slots && cylW.slots.filter((s) => s.visible).length !== n; k++) await new Promise((r) => setTimeout(r, 100));
     o.rows.push({ n, every: p.stats.sixthEvery, sixths, max: p.cylinder.max, slots: cylW && cylW.slots ? cylW.slots.filter((s) => s.visible).length : -1 });
   }
   p.restore({ items: [], hp: 99 });
@@ -205,11 +207,11 @@ await reset();
 out = await ev(async () => {
   const dw = window.__dw, p = dw.player, hud = window.__game.scene.getScene('HUD'), o = {};
   const hearts = hud.widgets.find((w) => w.constructor.name === 'Hearts');
+  const until = async (fn, ms = 6000) => { const t0 = performance.now(); while (performance.now() - t0 < ms && !fn()) await new Promise((r) => setTimeout(r, 100)); return !!fn(); }; // headless HUD updates lag under load: poll, never sleep
   p.addBuff('qa_hunt', (s) => { s.curseHunted = 1; }, Infinity); p.recomputeStats();
-  await new Promise((r) => setTimeout(r, 300));
-  o.hunted = hearts && hearts.hunted && hearts.hunted.visible;
-  p.removeBuff('qa_hunt'); await new Promise((r) => setTimeout(r, 300));
-  o.gone = hearts && hearts.hunted && !hearts.hunted.visible;
+  o.hunted = await until(() => hearts && hearts.hunted && hearts.hunted.visible);
+  p.removeBuff('qa_hunt');
+  o.gone = await until(() => hearts && hearts.hunted && !hearts.hunted.visible);
   return o;
 });
 ok('HUNTED chip shows with curseHunted and hides again', out.hunted && out.gone, JSON.stringify(out));
@@ -293,7 +295,7 @@ ok('every item at once: no NaN, bullets bounded (< 400)', all.finite && all.bull
 const dir = path.join(path.dirname(fileURLToPath(import.meta.url)), 'items2');
 for (const f of readdirSync(dir).filter((x) => x.endsWith('.mjs') && !x.startsWith('_')).sort()) {
   const mod = (await import(pathToFileURL(path.join(dir, f)).href)).default;
-  if (!mod || (only && mod.id !== only)) continue;
+  if (!mod || (only && !only.split(',').includes(mod.id))) continue;
   const e0 = errBase();
   try { await reset(); await mod.run({ g, ev, ok: (n, c, x) => ok(`${mod.id}: ${n}`, c, x), reset, warn }); }
   catch (e) { ok(`plugin ${mod.id}`, false, e.message); }

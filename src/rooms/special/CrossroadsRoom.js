@@ -160,7 +160,10 @@ export default class CrossroadsRoom extends Controller {
       this.dealer.say('refused', ctx);
     } else this.dealer.say('leaving', ctx);
     for (const r of this.rings) r.setVisible(false);
-    this.later(LEAVE_DELAY * 1000, () => gate.go());
+    this.later(LEAVE_DELAY * 1000, () => {
+      gate.go();
+      if (!gate.gone) { this.leaving = false; for (let i = 0; i < this.rings.length; i++) this.rings[i].setVisible(!this.state.offers[i].taken); } // refused (mid-transition): stay usable
+    });
   }
 
   // ---------------------------------------------------------------------------------------------------------- frame

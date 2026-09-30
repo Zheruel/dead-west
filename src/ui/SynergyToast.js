@@ -73,10 +73,10 @@ export default class SynergyToast {
     const c = hex(col);
     this.bg.clear().fillStyle(0x0d0806, 0.9).fillRoundedRect(-W / 2, -H / 2, W, H, 14).lineStyle(4, c, 1).strokeRoundedRect(-W / 2, -H / 2, W, H, 14)
       .lineStyle(2, c, 0.5).strokeRoundedRect(-W / 2 + 8, -H / 2 + 8, W - 16, H - 16, 10);
-    Sfx.play('item_get', { rate: 1.4 });
+    Sfx.play('synergy_chime'); // alias of item_get@1.4 (AudioAliases), own MIX row
     if (cap) Sfx.play('room_clear');
-    bus.emit('hud:flash', { color: cap ? 0xff8a40 : 0xf0c040, alpha: cap ? 0.3 : 0.15 });
     const g = this.g;
+    if (g && g.fx) g.fx.flash(cap ? 0xff8a40 : 0xf0c040, cap ? 0.3 : 0.15); // honours settings.flash
     if (g && g.player && g.fx) g.fx.ringPulse(g.player.x, g.player.y, c, cap ? 150 : 90, cap ? 600 : 420, 0.8);
     if (cap && g && g.slowMo) g.slowMo(0.3, 0.3);
     h.tweens.killTweensOf(this.c);

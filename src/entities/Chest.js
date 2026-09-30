@@ -2,7 +2,8 @@
 import { DEPTH, actorDepth } from '../config.js';
 import { Assets } from '../core/Assets.js';
 import { Sfx } from '../core/Audio.js';
-import { rng } from '../core/rng.js';
+import { rng, subRng } from '../core/rng.js';
+import { bus } from '../core/events.js';
 
 export default class Chest {
   constructor(scene, rec, room) {
@@ -32,16 +33,18 @@ export default class Chest {
       }
       p.keys--;
       Sfx.play('door_unlock');
+      bus.emit('key:used', { room: this.room.def && this.room.def.id, chest: true });
     }
     rec.opened = true;
     Sfx.play('coffin_open', { vol: 0.9, rate: 1.25 }); // creak + thump (wooden lid)
     this.sprite.setFrame(Assets.frame('pickups', 'chest_open'));
     this.scene.fx.burst(this.x, this.y - 10, { color: [0xffe090, 0xffffff], count: 16, speed: [80, 260] });
     const gold = rec.type === 'chest_gold';
+    bus.emit('chest:opened', { room: this.room.def && this.room.def.id, gold, free: !!rec.free, x: this.x, y: this.y }); // Meta chests counter / achievements
     const n = gold ? rng.game.int(3, 4) : rng.game.int(1, 3);
     for (let i = 0; i < n; i++) this.room.dropPickup(this.room.rollPickup(gold ? 1.5 : 0.5, true), this.x, this.y + 10);
     if (gold && rng.game.chance(0.2)) {
-      const id = this.scene.items.roll('treasure');
+      const id = this.scene.items.roll('treasure', subRng('item', (this.room.def && this.room.def.seed) ?? 0, 60 + (rec.slot | 0))); // D15: per-room seeded item roll
       if (id) this.room.spawnPedestal({ x: this.x, y: this.y + 110, itemId: id, price: null, group: null, taken: false });
     }
   }

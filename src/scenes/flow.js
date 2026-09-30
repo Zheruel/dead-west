@@ -1,18 +1,18 @@
 // Run flow across bosses, floors and chapters (ARCH_V2 s6). GameScene / RoomManager call in; every step has a fail-safe so a missing or
 // broken presentation module can never soft-lock the run.
 //
-//   onBossDefeated(scene, boss)          minis -> champion reward; floors 1-5 reward + trapdoor (F3 adds the CHAPTER I banner); scratch -> ending
+//   onBossDefeated(scene, boss)          minis -> champion reward; floors 1-5 reward + trapdoor (F3 adds the CHAPTER I banner); scratch -> ending;
+//                                        a contract run's goal boss (run.maxFloor) -> endContract (goalReached, run:ended variant 'contract')
 //   beforeDescend(scene, from, to, go)   trapdoor chain: F3 -> interlude card -> cutscene 'interlude_ch1'; F5 -> cutscene 'saloon_arrival'; then go()
 //   afterFloorIntro(scene, {from,floor}) chapter card (after the interlude), floor card, Hell's Welcome, checkpoint (F4-F6)
 //   playCutscene(scene, id, ctx, next)   overlay cutscene via the 'Cutscene' scene when it exists and the mode allows it, else next() at once
 //   trueFinale(scene)                    hook for the Sixth Bullet finale (ending.js); returns true when it took over
 //   endGame(scene, boss)                 game:ending (once) -> runEnding() from ending.js, else the chapter-complete poster + endRun('complete')
-import { MAX_FLOOR, INTERLUDE_AFTER, CHAPTER_OF, FLOORS, PLAYER, ROOM } from '../config.js';
+import { MAX_FLOOR, INTERLUDE_AFTER, CHAPTER_OF, FLOORS, PLAYER } from '../config.js';
 import { bossMeta, FINAL_BOSS } from '../bosses/registry.js';
 import { bus } from '../core/events.js';
 import { Save } from '../core/Save.js';
 import { Music, playMusicFor } from '../core/Audio.js';
-import Trapdoor from '../entities/Trapdoor.js';
 import { playBanner, playFinale } from './finale.js';
 
 // Optional modules from other jobs (absent in Foundation): resolved at build time, so a missing file is just an empty record.
@@ -50,11 +50,9 @@ export function onBossDefeated(scene, boss) {
   const meta = boss.meta || bossMeta(boss.id) || {};
   const room = scene.room;
   if (meta.mini) { onMiniDefeated(scene, boss, room); return; }
+  if (isContractGoal(scene)) { endContract(scene, boss); return; }
   if (meta.final || boss.id === FINAL_BOSS || scene.floorNum >= MAX_FLOOR) { endGame(scene, boss); return; }
-  if (room) {
-    room.onBossDefeated(boss); // reward pedestal, heart, crossroads gate roll (FN-5)
-    ensureTrapdoor(room);
-  }
+  if (room) room.onBossDefeated(boss); // reward pedestal(s), heart, trapdoor, crossroads gate roll (Room owns all of it)
   if (scene.floorNum === INTERLUDE_AFTER) playBanner(scene, 'CHAPTER I COMPLETE', 'Perdition County is quiet. For now.');
   scene.updateMusic({ fade: 1500 });
 }
@@ -72,20 +70,38 @@ function onMiniDefeated(scene, boss, room) {
   scene.updateMusic({ fade: 1200 });
 }
 
-/** Floors below MAX_FLOOR always get a trapdoor after the boss (older Room.onBossDefeated only made one for floors 1-2). */
-function ensureTrapdoor(room) {
-  if (room.floor >= MAX_FLOOR || room.state.trapdoor || room.trapdoor) return;
-  room.state.trapdoor = { x: ROOM.cx, y: ROOM.cy + 40 };
-  room.trapdoor = new Trapdoor(room.scene, room.state.trapdoor, room);
-  room.props.push(room.trapdoor);
-}
-
 // -------------------------------------------------------------------------------------------------------- endings
 /** Sixth Bullet finale hook: ending.js may export `trueFinale(scene)` and return true when it runs the finale (eligibility is its business). */
 export function trueFinale(scene) {
   const m = endingModule();
   if (!m || typeof m.trueFinale !== 'function') return false;
   try { return !!m.trueFinale(scene); } catch (e) { console.warn('[flow] trueFinale failed', e); return false; }
+}
+
+/** Contract run whose goal floor's boss (run.maxFloor, set by runSetup; 0 = none) just fell. */
+export function isContractGoal(scene) {
+  const run = scene.run;
+  return !!run && run.mode === 'contract' && run.maxFloor > 0 && scene.floorNum >= run.maxFloor;
+}
+
+/** Contract complete: goalReached first (Meta pays the bounty on run:ended), no story, a short poster, then endRun('contract'). */
+export function endContract(scene, boss) {
+  if (scene.endingStarted) return;
+  scene.endingStarted = true;
+  const run = scene.run, room = scene.room, p = scene.player;
+  if (room) { room.state.cleared = true; room.mode = 'done'; }
+  run.goalReached = true;
+  run.won = true;
+  run.roomsCleared++;
+  scene.cutscene = true;
+  scene.timeScale = 1;
+  p.vx = p.vy = 0;
+  p.setEntryInvuln(60);
+  p.syncVisual();
+  scene.bullets.clear();
+  const meta = (boss && boss.meta) || {};
+  playBanner(scene, 'CONTRACT FULFILLED', meta.name ? `${meta.name} is down. The board pays.` : 'The board pays.', { hold: 2400, dim: 0.5 });
+  scene.time.delayedCall(3200, () => scene.endRun('contract'));
 }
 
 export function endGame(scene, boss) {

@@ -5,6 +5,6 @@ registerItem({
   id: 'mezcal_worm', name: 'Mezcal Worm', desc: '+0.7 damage, +30 speed, but -1 heart container', type: 'passive', pool: ['treasure', 'boss', 'secret'],
   icon: { sheet: 'items_passive_c', name: 'mezcal_worm' },
   tags: ['blood', 'speed'], tier: 2,
-  lore: "Swallow it whole.",
+  lore: 'It tastes like courage and, a little, like regret.',
   apply(player, { stats }) { stats.damage += 0.7; stats.moveSpeed += 30; stats.maxHearts -= 1; },
 });

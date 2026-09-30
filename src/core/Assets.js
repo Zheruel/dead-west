@@ -45,6 +45,16 @@ export const SPEC = {
   boss_grimm_atk: strip(320, 320, 4),
   boss_undertaker_idle: strip(320, 320, 4),
   boss_undertaker_atk: strip(320, 320, 4),
+  // chapter 2 bosses (bottom anchor; the engine's locomotive charge sheet is 512 wide)
+  boss_toro_idle: strip(320, 320, 4),
+  boss_toro_atk: strip(320, 320, 4),
+  boss_engine_idle: strip(320, 320, 4),
+  boss_engine_atk: strip(320, 320, 4),
+  boss_engine_run: strip(512, 320, 4),
+  boss_scratch_idle: strip(320, 320, 4),
+  boss_scratch_atk: strip(320, 320, 4),
+  boss_scratch_true_idle: strip(320, 320, 4),
+  boss_scratch_true_atk: strip(320, 320, 4),
   doors: grid(192, 128, 3, 2, ['door_open', 'door_closed', 'door_treasure_open', 'door_treasure_locked', 'door_boss_open', 'door_boss_closed']),
   obst_f1: grid(96, 96, 4, 2, OBST, 'bottom'),
   obst_f2: grid(96, 96, 4, 2, OBST, 'bottom'),
@@ -65,6 +75,11 @@ export const SPEC = {
   fx_blood: grid(128, 128, 4, 1, ['blood_a', 'blood_b', 'blood_c', 'blood_d']),
   dynamite_placed: strip(64, 64, 3, 'bottom'),
   hud_icons: grid(64, 64, 5, 2, ['heart_full', 'heart_half', 'heart_empty', 'tin_full', 'tin_half', 'coin', 'key', 'dynamite', 'bullet_full', 'bullet_empty']),
+  // meta / UI sheets (Silhouette.metaIcon draws its own icons when this sheet is missing; the rows keep plain makeCell callers on named frames)
+  meta_icons: grid(96, 96, 4, 2, ['sermon_bible', 'hunters_ledger', 'gilded_pair', 'star_tin', 'star_silver', 'star_gold', 'padlock', 'rank_badge']),
+  ach_cat: grid(96, 96, 4, 2, ['combat', 'boss', 'ride', 'skill', 'economy', 'relic', 'rider', 'secret']),
+  icons_events: grid(96, 96, 4, 2, ['bless_steady', 'bless_grace', 'bless_iron', 'bless_fleet', 'curse_debt', 'curse_dark', 'curse_rot', 'curse_lead']),
+  npc_dealer: strip(160, 160, 6),
 };
 export const IMAGE_SPEC = {
   title_logo: [1024, 400],
@@ -75,6 +90,15 @@ export const IMAGE_SPEC = {
   portrait_grimm: [512, 512],
   portrait_undertaker: [512, 512],
   portrait_player: [512, 512],
+  portrait_preacher: [512, 512],
+  portrait_hunter: [512, 512],
+  portrait_queen: [512, 512],
+  portrait_toro: [512, 512],
+  portrait_engine: [512, 512],
+  portrait_scratch: [512, 512],
+  ui_charselect_bg: [1440, 960],
+  ui_codex_bg: [1440, 960],
+  img_interlude_ch2: [1440, 960],
   bg_shop: [1440, 864],
   bg_treasure: [1440, 864],
 };
@@ -294,6 +318,12 @@ function drawImagePlaceholder(scene, key, w, h) {
     ctx.fillStyle = g; ctx.beginPath(); ctx.roundRect(12, 12, w - 24, h - 24, 28); ctx.fill();
   } else if (key === 'ui_cursor') {
     ctx.strokeStyle = '#e8dcc0'; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(32, 32, 16, 0, 7); ctx.moveTo(32, 4); ctx.lineTo(32, 20); ctx.moveTo(32, 44); ctx.lineTo(32, 60); ctx.moveTo(4, 32); ctx.lineTo(20, 32); ctx.moveTo(44, 32); ctx.lineTo(60, 32); ctx.stroke();
+  } else if (/^ui_.*_bg$|^img_/.test(key)) { // full-screen menu / card art: a dark dusk gradient with a vignette
+    const g = ctx.createLinearGradient(0, 0, 0, h);
+    g.addColorStop(0, '#1a0c0a'); g.addColorStop(1, '#3a1a12');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
+    const v = ctx.createRadialGradient(w / 2, h / 2, h * 0.3, w / 2, h / 2, w * 0.7); v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, 'rgba(0,0,0,0.6)');
+    ctx.fillStyle = v; ctx.fillRect(0, 0, w, h);
   } else if (key.startsWith('portrait_')) {
     ctx.fillStyle = hashCol(key, 40, 35); ctx.beginPath(); ctx.arc(w / 2, h * 0.42, w * 0.26, 0, 7); ctx.fill();
     ctx.fillRect(w * 0.22, h * 0.6, w * 0.56, h * 0.4);

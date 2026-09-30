@@ -46,13 +46,15 @@ export default class Pedestal {
     this.icon = null;
     this.label = null;
     this.tag = scene.add.text(this.x, this.y - 130, '', { fontFamily: FONT_BODY, fontSize: '24px', color: '#f5e6b8', stroke: '#120c0a', strokeThickness: 6, align: 'center' }).setOrigin(0.5, 1).setDepth(DEPTH.pickups + 4).setAlpha(0);
+    // lore line (pedestal inspect, STORY_PRESENTATION s8): dim flavour text above the name while the player is close
+    this.lore = scene.add.text(this.x, this.y - 150, '', { fontFamily: FONT_BODY, fontSize: '17px', color: '#b8a888', stroke: '#120c0a', strokeThickness: 4, align: 'center', wordWrap: { width: 460 } }).setOrigin(0.5, 1).setDepth(DEPTH.pickups + 4).setAlpha(0);
     if (shop) {
       this.label = scene.add.text(this.x, this.y + 52, '', { fontFamily: FONT_BODY, fontSize: '26px', color: '#f0d060', stroke: '#120c0a', strokeThickness: 5 }).setOrigin(0.5).setDepth(DEPTH.pickups + 2);
     }
     this.refresh();
   }
 
-  get objs() { return [this.base, this.glow, this.ring, this.ring2, this.tag, this.icon, this.label, this.plate, ...this.chips].filter(Boolean); }
+  get objs() { return [this.base, this.glow, this.ring, this.ring2, this.tag, this.lore, this.icon, this.label, this.plate, ...this.chips].filter(Boolean); }
 
   /** The deal cost of this pedestal ({container,coins,keys,tin,dynamite}) or null. */
   get dealPay() {
@@ -84,6 +86,7 @@ export default class Pedestal {
     this.tag.setText(this.synergy && hintsOn() && nm ? 'SYNERGY!' : nm && rec.group != null ? `${nm}\n(TAKE ONE)` : nm);
     this.tag.setColor(this.synergy && hintsOn() ? '#ffd860' : '#f5e6b8');
     if (!this.icon) this.tag.setAlpha(0);
+    this.lore.setText(def && this.icon && def.lore ? def.lore : '').setAlpha(0);
     this.refreshChips(def && this.icon ? def : null);
     this.refreshPlate();
   }
@@ -140,6 +143,7 @@ export default class Pedestal {
       this.nameK += ((near ? 1 : 0) - this.nameK) * Math.min(1, dt * 8);
       const ty = this.y - ICON_Y - 50 - this.nameK * 8 + bob * 0.5;
       this.tag.setAlpha(this.nameK).setY(ty);
+      if (this.lore.text) this.lore.setAlpha(this.nameK * 0.85).setY(ty - this.tag.height - 4);
       const n = this.chipN;
       for (let i = 0; i < n; i++) this.chips[i].setPosition(this.x + (i - (n - 1) / 2) * 74, ty + 6).setAlpha(this.nameK * 0.95);
       if (near && !this.seen) { this.seen = true; this.markSeen(); }
@@ -179,7 +183,7 @@ export default class Pedestal {
       if (ok !== true) {
         this.denyCd = 1.2;
         s.fx.text(this.x, this.y - 60, ok === true ? '' : 'CANNOT PAY', { color: '#d63a2a', size: 22 });
-        bus.emit('pickup:denied', { id: rec.itemId });
+        bus.emit('pickup:denied', { type: 'item', id: rec.itemId, price: null });
         return;
       }
       s.items.pay(p, { id: def ? def.id : rec.itemId, deal: { pay } }, { emit: true });

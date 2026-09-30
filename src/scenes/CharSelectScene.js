@@ -5,6 +5,8 @@ import { W, H, FONT_TITLE, FONT_BODY, CSS } from '../config.js';
 import { Assets } from '../core/Assets.js';
 import { Sfx } from '../core/Audio.js';
 import { Save } from '../core/Save.js';
+import { bus } from '../core/events.js';
+import { UI } from '../data/story/text.js';
 import { Meta } from '../meta/index.js';
 import { nextRank } from '../meta/ranks.js';
 import { CHAR_ORDER, CHARACTERS, charDef } from '../data/characters.js';
@@ -134,7 +136,7 @@ export default class CharSelectScene extends Phaser.Scene {
       }
     };
     kb.on('keydown', this._key);
-    this.events.once('shutdown', () => { kb.off('keydown', this._key); this.bars.destroy(); });
+    this.events.once('shutdown', () => { kb.off('keydown', this._key); this.bars.destroy(); bus.emit('title:hell', { on: false }); });
     this.toasts = new AchievementToast(this, { hold: false });
 
     this.show(this.idx, true);
@@ -230,7 +232,9 @@ export default class CharSelectScene extends Phaser.Scene {
       m.c.setAlpha(m.lock ? 0.7 : 1).setScale(on ? 1.1 : 1);
       m.c.first.clear().fillStyle(on ? 0x3a1a12 : 0x1c130e, 0.95).fillRoundedRect(-m.c.w / 2, -m.c.h / 2, m.c.w, m.c.h, 8).lineStyle(on ? 4 : 2, on ? 0xf0a640 : 0x6b4423, 1).strokeRoundedRect(-m.c.w / 2, -m.c.h / 2, m.c.w, m.c.h, 8);
     });
-    this.modeHint.setText(this.mode ? 'Hell on Earth: tougher foes, 1.5x reward.' : '');
+    const mid = MODES[this.mode][0];
+    this.modeHint.setText(this.mode ? `${UI.modes[mid][1]}  1.5x reward.` : '');
+    bus.emit('title:hell', { on: mid === 'hell' });
   }
 
   deny(msg) {

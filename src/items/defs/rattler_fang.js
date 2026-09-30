@@ -5,6 +5,6 @@ registerItem({
   id: 'rattler_fang', name: 'Rattler Fang', desc: 'Bullets poison enemies', type: 'passive', pool: ['treasure', 'boss', 'secret'],
   icon: { sheet: 'items_passive_b', name: 'rattler_fang' },
   tags: ['poison'], tier: 2,
-  lore: "Still wet.",
+  lore: 'Still wet. Still angry. Points away from you, mostly.',
   apply(player, { stats }) { stats.poison += 3; },
 });

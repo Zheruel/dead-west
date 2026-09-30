@@ -1,5 +1,6 @@
-// The 26 named synergies (ITEMS_V2 s5). Pure data + pure evaluation (node-safe). Runtime hooks / activation callbacks live in
-// items/fx/synergyHooks.js (Phaser side) and are attached to these records at import time by items/index.js.
+// The 26 named synergies (ITEMS_V2 s5). Pure data + pure evaluation (node-safe). Stat effects are the `apply` functions below; effects that are not
+// stats (tin / jackpot room drops, avenging_angel's tin per floor, spectral_posse's free lantern) live in items/fx/synergyFx.js (Phaser side) and are
+// driven by ItemSystem (room:cleared, floor:changed) and Player (_syncSynergies / restore).
 //
 // Record: { id, name, kind:'pair'|'tag'|'capstone', req, desc, cue, apply(stats, player) [, hooks] [, onActivate/onLose] }
 //   req: { items?: [ids all owned], tags?: {tag: minCount}, anyTags?: {of: [tags], n}, syn?: [synergy ids all active] }   (all parts must hold)

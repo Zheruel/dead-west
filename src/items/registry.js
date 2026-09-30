@@ -1,5 +1,6 @@
 // Item registry (kept separate from index.js so def files can import it without circular-import TDZ problems). Pure (node-safe).
 import { isTag } from './tags.js';
+import { ITEM_LORE } from '../data/story/lore_items.js';
 
 const defs = new Map();
 
@@ -30,6 +31,7 @@ export function registerItem(def) {
     type: 'passive', pool: ['treasure'], weight: 1, tags: [], tier: 2, lore: '', gate: null, minFloor: 1, deal: null, hooks: {}, state: null, charOnly: null,
     ...def,
   };
+  if (ITEM_LORE[d.id]) d.lore = ITEM_LORE[d.id]; // the story table is authoritative for the 28 round-1 items (pedestal, codex, relics all read def.lore)
   const bad = d.tags.filter((t) => !isTag(t));
   if (bad.length) { console.error(`[items] ${d.id}: unknown tags ${bad.join(', ')} (dropped)`); d.tags = d.tags.filter((t) => isTag(t)); }
   defs.set(d.id, d);

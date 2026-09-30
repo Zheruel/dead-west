@@ -13,6 +13,8 @@ import { chip, itemIcon } from '../ui/Silhouette.js';
 import { getItem } from '../items/registry.js';
 import { MenuList, parchment, title, body, uiSfx, setOsCursor } from '../ui/UiKit.js';
 import OptionsPanel from '../ui/OptionsPanel.js';
+import { BuildPanel } from '../ui/Relics.js';
+import { UI } from '../data/story/text.js';
 
 export default class PauseScene extends Phaser.Scene {
   constructor() { super('Pause'); }
@@ -36,23 +38,57 @@ export default class PauseScene extends Phaser.Scene {
     this.meta = this.runInfo(g, cx, top + 204);
     this.opt = new OptionsPanel(this, { cx, cy, inRun: true, onBack: () => this.showMain(true) });
     this.list = new MenuList(this, [
-      { label: 'RESUME', act: () => this.resume() },
-      { label: 'OPTIONS', act: () => { this.showMain(false); this.opt.open(); } },
-      { label: () => (this.confirm ? 'REALLY QUIT?  ENTER' : 'QUIT TO MENU'), act: () => this.quitPress() },
+      { label: UI.pause[0], act: () => this.resume() },
+      { label: UI.pause[1], act: () => { this.showMain(false); this.opt.open(); } },
+      { label: () => (this.confirm ? 'FOLD IT?  ENTER' : UI.pause[2]), act: () => this.quitPress() },
     ], { x: cx, y: top + 288, gap: 70, size: 44, hitW: 600 });
-    this.hint = this.add.text(cx, top + this.panel.displayHeight - 82, 'W / S  choose     ENTER  select     ESC  resume', body(20, CSS.sand)).setOrigin(0.5);
+    this.hint = this.add.text(cx, top + this.panel.displayHeight - 82, 'W / S  choose     ENTER  select     TAB  build     ESC  resume', body(20, CSS.sand)).setOrigin(0.5);
     this.relics(g);
+    this.foldTip = this.add.text(cx, top + 252, '', body(18, '#d8a070', { strokeThickness: 3 })).setOrigin(0.5);
+    this.buildOn = false;
 
     const kb = this.input.keyboard;
-    const esc = () => { if (this.opt.isOpen || this.opt.recentlyClosed() || !this.list.live()) return; this.resume(); };
+    const esc = () => {
+      if (this.buildOn) { this.toggleBuild(false); return; }
+      if (this.opt.isOpen || this.opt.recentlyClosed() || !this.list.live()) return;
+      this.resume();
+    };
     kb.on('keydown-ESC', esc);
     kb.on('keydown-P', esc);
+    kb.on('keydown-TAB', (e) => { if (e && e.preventDefault) e.preventDefault(); if (this.opt.isOpen) return; this.toggleBuild(!this.buildOn); });
+    this.tabBtn = this.add.text(cx + 440, top + 40, 'BUILD [TAB]', body(18, CSS.amber, { strokeThickness: 3 })).setOrigin(1, 0.5).setInteractive({ useHandCursor: true });
+    this.tabBtn.on('pointerdown', () => { if (!this.opt.isOpen) this.toggleBuild(!this.buildOn); });
+    this.buildTop = top;
+  }
+
+  /** BUILD view: relics with tags plus active synergies, replacing the main widgets until TAB / ESC. */
+  toggleBuild(on) {
+    if (on === this.buildOn) return;
+    const g = this.scene.get('Game');
+    const p = g && g.player;
+    if (on && !p) return;
+    this.buildOn = on;
+    uiSfx.back();
+    this.showMain(!on);
+    this.tabBtn.setVisible(true).setText(on ? 'BACK [TAB]' : 'BUILD [TAB]');
+    if (on) {
+      const cx = W / 2;
+      this.panel.setVisible(true);
+      this.buildHead = this.add.text(cx, this.buildTop + 90, 'YOUR BUILD', title(56)).setOrigin(0.5);
+      this.build = new BuildPanel(this, cx - 440, this.buildTop + 150, 880);
+      try { this.build.refresh(p); } catch (e) { console.warn('[Pause] build panel failed', e); }
+    } else {
+      if (this.build) { this.build.destroy(); this.build = null; }
+      if (this.buildHead) { this.buildHead.destroy(); this.buildHead = null; }
+    }
   }
 
   /** Show / hide the main pause widgets (hidden while the options modal replaces them). */
   showMain(on) {
     for (const o of [this.head, this.sum, this.hint, ...this.meta]) o.setVisible(on);
     this.panel.setVisible(on);
+    if (this.tabBtn) this.tabBtn.setVisible(on);
+    if (this.foldTip) this.foldTip.setVisible(on);
     this.list.setVisible(on);
     if (on) { this.list.setEnabled(true); this.list.refresh(); }
     else this.list.setEnabled(false);
@@ -107,7 +143,8 @@ export default class PauseScene extends Phaser.Scene {
   quitPress() {
     if (!this.confirm) {
       this.confirm = true;
-      this.time.delayedCall(2600, () => { this.confirm = false; if (this.list) this.list.refresh(); });
+      this.foldTip.setText(UI.foldConfirm);
+      this.time.delayedCall(2600, () => { this.confirm = false; if (this.foldTip) this.foldTip.setText(''); if (this.list) this.list.refresh(); });
       return;
     }
     this.quit();

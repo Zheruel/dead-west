@@ -26,7 +26,9 @@
 //   'room:transition'   {from, to, dir}                                 slide started
 //   'floor:changed'     {floor, name, chapter}                          [RoomManager] new floor built
 //   'floor:intro'       {floor, name, subtitle}                         floor card
-//   'chapter:intro'     {chapter, title, tagline}                       [flow] chapter card (F1 start / after the interlude)
+//   'chapter:intro'     {chapter, name, tagline, ms}                    [flow] chapter card (F1 start / after the interlude)
+//   'interlude:show'    {..INTERLUDE, ms, skipAfter} / 'interlude:done' {}   [flow] / [Cards] F3->F4 text card
+//   'trapdoor:descend'  {x,y}                                           [RoomManager] player fell through the trapdoor (HUD iris closes on it; held until floor:changed)
 //   'checkpoint:saved'  {floor}                                         [flow] after the F4-F6 fade-in
 //   'pocket:entered' / 'pocket:left'  {id}                              [RoomManager] crossroads pocket room
 //   'gate:opened'       {floor}                                         [Crossroads] hell gate appeared after a boss
@@ -38,7 +40,9 @@
 //   'secret:found' {variant} / 'secret:hint' {tell} / 'supersecret:entered' {}
 //   'mark:collected' 'item:seen' 'chest:opened' 'key:used'              [WantedMark, Pedestal/Shop, Chest, Door]
 // -- bosses / run flow
-//   'boss:intro'        {boss, name, title, portrait, mini?, bounty?}  HUD shows intro card (mini: compact WANTED card)
+//   'boss:intro'        {boss, name, title, portrait, mini?, slam?, ms}  HUD shows intro card (mini: compact WANTED card); ms is always set by
+//                                                                       GameScene (boss 2900 / Scratch 4600 / mini 1500) and is when the fight starts
+//   'boss:intro:skip'   {}                                              [Cards] player skipped the card: GameScene releases the cutscene early
 //   'boss:spawned'      {boss, name, hp, maxHp}
 //   'boss:hp'           {hp, maxHp}
 //   'boss:phase'        {phase, boss, id}                               [Boss] audio stems + cards
@@ -58,7 +62,8 @@
 //   'hud:flash'         {color, alpha}                                  screen flash (HUD vignette)
 //   'ui:toast'          {text, color}
 // -- meta (Meta engine, FN-3)
-//   'meta:unlocked' 'meta:achievement' 'meta:rank' 'codex:discovered' 'bounty:completed' 'daily:finished'
+//   'meta:unlocked' {id,kind} 'meta:achievement' {id} 'meta:rank' {rank} 'codex:discovered' {kind,id} 'bounty:completed' {id} 'daily:finished' {..}
+//   End payload gains `ledger` {summary, char, mode, mutators, daily, contract, hell, enabled} (GameScene.finishRun via SETUP)
 //
 // Removed / aliased names (do NOT emit): crossroads:deal, crossroads:refused, event:resolved, miniboss:defeated, curse:changed.
 //

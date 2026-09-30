@@ -1,11 +1,5 @@
-// Engine No. 666 art helpers: placeholder specs for the three boss sheets (the static SPEC table has no rows for the chapter-2 bosses yet) and a
-// code-drawn side-view locomotive for `boss_engine_run` when that sheet is missing (?noassets=1, ?dropassets=N). Real art always wins.
-import { Assets, SPEC } from '../../core/Assets.js';
-
-const strip = (fw, fh, n) => ({ fw, fh, cols: n, n, a: 'bottom' });
-if (!SPEC.boss_engine_idle) SPEC.boss_engine_idle = strip(320, 320, 4);
-if (!SPEC.boss_engine_atk) SPEC.boss_engine_atk = strip(320, 320, 4);
-if (!SPEC.boss_engine_run) SPEC.boss_engine_run = strip(512, 320, 4);
+// Engine No. 666 art helpers: a code-drawn side-view locomotive for `boss_engine_run` when that sheet is missing (?noassets=1, ?dropassets=N). Real art always wins.
+import { Assets } from '../../core/Assets.js';
 
 const PH_KEY = 'engine_run_ph';
 

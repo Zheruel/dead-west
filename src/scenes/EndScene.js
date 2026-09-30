@@ -72,12 +72,12 @@ export default class EndScene extends Phaser.Scene {
     const ink = INK, red = '#6a1410';
     const h1 = T(cx, 176, variant === 'complete' ? WIN_POSTER.h1 : variant === 'contract' ? 'CONTRACT' : 'WANTED', title(won ? 96 : 116, '#2a1810', { stroke: '#c9a56a', strokeThickness: 3 }));
     h1.setShadow(3, 4, '#00000055', 0, false, true);
-    const h2 = T(cx, 250, variant === 'complete' ? WIN_POSTER.h2 : variant === 'contract' ? '-  PAID  IN  FULL  -' : '-  DEAD  OR  ALIVE  -', inkText(38, red, { fontStyle: 'bold' }));
+    const h2 = T(cx, 250, variant === 'complete' ? WIN_POSTER.h2 : variant === 'contract' ? (sum && sum.contract && sum.contract.completed === false ? '-  TERMS  NOT  MET  -' : '-  PAID  IN  FULL  -') : '-  DEAD  OR  ALIVE  -', inkText(38, red, { fontStyle: 'bold' }));
     const rule = this.add.graphics(); rule.lineStyle(3, 0x2a1810, 0.85).lineBetween(cx - 470, 284, cx + 470, 284).lineStyle(1, 0x2a1810, 0.7).lineBetween(cx - 470, 290, cx + 470, 290);
     poster.add(rule);
     const ending = this.data0.ending || run.ending || null;
     if (won) {
-      const sub = variant === 'contract' ? 'The board pays out. The Devil still keeps the change.' : (WIN_POSTER.sub[ending === 'true' ? 'true' : 'a']);
+      const sub = variant === 'contract' ? (sum && sum.contract && sum.contract.completed === false ? 'The boss is down. The fine print says otherwise.' : 'The board pays out. The Devil still keeps the change.') : (WIN_POSTER.sub[ending === 'true' ? 'true' : 'a']);
       T(cx, 322, sub, inkText(27, ink, { fontStyle: 'italic' }));
     } else {
       if (this.mode === 'hell') T(cx, 306, UI.hellDead, inkText(21, red, { fontStyle: 'bold' }));

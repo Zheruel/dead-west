@@ -18,12 +18,14 @@ import Pedestal from '../entities/Pedestal.js';
 import Chest from '../entities/Chest.js';
 import Trapdoor from '../entities/Trapdoor.js';
 import { spawnEnemy, enemyPool, enemyMeta } from '../enemies/index.js';
+import { enemyWeight } from '../enemies/registry.js';
 import { spawnBoss } from '../bosses/index.js';
 import { getItem } from '../items/registry.js';
 import { runHooks, CTX } from '../items/hooks.js';
 import { explode } from '../systems/Explosions.js';
 import { Affixes } from '../enemies/Affixes.js';
 import { Crossroads } from '../systems/Crossroads.js';
+import { itemShopPrice, heartShopPrice } from '../entities/Shop.js';
 import { Boons } from '../systems/Boons.js';
 import { Hazards } from './hazards/index.js';
 import { Modifiers } from './special/modifiers/index.js';
@@ -343,14 +345,17 @@ export default class Room {
         const P = { ...SHOP_BASE, ...(RW.shop || {}) };
         const slots = tpl.slots.H;
         const item = roll('shop', 0);
+        const hp = (t) => (t.startsWith('heart') ? heartShopPrice(P[t], this.scene.diff) : P[t]); // Hell: +1 on red hearts (Shop.js)
+        const range = item && getItem(item) && getItem(item).type === 'active' ? P.active : P.passive;
+        const rp = r.int(range[0], range[1]); // always drawn: keeps the room stream (and every later roll) identical to before the tier prices
         if (item) {
-          const range = getItem(item) && getItem(item).type === 'active' ? P.active : P.passive;
-          st.pedestals.push({ ...tileToWorld(slots[0].c, slots[0].r), itemId: item, price: r.int(range[0], range[1]), group: null, taken: false });
-        } else { const t = r.pick(['heart_full', 'key', 'dynamite', 'heart_tin']); st.pickups.push({ type: t, ...tileToWorld(slots[0].c, slots[0].r), price: P[t] }); } // item pool exhausted
+          const def0 = getItem(item);
+          st.pedestals.push({ ...tileToWorld(slots[0].c, slots[0].r), itemId: item, price: def0 ? itemShopPrice(def0, this.floor) : rp, group: null, taken: false }); // tier price (T1 10 / T2 13 / T3 16, +2 active, +3 on F4-6)
+        } else { const t = r.pick(['heart_full', 'key', 'dynamite', 'heart_tin']); st.pickups.push({ type: t, ...tileToWorld(slots[0].c, slots[0].r), price: hp(t) }); } // item pool exhausted
         const kind2 = r.chance(0.7) ? 'heart_full' : 'heart_tin';
-        st.pickups.push({ type: kind2, ...tileToWorld(slots[1].c, slots[1].r), price: P[kind2] });
+        st.pickups.push({ type: kind2, ...tileToWorld(slots[1].c, slots[1].r), price: hp(kind2) });
         const kind3 = r.pick(['key', 'dynamite', 'key', 'dynamite', 'heart_half']);
-        st.pickups.push({ type: kind3, ...tileToWorld(slots[2].c, slots[2].r), price: P[kind3] });
+        st.pickups.push({ type: kind3, ...tileToWorld(slots[2].c, slots[2].r), price: hp(kind3) });
       } else if (this.type === 'secret' && (!def.variant || def.variant === 'stash')) {
         for (const p of tpl.slots.C) {
           const w = tileToWorld(p.c, p.r);
@@ -414,7 +419,7 @@ export default class Room {
   eachController(name, arg) {
     for (let i = 0; i < this.controllers.length; i++) {
       const c = this.controllers[i];
-      if (c.failed) continue;
+      if (c.failed || typeof c[name] !== 'function') continue;
       try { c[name](arg); } catch (e) { c.failed = true; console.error(`[Room] ${c.role} controller ${name} failed`, e); }
     }
   }
@@ -442,7 +447,7 @@ export default class Room {
     const tpl = this.tpl;
     const r = new RNG(this.def.seed ^ 0x51ed);
     const pool = enemyPool(this.floor);
-    const pickFrom = (rr) => (pool.length ? rr.weighted(pool.map((id) => ({ id, w: (enemyMeta(id) || {}).weight ?? 1 })), (o) => o.w).id : 'outlaw');
+    const pickFrom = (rr) => (pool.length ? rr.weighted(pool.map((id) => ({ id, w: enemyWeight(id, this.floor) })), (o) => o.w).id : 'outlaw');
     const pick = () => pickFrom(r);
     if (this.type === 'boss' || this.type === 'champion') {
       this.waves = [];
@@ -471,8 +476,18 @@ export default class Room {
     const diff = this.scene.diff;
     if (diff && diff.extraEnemy > 0) this.addExtraEnemies(waves, new RNG(this.def.seed ^ 0xD1FF), diff.extraEnemy, pickFrom);
     if (!waves.length) this.state.cleared = true;
-    else this.rollElites(waves);
+    else { this.capEnemy(waves, pool, 'signalman', 2); this.rollElites(waves); }
     this.waves = waves;
+  }
+  /** Per-room cap for one enemy id (CHAPTER2 s4: signalman <= 2): surplus records are re-picked from the floor pool without it, own rng stream. */
+  capEnemy(waves, pool, id, max) {
+    let n = 0, xr = null;
+    const rest = pool.filter((p) => p !== id);
+    for (const w of waves) for (const rec of w) {
+      if (rec.id !== id || ++n <= max) continue;
+      xr = xr || new RNG(this.def.seed ^ 0x5163);
+      rec.id = rest.length ? xr.pick(rest) : 'outlaw';
+    }
   }
 
   /** One extra enemy per wave with probability `p`, on a random free floor tile (safeSpawns still keeps it away from the player). */
@@ -556,7 +571,14 @@ export default class Room {
     this.waveEnemies = spawned;
     let left = wave.length;
     for (const w of wave) {
-      this.scene.fx.spawn(w.x, w.y, Math.max(0.8, (enemyMeta(w.id)?.r ?? 30) / 34));
+      const meta = enemyMeta(w.id);
+      if (meta && meta.ambush) { // disguised ambushers (crate_mimic): no spawn puff / telegraph, they simply are there
+        const e = spawnEnemy(this.scene, w.id, w.x, w.y, { cursed: !!w.cursed, affixes: w.affixes, floor: this.floor, instant: true });
+        if (e) spawned.push(e);
+        if (--left === 0) { bus.emit('room:wave', { room: this, enemies: spawned }); this.hookRoom('wave'); }
+        continue;
+      }
+      this.scene.fx.spawn(w.x, w.y, Math.max(0.8, (meta?.r ?? 30) / 34));
       bus.emit('spawn:telegraph', { x: w.x, y: w.y });
       this.pending++;
       this.scene.time.delayedCall(560, () => {
@@ -827,8 +849,9 @@ export default class Room {
   onExplosion(x, y, radius, o = {}) {
     const src = o.source;
     const so = src && src.o;
-    const playerBlast = o.fire === true || (so && !so.from && so.hurtEnemies !== false && src.fuse !== undefined);
-    if (o.fire === false || !playerBlast) return;
+    // any player-owned stick whose blast can hurt its owner (placed dynamite, lit_cigar throws); the Dynamite Crate ring (hurtPlayer:false) stays clean
+    const playerBlast = o.fire === true || (so && so.owner === 'player' && so.hurtPlayer !== false && so.hurtEnemies !== false && src.fuse !== undefined);
+    if (o.fire === false || o.noFire || !playerBlast) return;
     this.ignite(x, y, { r: 44, life: 3.5, count: 4, spread: radius * 0.8 });
   }
 

@@ -63,12 +63,12 @@ export default class Minimap {
       const r = v.def;
       const x = px(r), y = py(r);
       const cur = id === m.currentId;
-      let fill = v.visited ? 0xc9ac78 : 0x7a6244;
+      let fill = v.visited ? 0xc9ac78 : v.dowsed ? 0x5c4a34 : 0x7a6244; // dowsed = revealed by the rod, never visited: dim
       if (v.visited && r.type === 'boss') fill = 0xa8483c;
       if (cur) { fill = 0xf5e6b8; this.curPos = { x, y }; }
       gfx.fillStyle(0x000000, 0.55).fillRect(x + 2, y + 2, CW, CH); // drop shadow: keeps the map readable over the wall band
       gfx.fillStyle(fill, 1).fillRect(x, y, CW, CH);
-      gfx.lineStyle(2, 0x120c0a, 1).strokeRect(x, y, CW, CH);
+      gfx.lineStyle(2, v.dowsed && !cur ? 0x9a7a3a : 0x120c0a, 1).strokeRect(x, y, CW, CH);
       // type icons (boss / shop / treasure / champion / event / secrets are always shown once the room is adjacent to a visited one)
       const cx = x + CW / 2, cy = y + CH / 2;
       const st = m.states[id];

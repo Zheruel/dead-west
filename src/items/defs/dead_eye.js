@@ -6,7 +6,7 @@ registerItem({
   id: 'dead_eye', name: 'Dead Eye', desc: 'First shot after 2 s of patience: x3 damage, pierces. +1 luck', type: 'passive', pool: ['treasure', 'boss'],
   icon: { sheet: 'items_passive_a', name: 'dead_eye' },
   tags: ['crit', 'luck'], tier: 3,
-  lore: "Patience is a bullet that has not left yet.",
+  lore: 'Patience is a virtue. Patience with a Colt is a verdict.',
   apply(player, { stats, count }) { stats.deadEye = Math.max(stats.deadEye, 2 + count); stats.luck += 1; },
   onPickup(player) { if (!player.familiars.some((f) => f instanceof DeadEyeSight)) player.addFamiliar(new DeadEyeSight(player)); },
   onRestore(player) { if (!player.familiars.some((f) => f instanceof DeadEyeSight)) player.addFamiliar(new DeadEyeSight(player)); },

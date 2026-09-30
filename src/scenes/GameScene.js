@@ -23,6 +23,7 @@ import * as flow from './flow.js';
 const SETUP = Object.values(import.meta.glob('../meta/runSetup.js', { eager: true }))[0] || null;
 const RIDERS = ['gunslinger', 'preacher', 'hunter', 'queen'];
 
+const BOSS_INTRO_MS = { boss: 2900, final: 4600, mini: 1500 }; // fallbacks when a boss's introData() has no `ms` (same numbers Cards uses)
 const track = (k) => MUSIC_FOR[k] || (String(k).startsWith('mus_') ? k : `mus_${k}`); // 'boss4' -> 'mus_boss4'
 
 export default class GameScene extends Phaser.Scene {
@@ -38,6 +39,7 @@ export default class GameScene extends Phaser.Scene {
     this.seed = initSeed(this.startData.seed); // checkpoint continue passes the saved seed; otherwise ?seed= or random
     this.run = new RunState(this.seed);
     this.endingStarted = false;
+    this._introRelease = null;
     this.chapter = 1;
     this.enemies = [];
     this.dynamites = [];
@@ -66,6 +68,7 @@ export default class GameScene extends Phaser.Scene {
     this.scene.launch('HUD', { game: this });
     bus.scoped(this, 'room:cleared', () => { this.player.addCharge(1); });
     bus.scoped(this, 'room:entered', () => this.updateMusic());
+    bus.scoped(this, 'boss:intro:skip', () => { if (this._introRelease) this._introRelease(); });
 
     // pause
     const pause = () => this.pauseGame();
@@ -172,18 +175,28 @@ export default class GameScene extends Phaser.Scene {
     this.time.delayedCall(seconds * 1000, () => { if (token === this._slowToken) this.timeScale = 1; });
   }
 
+  /**
+   * Boss / mini intro: the world is held for the card's own length (`introData().ms`: Scratch 4600 with the card slam; else 2900 boss / 1500 mini, the
+   * lengths Cards draws). Cards emits `boss:intro:skip` when a key ends its card early; the fight then starts at once.
+   */
   beginBossIntro(boss) {
     this.cutscene = true;
     this.player.vx = this.player.vy = 0;
     const data = boss.introData();
-    const ms = data.mini ? 1500 : 2100;
+    const ms = Math.max(600, +data.ms || (data.mini ? BOSS_INTRO_MS.mini : data.slam ? BOSS_INTRO_MS.final : BOSS_INTRO_MS.boss));
     data.ms = ms;
+    let done = false;
+    const release = () => {
+      if (done) return;
+      done = true;
+      if (this._introRelease === release) this._introRelease = null;
+      this.cutscene = false;
+      if (boss.alive && !boss.dying) boss.startFight();
+    };
+    this._introRelease = release;
     bus.emit('boss:intro', data);
     playMusicFor(track(boss.meta.music || 'boss'));
-    this.time.delayedCall(ms, () => {
-      this.cutscene = false;
-      if (boss.alive) boss.startFight();
-    });
+    this.time.delayedCall(ms, release);
   }
 
   /** A boss or mini boss died (after its own death sequence): flow.js decides what happens next. */
@@ -202,7 +215,7 @@ export default class GameScene extends Phaser.Scene {
     const r = this.run;
     const prevBest = Save.get().bestTime; // before recordRun: EndScene shows 'NEW BEST TIME' on a faster clear
     Save.recordRun({ floor: r.floor, time: r.time, kills: r.kills, won: variant === 'complete' });
-    bus.emit('run:ended', { variant, stats: r.toJSON() });
+    bus.emit('run:ended', { variant, ending: r.ending || null, won: variant !== 'death', stats: r.toJSON() });
     const payload = { variant, ending: r.ending || null, run: r.toJSON(), items: [...this.player.items, ...(this.player.active ? [this.player.active.id] : [])], seed: this.seed, best: { time: Save.get().bestTime, isNew: variant === 'complete' && (!prevBest || r.time < prevBest) } };
     if (SETUP && typeof SETUP.finishRun === 'function') {
       try { SETUP.finishRun(this, payload); } catch (e) { console.warn('[GameScene] finishRun failed', e); }

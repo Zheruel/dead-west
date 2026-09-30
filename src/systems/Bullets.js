@@ -12,6 +12,7 @@ import { DEPTH, ROOM, TILE, PLAYER, FEEL } from '../config.js';
 import { Assets } from '../core/Assets.js';
 import { Sfx } from '../core/Audio.js';
 import { bus } from '../core/events.js';
+import { Save } from '../core/Save.js';
 import { rad } from '../core/util.js';
 import { CTX, runHooks, hasHook } from '../items/hooks.js';
 import { explode } from './Explosions.js';
@@ -29,6 +30,7 @@ const V2 = {
 const NO_MODS = {};
 const SMITE_KILLS = []; // scratch: enemies killed by one smite
 
+// frame = base-sheet cell (always present); c2 = projectiles_c2 cell used when that sheet loaded; tint = fallback look on the base cell only.
 const ENEMY_KINDS = {
   enemy: { frame: 'bullet_enemy', r: 12, glow: 0xff5a2a, rotate: false },
   venom: { frame: 'bullet_venom', r: 12, glow: 0x8fc23f, rotate: false },
@@ -36,11 +38,22 @@ const ENEMY_KINDS = {
   ghostfire: { frame: 'bullet_ghostfire', r: 13, glow: 0x6fe0d0, rotate: false },
   rock: { frame: 'rock_debris', r: 16, glow: 0xb09070, rotate: true },
   stick: { frame: 'dynamite_stick', r: 14, glow: 0xff5a2a, rotate: true },
+  // chapter 2 (ITEMS/CHAPTER2 s2): real art from projectiles_c2, tinted base cells when the sheet is missing
+  ember: { frame: 'bullet_enemy', c2: 'bullet_ember', r: 12, glow: 0xff8a2a, rotate: false, tint: 0xffa040 },
+  coal: { frame: 'rock_debris', c2: 'bullet_coal', r: 14, glow: 0xff9a2a, rotate: true, tint: 0x9a6a3a },
+  steam: { frame: 'bullet_enemy', c2: 'bullet_steam', r: 15, glow: 0xdde4e8, rotate: false, tint: 0xdde4e8 },
+  card: { frame: 'bullet_nail', c2: 'bullet_card', r: 12, glow: 0xffffff, rotate: true, tint: 0xf8f0e0 },
+  chip: { frame: 'bullet_enemy', c2: 'bullet_chip', r: 13, glow: 0xe8dcc0, rotate: false, tint: 0xe8dcc0 },
+  shard: { frame: 'bullet_nail', c2: 'bullet_shard', r: 11, glow: 0xbfe8ff, rotate: true, tint: 0xbfe8ff },
+  spade: { frame: 'bullet_enemy', c2: 'bullet_spade', r: 13, glow: 0xb070e0, rotate: false, tint: 0xb070e0 },
+  spike: { frame: 'bullet_nail', c2: 'bullet_spike', r: 10, glow: 0xffa060, rotate: true },
 };
+for (const k of Object.values(ENEMY_KINDS)) { k.fi = -1; k.ci = -1; } // frame indices resolved on first use (Assets is loaded by then)
+const OUTLINE_COL = 0x0a0605;
 
 class Bullet {
   constructor() {
-    this.active = false; this.sprite = null; this.shadow = null; this.glow = null; this.streak = null;
+    this.active = false; this.sprite = null; this.shadow = null; this.glow = null; this.streak = null; this.ol = null;
     this.hit = new Set(); // enemies already hit (pierce); cleared on every fire()
     this.hitT = new Map(); // orbiters: enemy -> next age it may be hit again
     this.m = { split: 0, boom: false, orbit: 0, chain: false, explode: false, ghost: false, pull: false, chill: false, reflected: false }; // per-shot mods
@@ -68,6 +81,7 @@ class Pool {
       b.sprite = Assets.makeCell(s, 0, 0, 'projectiles', 'bullet_player', 0.5).setDepth(DEPTH.bullets);
       b.shadow = s.add.image(0, 0, 'shadow').setDepth(DEPTH.shadows + 1).setScale(0.22).setAlpha(0.7);
       b.glow = s.add.image(0, 0, 'glow').setDepth(DEPTH.bullets - 1).setBlendMode(Phaser.BlendModes.ADD);
+      b.ol = null; // bulletOutline setting: created on demand (a dark copy of the sprite a little larger, behind it)
       if (this.owner === 'player') b.streak = s.add.image(0, 0, 'fx_streak').setOrigin(1, 0.5).setDepth(DEPTH.bullets - 1).setBlendMode(Phaser.BlendModes.ADD).setVisible(false);
     }
     return b;
@@ -81,6 +95,25 @@ class Pool {
     if (b.texKey !== key) { b.sprite.setTexture(key); b.texKey = key; }
     b.sprite.setFrame(frame);
     return v2 && key === 'projectiles' ? v2 : null;
+  }
+
+  /** Enemy bullet sprite: the kind's projectiles_c2 cell when that sheet loaded, else its base cell (+ fallback tint). Returns the fallback tint or null. */
+  _skinEnemy(b, kind) {
+    const c2 = kind.c2 && Assets.has('projectiles_c2');
+    const key = c2 ? 'projectiles_c2' : 'projectiles';
+    if (b.texKey !== key) { b.sprite.setTexture(key); b.texKey = key; }
+    if (c2) { if (kind.ci < 0) kind.ci = Assets.frame('projectiles_c2', kind.c2); b.sprite.setFrame(kind.ci); return null; }
+    if (kind.fi < 0) kind.fi = Assets.frame('projectiles', kind.frame);
+    b.sprite.setFrame(kind.fi);
+    return kind.tint ?? null;
+  }
+
+  /** bulletOutline setting: a dark, slightly larger copy of the sprite behind it (accessibility; off by default). */
+  _outline(b) {
+    if (!Save.settings().bulletOutline) { if (b.ol) b.ol.setVisible(false); return; }
+    if (!b.ol) b.ol = this.scene.add.image(0, 0, b.texKey, 0).setDepth(DEPTH.bullets - 0.5).setTint(OUTLINE_COL).setAlpha(0.9);
+    const sp = b.sprite;
+    b.ol.setTexture(b.texKey, sp.frame.name).setScale(sp.scaleX * 1.28, sp.scaleY * 1.28).setRotation(sp.rotation).setPosition(sp.x, sp.y).setVisible(true);
   }
 
   /** Fires one bullet; returns the bullet object (live until it dies; do not keep references after `active` is false), or null when refused by a cap. */
@@ -155,14 +188,14 @@ class Pool {
       while (ol.length > ORBIT_MAX) this.kill(ol[0], 'expire', true); // oldest expires
     }
 
-    let fb = null;
-    if (isEnemy) b.sprite.setFrame(Assets.frame('projectiles', kind.frame));
+    let fb = null, etint = null;
+    if (isEnemy) etint = this._skinEnemy(b, kind);
     else fb = this._skin(b, frameName);
     b.sprite.setVisible(true).setAlpha(o.alpha ?? (m.ghost ? 0.75 : 1));
     b.sprite.setScale((o.scale ?? 1) * (isEnemy ? 1 : b.size * FEEL.playerBulletScale * (b.sixth ? 1.25 : 1)));
     b.sprite.setRotation(b.rotate ? Math.atan2(vy, vx) : 0);
     b.sprite.clearTint();
-    const tint = o.tint ?? (m.ghost ? 0xb8ffe0 : fb ? fb.tint : null);
+    const tint = o.tint ?? (m.ghost ? 0xb8ffe0 : fb ? fb.tint : etint);
     if (tint != null) b.sprite.setTint(tint);
     b.shadow.setVisible(true);
     b.glow.setVisible(true);
@@ -174,6 +207,7 @@ class Pool {
       b.streak.setVisible(true).setTint(gc).setAlpha(b.sixth ? 0.7 : 0.42).setDisplaySize(len, (b.sixth ? 11 : 7) * Math.min(1.6, b.size));
     }
     this._place(b);
+    this._outline(b);
     this.list.push(b);
     if (bus.listenerCount('bullet:fired') > 0) bus.emit('bullet:fired', { bullet: b, sixth: b.sixth, owner: this.owner }); // skip the per-shot allocation when nobody listens
     return b;
@@ -183,6 +217,7 @@ class Pool {
     const y = b.y - b.lift;
     b.sprite.setPosition(b.x, y);
     b.glow.setPosition(b.x, y);
+    if (b.ol && b.ol.visible) { b.ol.setPosition(b.x, y); b.ol.setRotation(b.sprite.rotation); }
     if (!this.isEnemyPool) { b.streak.setPosition(b.x, y); b.streak.setRotation(Math.atan2(b.vy, b.vx)); }
     b.shadow.setPosition(b.x, b.y + 6);
   }
@@ -193,6 +228,7 @@ class Pool {
     b.sprite.setVisible(false);
     b.shadow.setVisible(false);
     b.glow.setVisible(false);
+    if (b.ol) b.ol.setVisible(false);
     if (b.streak) b.streak.setVisible(false);
     const s = this.scene;
     if (!silent && (reason === 'wall' || reason === 'obstacle' || reason === 'hit' || reason === 'life')) {

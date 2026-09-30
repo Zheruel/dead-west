@@ -5,6 +5,6 @@ registerItem({
   id: 'prospectors_pan', name: "Prospector's Pan", desc: '+3 coins per cleared room, sometimes a key', type: 'passive', pool: ['treasure', 'shop'],
   icon: { sheet: 'items_passive_c', name: 'prospectors_pan' },
   tags: ['gold'], tier: 1,
-  lore: "Sifting the desert for other men's luck.",
+  lore: 'Every fool with a pan swears the next scoop is the one.',
   apply(player, { stats }) { stats.roomClearCoins += 3; stats.roomClearKeyChance += 0.1; },
 });

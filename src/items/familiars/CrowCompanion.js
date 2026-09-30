@@ -3,7 +3,6 @@ import Familiar from './Familiar.js';
 import { Assets } from '../../core/Assets.js';
 import { Sfx } from '../../core/Audio.js';
 import { ROOM, DEPTH, actorDepth } from '../../config.js';
-import { rng } from '../../core/rng.js';
 
 const LIFT = 56;
 
@@ -77,12 +76,11 @@ export default class CrowCompanion extends Familiar {
     const b = this.scene.bullets.player.fire({
       x: this.x + Math.cos(ang) * 22, y: this.y + Math.sin(ang) * 22, angle: ang, speed: 640, life: 1.0,
       damage: Math.max(0.5, s.damage * 0.5), size: 0.7, lift: LIFT - 4, source: this,
-      poison: s.poison, burn: s.burn && Math.random() < s.burn ? 1 : 0, fear: s.fearChance && rng.game.chance(s.fearChance) ? 1 : 0,
+      poison: s.poison, burn: s.burn && player.crng.chance(s.burn) ? 1 : 0, fear: s.fearChance && player.crng.chance(s.fearChance) ? 1 : 0, // seeded combat stream
       homing: 0.35, tint: 0xb8a0ff,
     });
-    b.glow.setTint(0x9070ff);
-    if (b.streak) b.streak.setTint(0x9070ff);
-    this.cd = Math.max(0.55, s.fireDelay * 1.5);
+    if (b) { b.glow.setTint(0x9070ff); if (b.streak) b.streak.setTint(0x9070ff); } // null when the live-bullet cap refused the shot
+    this.cd = Math.max(0.55, s.fireDelay * 1.5) * this.cdMult; // Pack Leader: faster
     this.squash = 0.12;
     this.shots++;
     Sfx.play('shoot', { vol: 0.28, rate: 1.5 + Math.random() * 0.3, gap: 0.05 });

@@ -6,7 +6,7 @@ registerItem({
   id: 'whiskey_bottle', name: 'Whiskey Bottle', desc: 'Heals one heart. Recharges by clearing rooms.', type: 'active', charges: 4, pool: ['treasure', 'shop', 'boss', 'secret'],
   icon: { sheet: 'items_active', name: 'whiskey_bottle' },
   tags: ['heal'], tier: 1,
-  lore: "One swig from courage.",
+  lore: 'Medicine, according to every bar in the West.',
   use(player, { scene }) {
     if (player.hp >= player.maxHp) return false; // nothing to heal: don't spend the charge
     player.heal(2);

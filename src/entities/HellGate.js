@@ -86,8 +86,9 @@ export default class HellGate {
     const mgr = this.scene.roomMgr;
     if (!mgr || this.gone) return;
     this.gone = true;
+    const ok = this.exit ? mgr.leavePocket() : mgr.enterPocket();
+    if (ok === false) { this.gone = false; this.used = false; this.armed = false; return; } // refused (mid-transition, no pocket): stay usable, re-arm
     Sfx.play('hellgate_enter');
-    if (this.exit) mgr.leavePocket(); else mgr.enterPocket();
   }
 
   destroy() {

@@ -8,7 +8,8 @@ import { explode } from '../systems/Explosions.js';
 
 export default class Dynamite {
   /**
-   * o: {fuse, radius, damage, playerDamage, hurtEnemies, hurtPlayer, from:{x,y}, flight (s, arc time), owner:'player'|'enemy' (default enemy)}
+   * o: {fuse, radius, damage, playerDamage, hurtEnemies, hurtPlayer, from:{x,y}, flight (s, arc time), owner:'player'|'enemy' (default enemy),
+   *     fire (forwarded to Room.onExplosion: true/false forces / forbids the ground-fire patches), silent (no 'dynamite:placed': vest / crate sticks)}
    * owner 'player' feeds the item engine (nitro fire, clusters, refunds, `explosion` hook) via explode().
    * If `from` and `flight` are given the stick arcs from `from` to (x,y) before starting its fuse.
    */
@@ -27,7 +28,7 @@ export default class Dynamite {
     this.sprite.play('dynamite_placed:lit');
     this.shadow = scene.add.image(x, y + 18, 'shadow').setScale(0.4).setDepth(DEPTH.shadows);
     this.stick = null;
-    this.glow = scene.add.image(x, y - 8, 'glow').setTint(0xff9a30).setBlendMode(Phaser.BlendModes.ADD).setScale(0.6).setAlpha(0).setDepth(DEPTH.bullets - 4); // fuse light
+    this.glow = scene.add.image(x, y - 8, 'glow').setTint(0xff9a30).setBlendMode(Phaser.BlendModes.ADD).setScale(0.6).setAlpha(0).setDepth(scene.fx.lit(DEPTH.bullets - 4)); // fuse light
     this.sparkT = 0;
     if (this.flight > 0) {
       this.sprite.setVisible(false);
@@ -40,7 +41,7 @@ export default class Dynamite {
 
   _start() {
     this.fuseLoop = Sfx.loop('fuse', { vol: 0.6 });
-    bus.emit('dynamite:placed', { x: this.x, y: this.y });
+    if (this.o.owner === 'player' && !this.o.silent) bus.emit('dynamite:placed', { x: this.x, y: this.y }); // Meta counts player-placed sticks only (enemy throws, vest and crate sticks are silent)
   }
 
   update(dt) {
@@ -68,7 +69,7 @@ export default class Dynamite {
     if (this.glow) this.glow.setPosition(tipX, tipY).setScale(0.5 + hot * 0.9 + Math.random() * 0.25).setAlpha(0.35 + hot * 0.35 + Math.random() * 0.2);
     const blink = this.fuse < 0.6 && Math.floor(this.fuse * 14) % 2 === 0;
     this.sprite.setTint(blink ? 0xffffff : 0xffffff).setAlpha(blink ? 0.6 : 1);
-    this.sprite.setDepth(actorDepth(this.y + 20));
+    this.sprite.setDepth(this.scene.fx.lit(actorDepth(this.y + 20)));
     this.shadow.setPosition(this.x, this.y + 18);
     if (this.fuse <= 0) this.explode();
   }
@@ -89,6 +90,7 @@ export default class Dynamite {
       hurtPlayer: o.hurtPlayer,
       source: this,
       owner: o.owner,
+      fire: o.fire,
     });
     const i = s.dynamites.indexOf(this);
     if (i >= 0) s.dynamites.splice(i, 1);

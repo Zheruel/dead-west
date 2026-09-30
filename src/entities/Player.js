@@ -21,6 +21,7 @@ import { applyMutators } from '../data/difficulty.js';
 import { applyBoons, Boons } from '../systems/Boons.js';
 import { CTX, runHooks, hasHook, rebuildHooks } from '../items/hooks.js';
 import { evaluateSynergies, SYN_BY_ID } from '../items/synergies.js';
+import { posseSync } from '../items/fx/synergyFx.js';
 import { ownedIds } from '../items/tags.js';
 import { itemFx } from '../items/fx/ItemFx.js';
 import { nova } from '../items/fx/Nova.js';
@@ -63,6 +64,7 @@ export default class Player extends Actor {
     this.blessings = [];
     this.heartDebt = 0; // containers lost to deals (`penalty.containers` is an alias)
     this.extraHearts = 0; // heart_container pickups
+    this.bulletTint = null; // number|null: FaithMeter (Sanctified) tints normal player slugs pale gold
     this.coins = PLAYER.startCoins;
     this.keys = PLAYER.startKeys;
     this.dynamite = PLAYER.startDynamite;
@@ -253,6 +255,7 @@ export default class Player extends Actor {
       if (!quiet) bus.emit('synergy:activated', { id, def: SYN_BY_ID[id] });
     }
     rebuildHooks(this);
+    posseSync(this); // spectral_posse: free Spirit Lantern while the synergy holds
   }
 
   /** Cylinder HUD view: `loaded` = shots left before the Sixth Bullet (1 = the Sixth is up). */
@@ -342,6 +345,7 @@ export default class Player extends Actor {
     if (!snap) return;
     for (const f of [...this.familiars]) if (f.destroy) f.destroy();
     this.familiars.length = 0;
+    this._posseF = null; // the free posse lantern is re-created by the synergy sync below
     if (snap.char && isChar(snap.char)) this._setCharBase(snap.char);
     this.items = Array.isArray(snap.items) ? snap.items.filter((id) => getItem(id)) : [];
     this.active = null;
@@ -371,6 +375,7 @@ export default class Player extends Actor {
     this.tin = clampN(snap.tin ?? 0, 0, this._tinCap());
     this._coinsSeen = this.coins;
     this.haloLeft = this.stats.haloCharges || 0;
+    this.shieldLeft = this.stats.roomShield || 0; this.shieldRest = 0; // a restored build starts with its own room shield (never a stale one from the previous build)
     if (this.sprite) { this._anim = ''; if (this.skinBase === 'player' && this.tint !== 0xffffff) this.sprite.setTint(this.tint); }
     const api = this._api;
     for (const id of new Set([...this.items, ...(this.active ? [this.active.id] : [])])) {
@@ -378,6 +383,7 @@ export default class Player extends Actor {
       if (d && d.onRestore) { api.count = this.itemCount(id) || 1; try { d.onRestore(this, api); } catch (e) { console.error('[Player] onRestore', id, e); } }
     }
     this.recomputeStats(true);
+    posseSync(this); // restore destroyed every familiar: bring the synergy lantern back (the synergy set itself may be unchanged)
     bus.emit('active:changed', this.active ? { ...this.active } : { id: null, charge: 0, max: 0 });
   }
 
@@ -469,7 +475,7 @@ export default class Player extends Actor {
     this.recomputeStats();
     bus.emit('player:hurt', { units, source, hp: this.hp, tin: this.tin });
     if (s.dynamiteVestChance > 0 && this.crng.chance(s.dynamiteVestChance)) {
-      new Dynamite(this.scene, this.x, this.y, { fuse: 1.2, playerDamage: s.explosionImmune ? 0 : 2, owner: 'player' });
+      new Dynamite(this.scene, this.x, this.y, { fuse: 1.2, playerDamage: s.explosionImmune ? 0 : 2, owner: 'player', silent: true });
     }
     if (s.avengingAngel) nova(this.scene, this.x, this.y, { radius: 260, damage: s.damage * 4, source: 'angel' });
     if (hasHook(this, 'hurtPost')) {
@@ -514,7 +520,7 @@ export default class Player extends Actor {
     if (sc.bullets && sc.bullets.enemy) sc.bullets.enemy.clear();
     sc.fx.text(this.x, this.y - 90, 'RISEN', { color: '#ffe090', size: 30 });
     sc.fx.ringPulse(this.x, this.footY, 0xffe090, 200, 700, 0.9);
-    bus.emit('hud:flash', { color: 0xffe090, alpha: 0.45 });
+    this.scene.fx.flash(0xffe090, 0.45);
     bus.emit('player:revived', { source: how });
     return true;
   }
@@ -566,7 +572,7 @@ export default class Player extends Actor {
         this.extraHearts++;
         this.recomputeStats();
         this.heal(2);
-        bus.emit('hud:flash', { color: 0xf0d060, alpha: 0.35 });
+        this.scene.fx.flash(0xf0d060, 0.35);
         break;
       }
       case 'coin': if (this.coins >= max) return false; this.gainCoins(1); break;
@@ -813,8 +819,9 @@ export default class Player extends Actor {
     const side = s.dualGuns ? (this._gunSide = -this._gunSide) : 0;
     const ox = perp.x * side * 12, oy = perp.y * side * 12;
     const damage = s.damage + s.coinDamage * this.coins;
-    const extra = sixth ? s.sixthSplit : 0; // sixthSplit: extra slugs fanned +-10 degrees, each x0.6
     const orbitT = sixth ? s.sixthOrbit : 0;
+    const extra = sixth && orbitT <= 0 ? s.sixthSplit : 0; // sixthSplit (Ten-Gauge Hammer): extra slugs fanned +-10 degrees; EVERY slug of the burst is x0.6. Orbit beats split (extras would only evict orbiters)
+    const splitK = extra > 0 ? 0.6 : 1;
     if (orbitT > 0) n = 1;
     const list = CTX.fire.bullets;
     list.length = 0;
@@ -835,7 +842,7 @@ export default class Player extends Actor {
       mods.pull = s.pullRadius > 0;
       mods.chill = s.chillChance > 0 && cr.chance(s.chillChance);
       const b = scene.bullets.player.fire({
-        x: mx, y: my, angle: a, speed: s.shotSpeed, damage, mult: isExtra ? mult * 0.6 : mult, life: s.range,
+        x: mx, y: my, angle: a, speed: s.shotSpeed, damage, mult: mult * splitK, life: s.range,
         pierce, ricochet, homing, poison: s.poison,
         burn: s.burn && cr.chance(s.burn) ? 1 : 0,
         fear: s.fearChance && cr.chance(s.fearChance) ? 1 : 0,
@@ -846,6 +853,7 @@ export default class Player extends Actor {
       b.vx += perp.x * inherit; b.vy += perp.y * inherit;
       if (dead) { b.sprite.setTint(0xff9060); b.glow.setTint(0xff6030); b.streak.setTint(0xff6030); }
       else if (luckCrit) { b.sprite.setTint(0xffe070); b.glow.setTint(0xffd040); b.streak.setTint(0xffd040); }
+      else if (this.bulletTint != null && !sixth && !mods.ghost && !mods.chill && !mods.explode && !boom) { b.sprite.setTint(this.bulletTint); b.glow.setTint(this.bulletTint); b.streak.setTint(this.bulletTint); } // Sanctified (FaithMeter)
       else if (!sixth && !mods.ghost && !mods.chill && !mods.explode && !boom) { // status bullets are colour-coded: burn orange, fear violet, poison green
         if (b.burn) { b.sprite.setTint(0xffe2b8); b.glow.setTint(0xff8030); b.streak.setTint(0xff8030); } else if (b.fear) { b.sprite.setTint(0xe0ccff); b.glow.setTint(0xa060ff); b.streak.setTint(0xa060ff); } else if (b.poison) { b.sprite.setTint(0xe4ffd0); b.glow.setTint(0x80d040); b.streak.setTint(0x80d040); } // pale slugs + coloured glow: never confusable with enemy embers/venom
       }
@@ -878,7 +886,7 @@ export default class Player extends Actor {
     if (s.dynamiteThrow > 0) { // thrown ahead of you along the facing direction
       const d = DIRS[this.facing] || DIRS.down;
       tx = clampN(this.x + d.x * s.dynamiteThrow, ROOM.x + 60, ROOM.right - 60); ty = clampN(this.y + d.y * s.dynamiteThrow, ROOM.y + 60, ROOM.bottom - 60);
-      o.from = { x: this.x, y: this.y }; o.flight = 0.35;
+      o.from = { x: this.x, y: this.y }; o.flight = 0.25; // ITEMS_V2 4.5: the thrown stick arcs 0.25 s
     }
     new Dynamite(this.scene, tx, ty, o);
     Sfx.play('gun_cock', { vol: 0.5 });

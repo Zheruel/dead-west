@@ -54,7 +54,7 @@ export function eligible(enemyId, def) {
   if (NO_AFFIX.has(enemyId)) return false;
   const m = metaOf(enemyId, def);
   if (m) {
-    if (m.noAffix || m.boss || m.mini || m.isBoss || m.link || m.chainLink) return false;
+    if (m.noAffix || m.noElite || m.boss || m.mini || m.isBoss || m.link || m.chainLink) return false;
     if (m.affixBan === true || m.affixBan === '*') return false;
   }
   return true;
@@ -418,7 +418,7 @@ export const Affixes = {
       const r = gameRng.game;
       for (const id of st.list) {
         const d = AFFIXES[id].drop;
-        if (d && (d.p >= 1 || r.chance(d.p))) room.dropPickup(d.type, enemy.x + (Math.random() - 0.5) * 30, enemy.y + (Math.random() - 0.5) * 30);
+        if (d && (d.p >= 1 || r.chance(d.p))) room.dropPickup(d.type, enemy.x + r.float(-15, 15), enemy.y + r.float(-15, 15));
       }
     }
     if (has(enemy, 'volatile')) this.detonate(enemy);

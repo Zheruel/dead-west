@@ -41,7 +41,7 @@ const NAME = 'Engine No. 666';
 const LANE_ATTACKS = new Set(['lane_charge', 'phantom_express', 'derail_run']);
 const FIRST_LANE_AT = 3.0; // no lane telegraph earlier than this many seconds after the fight starts
 
-const snd = (key, alt, o) => Sfx.play(Assets.hasAudio(key) ? key : alt, o);
+const snd = (key, alt, o) => Sfx.play(Sfx.canPlay(key) ? key : alt, o); // canPlay = manifest file OR alias chain
 const clampRoom = (o, m = 64) => { o.x = clamp(o.x, ROOM.x + m, ROOM.right - m); o.y = clamp(o.y, ROOM.y + m, ROOM.bottom - m); return o; };
 
 class Engine extends Boss {

@@ -10,7 +10,7 @@ registerItem({
   id: 'powder_keg', name: 'Powder Keg', desc: 'A colossal blast at your feet. Costs a half heart.', type: 'active', charges: 5, pool: ['treasure', 'boss', 'secret'], weight: 0.7,
   icon: { sheet: 'items_active', name: 'powder_keg' },
   tags: ['explosive', 'dynamite'], tier: 3,
-  lore: "Subtlety is for the living.",
+  lore: 'Subtle it is not. Neither is the crater.',
   use(player, { scene }) {
     const { x, y } = player;
     scene.bullets.enemy.clearRadius(x, y, RADIUS);

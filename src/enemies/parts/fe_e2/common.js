@@ -1,5 +1,4 @@
 // FE-E2 helpers shared by magma_eel, sulfur_preacher and magma_golem (CHAPTER2 s3).
-import { Assets } from '../../../core/Assets.js';
 import { Sfx } from '../../../core/Audio.js';
 import { subRng } from '../../../core/rng.js';
 import { warnDepth } from '../../../rooms/hazards/common.js';
@@ -12,9 +11,9 @@ export function enemyRng(e) {
   return subRng('fe2', e.id, room && room.def ? room.def.seed : 0, Math.round(e.x), Math.round(e.y));
 }
 
-/** Play `key`, or `alt` while the real sound is not in the manifest yet (AUDIO_SPEC aliases land with FE-A1). */
+/** Play `key` (manifest file or SFX_ALIAS chain); `alt` only when neither exists. */
 export function sfx(key, alt, o) {
-  if (Assets.hasAudio(key)) return Sfx.play(key, o);
+  if (Sfx.canPlay(key)) return Sfx.play(key, o);
   return alt ? Sfx.play(alt, o) : null;
 }
 

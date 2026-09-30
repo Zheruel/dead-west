@@ -4,6 +4,6 @@ registerItem({
   id: 'tin_star', name: 'Tin Star', desc: '+2 tin hearts (armour)', type: 'passive', pool: ['treasure', 'shop', 'boss'],
   icon: { sheet: 'items_passive_b', name: 'tin_star' },
   tags: ['armor'], tier: 1,
-  lore: "Worn by six men. Buried with five.",
+  lore: 'Worth about a nickel. Stops about a bullet.',
   onPickup(player) { player.addTin(4); }, // 2 tin units per tin heart
 });

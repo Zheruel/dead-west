@@ -12,6 +12,9 @@ import { nextRank } from '../meta/ranks.js';
 import { ACHIEVEMENTS } from '../meta/achievements.js';
 import { UNLOCKS, UNLOCK_BY_ID } from '../meta/unlocks.js';
 import { LORE } from '../meta/lore.js';
+import { BIOS } from '../data/story/bestiary.js';
+import { itemLore } from '../data/story/lore_items.js';
+import { causeOf } from '../data/story/epitaphs.js';
 import { ENEMY_TEXT, BOSS_TEXT, MINI_TEXT, WORLD, WORLD_KINDS, mergeBestiary, prettyId } from '../meta/codexText.js';
 import { ENEMY_META } from '../enemies/registry.js';
 import { BOSS_META } from '../bosses/registry.js';
@@ -35,6 +38,7 @@ const DX = 1110; // detail page centre
 const DW = 470;
 const money = (n) => `$${Math.round(n).toLocaleString('en-US')}`;
 const num = (n) => Math.round(n).toLocaleString('en-US');
+const bossText = (id) => { const t = BOSS_TEXT[id] || {}; return t.lore || !BIOS[id] ? t : { ...t, lore: BIOS[id] }; };
 const cap = (s) => String(s).charAt(0).toUpperCase() + String(s).slice(1);
 
 export default class CodexScene extends Phaser.Scene {
@@ -116,7 +120,7 @@ export default class CodexScene extends Phaser.Scene {
     for (const id of Object.keys(BOSS_META)) {
       const m = BOSS_META[id];
       if (m.mini) continue;
-      out.push({ id, kind: 'boss', m, stage: Meta.bossStage(id), rec: cb[id] || null, name: m.name, tx: BOSS_TEXT[id] || {} });
+      out.push({ id, kind: 'boss', m, stage: Meta.bossStage(id), rec: cb[id] || null, name: m.name, tx: bossText(id) });
     }
     for (const id of Object.keys(BOSS_META)) {
       const m = BOSS_META[id];
@@ -158,7 +162,7 @@ export default class CodexScene extends Phaser.Scene {
     else if (this.mode === 'deeds') this.renderDeeds();
     else this.renderRecord();
     this.footer.setText(this.mode === 'grid'
-      ? 'Q / E  tab     ARROWS  browse     Z / X  page     ESC  back'
+      ? `Q / E  tab     ARROWS  browse     Z / X  page${this.tabId === 'lore' ? '     ENTER  reread' : ''}     ESC  back`
       : this.mode === 'deeds' ? 'Q / E  tab     Z / X  page     ESC  back' : 'Q / E  tab     UP / DOWN  choose a title     ENTER  equip     ESC  back');
   }
 
@@ -292,7 +296,8 @@ export default class CodexScene extends Phaser.Scene {
     if (d.tags && d.tags.length) { this.T(d.tags.map((t) => (TAGS[t] ? TAGS[t].label : t.toUpperCase())).join('   '), cx, y, inkText(17, '#5a1a10', { fontStyle: 'bold' })); y += 28; }
     const where = d.charOnly ? `${charDef(d.charOnly).name}'s relic` : (d.pool || []).filter((p) => p !== 'c2').join(', ') || 'special';
     this.T(`FOUND IN: ${where.toUpperCase()}`, cx, y, inkText(16, INK)); y += 30;
-    if (d.lore) y += this.T(`"${d.lore}"`, cx, y, inkText(18, '#6b4423', { fontStyle: 'italic', align: 'center', wordWrap: { width: DW } })).height + 12;
+    const lore = itemLore(d.id, d);
+    if (lore) y += this.T(`"${lore}"`, cx, y, inkText(18, '#6b4423', { fontStyle: 'italic', align: 'center', wordWrap: { width: DW } })).height + 12;
     const syn = synergiesFor(d.id).slice(0, 3);
     if (syn.length) {
       this.T('SYNERGIES', cx, y, title(17, '#5a1a10', { strokeThickness: 0 })); y += 24;
@@ -329,7 +334,20 @@ export default class CodexScene extends Phaser.Scene {
       this.T(l.hint, cx, top + 150, inkText(22, '#5a1a10', { align: 'center', fontStyle: 'bold', wordWrap: { width: DW } }));
       return;
     }
-    this.T(l.text, cx, top + 80, inkText(22, INK, { align: 'center', wordWrap: { width: 440 }, lineSpacing: 6 }));
+    const t = this.T(l.text, cx, top + 80, inkText(22, INK, { align: 'center', wordWrap: { width: 440 }, lineSpacing: 6 }));
+    if (l.reread) {
+      const b = this.T('[ENTER]  REREAD', cx, top + 100 + t.height, title(24, '#5a1a10', { strokeThickness: 0 }));
+      b.setInteractive({ useHandCursor: true }).on('pointerdown', () => this.reread(l));
+    }
+  }
+
+  /** LORE Reread: replay the cutscene standalone (clean, non-hell), then come back to the LORE tab. */
+  reread(l) {
+    if (this.leaving || !l || !l.reread) return;
+    this.leaving = true;
+    uiSfx.back();
+    this.cameras.main.fadeOut(220, 13, 8, 6);
+    this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start('Cutscene', { id: l.reread, ctx: { char: 'gunslinger', clean: true, hell: false }, next: { scene: 'Codex', data: { tab: 'lore' } } }));
   }
 
   detailWorld(e, cx, top) {
@@ -437,7 +455,7 @@ export default class CodexScene extends Phaser.Scene {
       t(rx + 84, ({ gunslinger: 'GUN', preacher: 'PRE', hunter: 'HUN', queen: 'QUE' })[h.char] || '?');
       t(rx + 132, `F${h.floor}`);
       t(rx + 190, money(h.reward || 0));
-      t(rx + rw - 8, h.won ? 'WIN' : cap(String(h.killedBy || 'unknown')).slice(0, 18), 1);
+      t(rx + rw - 8, h.won ? 'WIN' : causeOf(h.killedBy).slice(0, 18), 1);
     });
   }
 
@@ -478,6 +496,11 @@ export default class CodexScene extends Phaser.Scene {
     if (this.mode === 'grid') {
       const n = this.entries.length;
       let i = this.sel;
+      if ((c === 'Enter' || c === 'NumpadEnter') && this.tabId === 'lore') {
+        const en = this.entries[this.sel];
+        if (en && en.stage >= 1 && en.l && en.l.reread) this.reread(en.l);
+        return;
+      }
       if (c === 'ArrowLeft' || c === 'KeyA') i -= (i % COLS) ? 1 : 0;
       else if (c === 'ArrowRight' || c === 'KeyD') i += (i % COLS < COLS - 1 && i + 1 < n) ? 1 : 0;
       else if (c === 'ArrowUp' || c === 'KeyW') i -= COLS;

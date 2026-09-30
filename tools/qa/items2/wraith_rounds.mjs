@@ -20,7 +20,7 @@ export default {
       o.a = I.lost(a); o.b = I.lost(b);
       t.type = old; t.solid = oldSolid;
       // control: with the chance back at 0 the same rock stops a plain bullet
-      p.recomputeStats(); I.prep(); t.type = 'block'; t.solid = true; const c2 = I.dummy(400, 0); I.shoot(1, 0); I.sim(0.9);
+      p.recomputeStats(); I.prep(); t.type = 'block'; t.solid = true; const c2 = I.dummy(400, 0); p.crng.chance = () => false; I.shoot(1, 0); I.sim(0.9); delete p.crng.chance; // ghostChance is back to 0.25: force the roll to miss
       o.ctl = I.lost(c2); t.type = old; t.solid = oldSolid;
       return o;
     });

@@ -5,10 +5,11 @@
 import { flag } from './util.js';
 import { spawnEnemy, ENEMY_META } from '../enemies/index.js';
 import { spawnBoss, BOSS_META } from '../bosses/index.js';
-import { allItems } from '../items/index.js';
+import { allItems, getItem, tagCounts } from '../items/index.js';
 import { MAX_FLOOR } from '../config.js';
 import { subRng } from './rng.js';
 import { Music } from './Audio.js';
+import { bus } from './events.js';
 import { Boons } from '../systems/Boons.js';
 import { openGate } from '../systems/Crossroads.js';
 import * as flow from '../scenes/flow.js';
@@ -35,7 +36,7 @@ export function installDebug(scene) {
     randomPassive() {
       const owned = new Set(P().items);
       const c = allItems().filter((d) => d.type === 'passive' && !owned.has(d.id));
-      const d = c[Math.floor(Math.random() * c.length)];
+      const d = subRng('debug-passive', scene.time.now | 0).pick(c);
       if (d) api.giveItem(d.id);
       return d && d.id;
     },
@@ -69,6 +70,29 @@ export function installDebug(scene) {
     clearRoom() { const r = scene.room; if (r) { api.killAll(); r.clearRoom(); } },
     revealMap() { for (const r of scene.roomMgr.floor.rooms) scene.roomMgr.stateFor(r.id).visited = true; scene.roomMgr.touchMap(); },
     die() { P().hp = 0; P().tin = 0; P().godMode = false; P().hurtT = 0; P().entryInv = 0; P().damage(1, { x: P().x, y: P().y }); },
+    // ---- FN-4 items (INTEGRATION_REQUESTS): per-item tests and QA
+    /** Give several items (ids). Returns the ids that were accepted. */
+    giveItems(ids) { return (ids || []).filter((id) => { if (!getItem(id)) return false; api.giveItem(id); return true; }); },
+    /** Tag counts of the owned items ({tag: n}). */
+    tags() { return { ...tagCounts(P()) }; },
+    /** Active synergy ids. */
+    synergies() { return [...P().synergies]; },
+    /** Set current hearts in half-heart units (clamped to max), recomputes stats. */
+    setHp(units) { const p = P(); p.hp = Math.max(0, Math.min(p.maxHp, Math.round(+units) || 0)); if (p.recomputeStats) p.recomputeStats(); return p.hp; },
+    setCoins(n) { const p = P(); p.coins = Math.max(0, Math.round(+n) || 0); bus.emit('coins:changed', { coins: p.coins }); return p.coins; },
+    /** Roll `n` unused items from a pool ('treasure' | 'shop' | 'boss' | 'secret' | 'crossroads') on `floor`; the ids are released again (a pure preview). */
+    rollPool(pool, n = 1, floor) {
+      const out = [];
+      const r = subRng('debug-roll', pool, floor || scene.floorNum, scene.time.now | 0);
+      for (let i = 0; i < n; i++) { const id = scene.items.roll(pool, r, { floor: floor || scene.floorNum }); if (id) out.push(id); }
+      for (const id of out) scene.items.release(id);
+      return out;
+    },
+    // ---- FN-1 world: minimap reveal, contract goal
+    /** Reveal rooms on the minimap without visiting them (default kinds: shop, treasure, boss, secret). */
+    reveal(kinds) { return scene.roomMgr.revealKinds(kinds || ['shop', 'treasure', 'boss', 'secret']); },
+    /** Finish the current contract as if the goal boss fell (needs a contract run: run.maxFloor > 0). */
+    finishContract() { if (!flow.isContractGoal(scene)) return false; flow.endContract(scene, scene.room && scene.room.boss); return true; },
     // ---- FN-5 crossroads (INTEGRATION_REQUESTS)
     /** Open the devil gate in the current room (the boss room on a real run). */
     openGate() { return scene.room ? !!openGate(scene, scene.room) : false; },
@@ -78,7 +102,7 @@ export function installDebug(scene) {
       const p = P(), r = scene.room, m = scene.roomMgr;
       return {
         floor: scene.floorNum, chapter: scene.chapter, seed: scene.seed, roomId: m.currentId, roomType: r && r.type, mod: r && r.def.mod, pocket: m.inPocket, music: Music.current(), locked: r && r.locked, cleared: r && r.state.cleared, mode: r && r.mode,
-        hp: p.hp, tin: p.tin, maxHp: p.maxHp, coins: p.coins, keys: p.keys, dyn: p.dynamite, x: Math.round(p.x), y: Math.round(p.y), dead: p.dead,
+        hp: p.hp, tin: p.tin, maxHp: p.maxHp, synergies: [...p.synergies], tags: { ...tagCounts(p) }, cyl: { pos: p.cyl ? p.cyl.pos : 0, every: p.stats.sixthEvery }, coins: p.coins, keys: p.keys, dyn: p.dynamite, x: Math.round(p.x), y: Math.round(p.y), dead: p.dead,
         enemies: scene.enemies.map((e) => `${e.id}:${Math.round(e.hp)}`), bullets: scene.bullets.count, items: [...p.items], active: p.active,
         transitioning: scene.transitioning, cutscene: scene.cutscene, doors: r ? Object.fromEntries(Object.entries(r.doors).map(([k, d]) => [k, d.state])) : {},
         fps: Math.round(scene.game.loop.actualFps), stats: { ...p.stats },

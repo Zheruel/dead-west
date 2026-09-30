@@ -60,10 +60,29 @@ const recompute = (player) => { try { if (player.recomputeStats) player.recomput
 const toast = (text, color) => emit('ui:toast', { text, color });
 const runOf = (player) => (player.scene && player.scene.run) || null;
 
+/**
+ * Has `player` signed pact `id`? Pacts live on `player.pacts[]` AND on `run.pacts[]`: RunState is serialised whole into checkpoints while the Player
+ * snapshot does not carry `pacts`, so a CONTINUE keeps glass_cannon through the run copy.
+ */
+export function hasPact(player, id) {
+  if (!player) return false;
+  if (player.pacts && player.pacts.includes(id)) return true;
+  const run = runOf(player);
+  return !!(run && Array.isArray(run.pacts) && run.pacts.includes(id));
+}
+
+/** Record a signed pact on the player and the run (see hasPact). */
+export function addPact(player, id) {
+  const list = arr(player, 'pacts');
+  if (!list.includes(id)) list.push(id);
+  const run = runOf(player);
+  if (run) { if (!Array.isArray(run.pacts)) run.pacts = []; if (!run.pacts.includes(id)) run.pacts.push(id); }
+}
+
 /** Apply curse + blessing stat effects. Pure over `stats` (called on every recompute). */
 export function applyBoons(player, stats) {
   const cu = player.curses, bl = player.blessings;
-  if (player.pacts && player.pacts.includes('glass_cannon')) stats.damage += BOON_NUM.glassDamage;
+  if (hasPact(player, 'glass_cannon')) stats.damage += BOON_NUM.glassDamage;
   if (cu && cu.length) {
     if (cu.includes('curse_lead')) {
       stats.moveSpeed += BOON_NUM.leadSpeed;
@@ -83,7 +102,7 @@ export function applyBoons(player, stats) {
 
 export const Boons = {
   CURSES, BLESSINGS, MAX_CURSES,
-  applyBoons,
+  applyBoons, hasPact, addPact,
 
   hasCurse(player, id) { return !!(player.curses && player.curses.includes(id)); },
   curseCount(player) { return player.curses ? player.curses.length : 0; },

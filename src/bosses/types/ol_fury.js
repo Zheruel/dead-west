@@ -52,7 +52,7 @@ class OlFury extends MiniBase {
     fx.hitStop(60);
     this.dustRing(170);
     Sfx.play('explosion', { vol: 0.5, rate: 0.8 });
-    Sfx.play('bullet_hit_wall', { vol: 0.9, rate: 0.6 });
+    Sfx.play('rock_crumble', { vol: 0.9, rate: 1.5 });
     this.setPose('attack');
     if (spawn && this.p2) {
       let alive = 0;

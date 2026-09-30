@@ -91,6 +91,7 @@ export default class QuickDraw extends EventBase {
       scene.fx.shake(0.008, 160);
       scene.fx.flash(0xd63a2a, 0.25);
       Sfx.play('duel_draw');
+      bus.emit('duel:draw'); // DRAW moment (Audio / Meta cue)
       this.duelEnd();
     }
     if (this.drawn && this.duelist && !this.duelist.alive) this.win();

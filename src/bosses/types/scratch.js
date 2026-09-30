@@ -53,7 +53,7 @@ const WEIGHTS = {
   brimstone_grid: [0, 0, 2, 0],
 };
 const clampRoom = (o, m = 60) => { o.x = clamp(o.x, ROOM.x + m, ROOM.right - m); o.y = clamp(o.y, ROOM.y + m, ROOM.bottom - m); return o; };
-const snd = (key, alt, o) => Sfx.play(Assets.hasAudio(key) ? key : alt, o);
+const snd = (key, alt, o) => Sfx.play(Sfx.canPlay(key) ? key : alt, o); // canPlay = manifest file OR alias chain
 
 class Scratch extends Boss {
   setup() {

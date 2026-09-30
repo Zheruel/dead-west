@@ -112,7 +112,7 @@ export default class AchievementToast {
     this.np.setText(t.np ? `+${t.np} NP` : '');
     this.c.setVisible(true).setY(H + CH);
     this.phase = 'in'; this.t = 0;
-    Sfx.play(t.kind === 'rank' ? 'room_clear' : 'item_get', { vol: 0.6, rate: 1 });
+    Sfx.play(t.kind === 'rank' ? 'stamp_slam' : 'item_get', { vol: 0.6, rate: 1 });
   }
 
   tick(dt) {

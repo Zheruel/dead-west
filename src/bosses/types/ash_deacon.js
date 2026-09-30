@@ -45,7 +45,7 @@ class AshDeacon extends MiniBase {
     const s = this.scene, n = this.p2 ? 16 : 12;
     this.setPose('windup');
     this.pulse(0.6);
-    Sfx.play('lasso_swish', { rate: 0.5 });
+    Sfx.play('censer_swing');
     yield 0.6;
     this.setPose('attack');
     Sfx.play('fire_whoosh', { vol: 0.8, rate: 0.9 });

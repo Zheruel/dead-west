@@ -6,7 +6,7 @@ registerItem({
   id: 'pocket_watch', name: 'Pocket Watch', desc: 'Bullet-time for 4 s: foes and their bullets crawl at 40% speed.', type: 'active', charges: 4, pool: ['treasure', 'shop', 'boss', 'secret'], weight: 0.7,
   icon: { sheet: 'items_active', name: 'pocket_watch' },
   tags: ['speed'], tier: 2,
-  lore: "Borrowed time. No interest.",
+  lore: 'Time waits for no man. This one asked nicely.',
   use(player, { scene }) {
     if (scene._bulletTime) return false; // already running: do not waste the charge
     startBulletTime(scene, 4, 0.4);
