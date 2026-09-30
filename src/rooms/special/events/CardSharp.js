@@ -122,15 +122,21 @@ export default class CardSharp extends EventBase {
       Sfx.play(pd.outcome === 'bust' ? 'card_lose' : pd.outcome === 'push' ? 'chip_place' : 'card_win');
       if (gain > 0) this.scene.fx.burst(this.cx, this.cy, { color: [0xffe090, 0xffffff], count: 14, speed: [80, 260], blend: 'ADD' });
       if (pd.outcome === 'dead_mans_hand') { this.room.banner("DEAD MAN'S HAND", { color: '#c8a8f0', hold: 1400 }); this.scene.fx.flash(0x6a3aa0, 0.2); }
+      this.speak(pd.outcome);
     }
-    if (d.hands >= BET.maxHands || state.net >= BET.foldNet) this.closeHouse(!quiet);
+    const closing = d.hands >= BET.maxHands || state.net >= BET.foldNet;
+    if (closing) this.closeHouse(!quiet);
+    else if (!quiet && p.coins < BET.chips[0]) this.speak('broke', { delay: 2800 });
   }
 
   closeHouse(fx) {
     const d = this.data;
     d.folded = true;
     for (const c of this.chips) { c.ring.setVisible(false); c.chip.setTint(0x666666); }
-    if (fx) this.later(900, () => this.say(this.cx, this.cy - 60, this.state.net >= BET.foldNet ? 'THE HOUSE FOLDS' : 'HOUSE CLOSED', '#f0d060', 32));
+    if (fx) {
+      this.later(900, () => this.say(this.cx, this.cy - 60, this.state.net >= BET.foldNet ? 'THE HOUSE FOLDS' : 'HOUSE CLOSED', '#f0d060', 32));
+      this.speak('fold', { delay: 2800 });
+    }
     this.finish(this.state.net >= BET.foldNet ? 'cleaned_out' : 'closed');
   }
 
@@ -143,6 +149,13 @@ export default class CardSharp extends EventBase {
       const grey = !this.data.folded && p.coins < c.bet;
       if (grey !== c.grey) { c.grey = grey; c.chip.setTint(grey ? 0x666666 : 0xffffff); if (!grey) c.chip.clearTint(); }
     }
+  }
+
+  onEnter() {
+    const d = this.data;
+    if (this.state.greeted || d.folded) return;
+    this.state.greeted = true;
+    this.speak(this.player.coins < BET.chips[0] ? 'broke' : 'greet', { delay: 1500 });
   }
 
   onLeave() { this.settle(true); }

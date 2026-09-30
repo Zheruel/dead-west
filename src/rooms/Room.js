@@ -39,6 +39,7 @@ const SECRETS = Object.values(import.meta.glob('./special/SecretVariants.js', { 
 
 const BIG = 400;
 /** Tile types nothing may drop onto / spawn from (walkableNear, safe spawns): they hurt or hold whoever stands there. */
+const DOOR_SPAWN_MARGIN = 90; // px between an enemy body and the interior door tile centre, on top of its radius
 const NO_DROP = new Set(['spikes', 'lava', 'quicksand', 'vent', 'rspikes', 'pit']);
 /** Template chars that only Hazards.build draws (Room registers them as tiles and draws nothing). */
 const FLOOR_HAZARD = { L: 'lava', V: 'vent', '=': 'rail', '|': 'rail', r: 'roulette', k: 'roulette', Q: 'quicksand', s: 'rspikes' };
@@ -183,7 +184,13 @@ export default class Room {
         else if (ch === 'B') {
           t.type = 'breakable'; t.solid = true; t.hp = 2; name = 'breakable';
           if (broken[`${col},${row}`]) { t.broken = true; t.solid = false; name = 'breakable_broken'; }
-        } else if (ch === 'd') { t.type = 'decor'; name = r.chance(0.5) ? 'decor_a' : 'decor_b'; t.decorName = name; }
+        } else if (ch === 'd') {
+          // V-033: scenery must fit the room's theme. Vaults / secret rooms stay clean (no gravestones round the Dealer's safe); events use one
+          // prop kind (gravestone for the gravedigger, tipped chair everywhere else). `r.chance` is still drawn so other tiles keep their variants.
+          const pick = r.chance(0.5) ? 'decor_a' : 'decor_b';
+          if (this.type === 'supersecret' || this.type === 'secret') { /* bare floor */ }
+          else { name = this.type === 'event' ? (this.def.event === 'gravedigger' ? 'decor_a' : 'decor_b') : pick; t.type = 'decor'; t.decorName = name; }
+        }
         else if (ch === 'Z') { // explosive powder barrel: breakable by one hit, chain-detonates (breakTile)
           t.type = 'breakable'; t.barrel = true; t.solid = true; t.hp = 1;
           if (broken[`${col},${row}`]) { t.broken = true; t.solid = false; }
@@ -301,10 +308,19 @@ export default class Room {
     const s = this.scene;
     this.state.hinted = true; // controls hint only on the first visit
     const lines = ['WASD  -  MOVE', 'ARROWS  -  SHOOT', 'SPACE  -  DODGE ROLL', 'E  -  DYNAMITE'];
-    lines.forEach((l, i) => {
-      const t = s.add.text(ROOM.cx, ROOM.cy - 80 + i * 40, l, { fontFamily: FONT_BODY, fontSize: '30px', color: '#e8dcc0' }).setOrigin(0.5).setAlpha(0.33).setDepth(DEPTH.decals + 1);
-      this.track(t);
-    });
+    // bottom-left corner (the spawn point is the room centre); fades out on the first move / shot / roll
+    this._hint = lines.map((l, i) => this.track(s.add.text(ROOM.x + 36, ROOM.bottom - 152 + i * 34, l, { fontFamily: FONT_BODY, fontSize: '26px', color: '#e8dcc0' }).setOrigin(0, 0.5).setAlpha(0.4).setDepth(DEPTH.decals + 1)));
+  }
+
+  /** Fade the first-visit controls hint once the player does anything. */
+  updateHint() {
+    const s = this.scene, gi = s.gameInput, p = s.player;
+    if (!gi || !p || s.cutscene) return;
+    const m = gi.move;
+    if (!(m.x || m.y) && !gi.aim(p) && !p.rolling) return;
+    const list = this._hint;
+    this._hint = null;
+    for (const t of list) if (t && t.scene) s.tweens.add({ targets: t, alpha: 0, duration: 500, onComplete: () => { if (t.scene) t.destroy(); } });
   }
 
   /** Big timed banner (event names, modifier names, vault plate). One reusable text per room. */
@@ -600,20 +616,25 @@ export default class Room {
     const pts = [];
     if (p) pts.push({ x: p.x, y: p.y });
     if (this.waveIdx === 0 && this.enteredVia && DOORS[this.enteredVia]) pts.push(DOORS[this.enteredVia].entry);
-    if (!pts.length) return wave;
     const D = SPAWN_SAFE_DIST;
-    const minD = (x, y) => Math.min(...pts.map((q) => Math.hypot(q.x - x, q.y - y)));
+    const minD = pts.length ? (x, y) => Math.min(...pts.map((q) => Math.hypot(q.x - x, q.y - y))) : () => Infinity;
+    // door margin (V-005): a body may not sit on / against any door of the room (big enemies like the magma golem overlapped the frame)
+    const doorC = Object.keys(this.doors || {}).filter((d) => DOORS[d]).map((d) => tileToWorld(DOORS[d].tile[0], DOORS[d].tile[1]));
+    const nearDoor = (x, y, r) => doorC.some((c) => Math.hypot(c.x - x, c.y - y) < r + DOOR_SPAWN_MARGIN);
     const doorTiles = new Set(DIRS.flatMap((d) => [DOORS[d].tile.join(','), DOORS[d].front.join(',')]));
     const used = [];
     const out = [];
     for (const w of wave) {
       let pos = { x: w.x, y: w.y };
-      if (minD(w.x, w.y) < D) {
-        const fly = !!(enemyMeta(w.id) || {}).flying;
+      const em = enemyMeta(w.id) || {};
+      const er = em.r || 30;
+      if (minD(w.x, w.y) < D || nearDoor(w.x, w.y, er)) {
+        const fly = !!em.flying;
         let best = null, bestScore = Infinity, far = null, farD = -1;
         for (const row of this.tiles) for (const t of row) {
           if ((NO_DROP.has(t.type) && t.type !== 'pit') || (t.solid && !(fly && t.type === 'pit')) || doorTiles.has(`${t.c},${t.r}`)) continue;
           if (used.some((u) => Math.hypot(u.x - t.x, u.y - t.y) < 70)) continue;
+          if (nearDoor(t.x, t.y, er)) continue;
           const d = minD(t.x, t.y);
           if (d > farD) { farD = d; far = t; }
           if (d >= D) { const sc = Math.hypot(t.x - w.x, t.y - w.y); if (sc < bestScore) { bestScore = sc; best = t; } }
@@ -1024,6 +1045,7 @@ export default class Room {
     for (const c of this.chests) c.update(dt);
     for (const p of this.props) p.update(dt);
     for (let i = this.rings.length - 1; i >= 0; i--) this.rings[i].update(dt);
+    if (this._hint) this.updateHint();
     this.updateEncounter(dt);
     this.updateDoors(dt);
     if (this.destroyed) return; // a door transition just tore this room down: don't run spikes/lights against the dead room

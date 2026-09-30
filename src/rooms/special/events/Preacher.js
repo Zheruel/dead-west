@@ -14,12 +14,7 @@ const ALTARS = [
   { id: 'absolution', color: 0xf0f0e8, tint: 0xffffff },
   { id: 'plate', color: 0xf0c860, tint: 0xffe090 },
 ];
-const LINES = {
-  enter: 'CONFESS, CHILD.',
-  communion: ['THE BLOOD IS THE COVENANT.', 'A FALSE PROPHET. HIS DEBT IS YOURS.', 'A MIRACLE. DO NOT ASK TWICE.'],
-  absolution: ['YOUR SINS ARE LIFTED.', 'YOU CARRY NO SIN. TAKE THIS ANYWAY.'],
-  plate: ['THE LORD LOVES A CHEERFUL GIVER.'],
-};
+// spoken lines come from STORY 11.3 (EVENT_LINES.preacher): greet, communion, blessing, miracle, false_prophet, no_sins, plate, leave
 
 export default class Preacher extends EventBase {
   build() {
@@ -69,10 +64,8 @@ export default class Preacher extends EventBase {
     if (fx) { this.scene.fx.burst(alt.at.x, alt.at.y - 40, { color: [0x888888, 0x444444], count: 8, speed: [20, 80], gravity: -80, life: [400, 800] }); }
   }
 
-  preach(text, color = '#c8d8e8') {
-    const k = this.spots('K', [[6, 2]])[0];
-    this.say(k.x, k.y - 150, text, color, 24);
-  }
+  /** Preacher's spoken line `key` (STORY 11.3); `delay` ms defers it. */
+  preach(key, delay = 0) { this.speak(key, { delay }); }
 
   take(id) {
     if (this.canUse(id) !== true) return;
@@ -89,11 +82,12 @@ export default class Preacher extends EventBase {
       bus.emit('hud:flash', { color: 0xd63a2a, alpha: 0.3 });
       const r = rollCommunion(this.rng('communion', 0));
       outcome = `communion_${r}`;
-      if (r === 'false_prophet') { Boons.gainCurse(p, this.rng('communion-curse', 0)); this.preach(LINES.communion[1], '#d63a2a'); Sfx.play('curse_gain'); }
+      this.preach('communion');
+      if (r === 'false_prophet') { Boons.gainCurse(p, this.rng('communion-curse', 0)); this.preach('false_prophet', 2200); Sfx.play('curse_gain'); }
       else {
         Boons.gainBlessing(p, undefined, this.rng('communion-bless', 0));
         Sfx.play('blessing_gain');
-        if (r === 'miracle') { p.heal(p.maxHp); this.preach(LINES.communion[2], '#f0d060'); scene.fx.flash(0xffe090, 0.3); } else this.preach(LINES.communion[0]);
+        if (r === 'miracle') { p.heal(p.maxHp); this.preach('miracle', 2200); scene.fx.flash(0xffe090, 0.3); } else this.preach('blessing', 2200);
       }
     } else if (id === 'absolution') {
       const n = p.curses ? p.curses.length : 0;
@@ -101,9 +95,9 @@ export default class Preacher extends EventBase {
         let removed = 0;
         while (p.curses && p.curses.length) { if (!Boons.removeCurse(p)) break; removed++; }
         p.addTin(2 * Math.min(ABSOLUTION_TIN_MAX, removed));
-        this.preach(LINES.absolution[0]);
+        this.preach('blessing');
         outcome = 'absolved';
-      } else { p.addTin(2); this.preach(LINES.absolution[1]); outcome = 'benediction'; }
+      } else { p.addTin(2); this.preach('no_sins'); outcome = 'benediction'; }
       Sfx.play('holy_chime');
       scene.fx.ringPulse(p.x, p.y, 0xf0f0e8, 120, 600, 0.6);
     } else {
@@ -112,14 +106,15 @@ export default class Preacher extends EventBase {
       state.net = -cost;
       p.heal(p.maxHp);
       if (this.rng('plate', 0).chance(PLATE_BLESSING_CHANCE)) { Boons.gainBlessing(p, undefined, this.rng('plate-bless', 0)); Sfx.play('blessing_gain'); }
-      this.preach(LINES.plate[0]);
+      this.preach('plate');
       Sfx.play('shop_buy');
     }
     this.finish(outcome);
+    this.preach('leave', id === 'communion' ? 5200 : 3400);
   }
 
   onEnter() {
-    if (!this.data.chosen && !this.state.greeted) { this.state.greeted = true; this.later(500, () => this.preach(LINES.enter)); }
+    if (!this.data.chosen && !this.state.greeted) { this.state.greeted = true; this.preach('greet', 1500); }
   }
 
   update(dt) {

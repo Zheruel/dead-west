@@ -2,7 +2,7 @@
 //
 // Override points:  init()  ai(dt)  onHit(dmg, info)  onDeath(info)  damageMultiplier(info)  onWallHit(nx, ny)
 // Animation convention (sprite 'enemy_<id>', 6 frames): 0-3 move loop, 4 windup/telegraph, 5 attack.
-import { ENEMY_DEFAULTS, FLOORS, FEEL, ROOM_REWARD } from '../config.js';
+import { ENEMY_DEFAULTS, FLOORS, FEEL, ROOM_REWARD, W, H } from '../config.js';
 import Actor from '../entities/Actor.js';
 import { Assets } from '../core/Assets.js';
 import { Sfx } from '../core/Audio.js';
@@ -31,6 +31,34 @@ function installTokens(scene) {
   };
   scene.tokenRelease = (name, owner) => { if (held[name]) held[name].delete(owner); };
   scene.tokenClear = () => { for (const k of Object.keys(held)) held[k].clear(); };
+}
+
+/** Elite nameplate placement (QA V-027 / V-040): Affixes.js positions the plate above the head; here it is clamped to the screen (8 px margin, below the 98 px HUD strip)
+ *  and pushed off plates of earlier enemies so simultaneous elites never overprint each other. Runs right after Affixes.update, so the plate is drawn once. */
+function fitPlate(e) {
+  const st = e._affix, pl = st && st.plate;
+  if (!pl || !pl.scene) return;
+  const w = pl.width * pl.scaleX, h = pl.height * pl.scaleY;
+  const x = Math.max(8 + w / 2, Math.min(W - 8 - w / 2, pl.x));
+  const minY = 102 + h / 2, maxY = H - 8 - h / 2;
+  const list = e.scene.enemies, mine = list.indexOf(e);
+  const clash = (cy) => {
+    for (let i = 0; i < mine; i++) {
+      const o = list[i], op = o._affix && o._affix.plate;
+      if (!op || !op.scene || op.alpha <= 0.02) continue;
+      if (Math.abs(op.x - x) < (op.width * op.scaleX + w) / 2 && Math.abs(op.y - cy) < (op.height * op.scaleY + h) / 2) return true;
+    }
+    return false;
+  };
+  let y = Math.max(minY, Math.min(maxY, pl.y));
+  if (clash(y)) {
+    for (let k = 1; k < 12; k++) { // alternate up / down in one-plate steps
+      const up = Math.max(minY, Math.min(maxY, pl.y - k * (h + 2))), dn = Math.max(minY, Math.min(maxY, pl.y + k * (h + 2)));
+      if (!clash(up)) { y = up; break; }
+      if (!clash(dn)) { y = dn; break; }
+    }
+  }
+  pl.setPosition(x, y);
 }
 
 export default class Enemy extends Actor {
@@ -96,6 +124,7 @@ export default class Enemy extends Actor {
     this.refreshTint();
     this.syncVisual();
     Affixes.apply(this); // elite rings / hp / tint / nameplate (owns cursed x1.5 hp and the aura)
+    fitPlate(this);
     bus.emit('enemy:spawned', { enemy: this });
   }
 
@@ -353,6 +382,7 @@ export default class Enemy extends Actor {
     }
     if (info.sixth) s.fx.hitStop(40);
     else s.fx.hitStop(20);
+    if (ST.frozen && !info.silent) { Sfx.play('freeze_shatter', { vol: 0.8 }); s.fx.burst(this.x, this.y - 30, { color: [0xd8f4ff, 0x9fd8ff, 0xffffff], count: 12, speed: [120, 320], life: [250, 550], scale: [1.2, 2.6], gravity: 420 }); } // frozen kill
     this.dropLoot();
     try { Affixes.onDeath(this, info); } catch (e) { console.error(e); }
     try { this.onDeath(info); } catch (e) { console.error(e); }
@@ -405,6 +435,7 @@ export default class Enemy extends Actor {
     this.updateStatus(dt);
     if (!this.alive) return;
     Affixes.update(this, dt);
+    fitPlate(this);
 
     const stunned = !!this.status.stun;
     if (stunned) { this.stop(); }

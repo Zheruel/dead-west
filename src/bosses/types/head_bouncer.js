@@ -8,7 +8,6 @@ import MiniBase, { ROOM, TILE, ROWS, TAU } from '../parts/MiniBase.js';
 import { registerBoss } from '../registry.js';
 import { Sfx } from '../../core/Audio.js';
 
-const WOOD = 0xc09060;
 
 class HeadBouncer extends MiniBase {
   build() {
@@ -56,7 +55,7 @@ class HeadBouncer extends MiniBase {
           im.once('destroy', () => tw.remove());
           return im;
         },
-        onLand: () => s.bullets.enemy.ring({ x: q.x, y: q.y, speed: 300, damage: 1, kind: 'nail', tint: WOOD, scale: 0.9, lift: 18, life: 1.6 }, 4, o),
+        onLand: () => s.bullets.enemy.ring({ x: q.x, y: q.y, speed: 300, damage: 1, kind: 'spike', scale: 1.05, lift: 18, life: 1.6 }, 4, o),
       });
     }
     yield 0.9;

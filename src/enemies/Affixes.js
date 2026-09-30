@@ -10,7 +10,7 @@
 // Limits: `maxPerRoom` (2 on floors 1-3, 3 on 4-6), at least one plain enemy per room, no elites on bosses / minis / crow / tumbleweed_mini /
 // duelist / chain-gang links / contract seals / adds (those never pass through rollWave). `meta.affixBan` lists banned affixes per enemy.
 // Second affix (floors 5-6, 25 %): distinct, never armored+shielded, never two hp-multiplying affixes, never splitting+volatile.
-import { VARIETY, DEPTH, FONT_BODY, eliteChance, eliteMaxPerRoom } from '../config.js';
+import { VARIETY, DEPTH, FONT_BODY, W, eliteChance, eliteMaxPerRoom } from '../config.js';
 import { enemyMeta } from './registry.js';
 import { rng as gameRng } from '../core/rng.js';
 import { deps, emit, sfx } from '../systems/Boons.js';
@@ -220,6 +220,31 @@ function installVampire(scene) {
   scene.events.once('shutdown', () => { scene._affixVamp = false; });
 }
 
+/** Nameplates live in the play area only: clamped to [8, W - w - 8] and below the HUD bar, and stacked so plates of one frame never overlap (QA V-027 / V-040). */
+const PLATE_TOP = 118; // top edge floor: below the HUD bar
+const MAP_X = 1195, MAP_BOTTOM = 176; // minimap footprint (x from, y to)
+function placePlate(scene, plate, x, y, alpha) {
+  const frame = scene.game && scene.game.getFrame ? scene.game.getFrame() : scene.time.now;
+  let f = scene._platesFrame;
+  if (!f || f.frame !== frame) f = scene._platesFrame = { frame, list: [] };
+  const w = plate.width, h = plate.height;
+  const px = Math.max(8 + w / 2, Math.min(W - 8 - w / 2, x));
+  const top = px + w / 2 > MAP_X ? MAP_BOTTOM : PLATE_TOP; // the minimap (top right) reaches y ~ 172: plates that would sit under it drop below it
+  let py = Math.max(top + h / 2, y);
+  for (let pass = 0; pass < 6; pass++) {
+    let moved = false;
+    for (const q of f.list) {
+      if (Math.abs(px - q.x) >= (w + q.w) / 2 || Math.abs(py - q.y) >= (h + q.h) / 2) continue;
+      const up = q.y - (h + q.h) / 2 - 1;
+      py = up >= top + h / 2 ? up : q.y + (h + q.h) / 2 + 1; // stack upward, else below the blocking plate
+      moved = true;
+    }
+    if (!moved) break;
+  }
+  f.list.push({ x: px, y: py, w, h });
+  plate.setPosition(px, py).setAlpha(alpha);
+}
+
 export const Affixes = {
   AFFIXES, AFFIX_NUM, roll, rollWave, chance, eligible,
 
@@ -313,7 +338,7 @@ export const Affixes = {
     if (st.plate) {
       st.plateT -= dt;
       if (st.plateT <= 0) { st.plate.destroy(); st.plate = null; }
-      else st.plate.setPosition(enemy.x, headY - 20).setAlpha(Math.min(1, st.plateT / 0.35));
+      else placePlate(enemy.scene, st.plate, enemy.x, headY - 20, Math.min(1, st.plateT / 0.35));
     }
     if (st.bubble) {
       const k = st.shield / st.shieldMax;

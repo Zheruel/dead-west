@@ -81,11 +81,18 @@ export default class MenuScene extends Phaser.Scene {
     items.push({ label: 'OPTIONS', act: () => this.openOptions() });
     items.push({ label: 'CREDITS', act: () => this.openCredits() });
     this.list = new MenuList(this, items, { x: 560, y: cp ? 512 : 528, gap: 54, size: 40, hitW: 520 });
-    this.list.select(cp ? 1 : 0, true);
+    this.list.select(0, true); // CONTINUE (when a checkpoint exists) is item 0: one Enter must never abandon it (Q1-02)
+    // lazy art (QA4-001): once the menu is up, fetch what the next actions need (first-ride cutscene, Hell intro reuse, codex book)
+    this.time.delayedCall(1200, () => {
+      if (!Save.flag('introSeen')) Assets.prefetch('intro');
+      if (Meta.isModeUnlocked('hell')) Assets.prefetch(['cutscene_end_a_5', 'cutscene_intro_7']);
+      Assets.prefetch(['cast', 'codex']);
+    });
 
     // controls + credits line + mute state
     const controls = ['WASD  move          ARROWS / MOUSE  shoot', 'SPACE  dodge roll          E  dynamite          Q  item', 'ESC / P  pause          M  mute'];
-    controls.forEach((c, i) => this.add.text(40, 840 + i * 30, c, body(21, CSS.sand, { strokeThickness: 4 })).setOrigin(0, 0.5));
+    this.add.rectangle(28, 826, 640, 106, 0x0d0806, 0.6).setOrigin(0, 0).setDepth(1); // V-023: contrast plate under the hints
+    controls.forEach((c, i) => this.add.text(40, 840 + i * 30, c, body(21, CSS.sand, { strokeThickness: 4 })).setOrigin(0, 0.5).setDepth(2));
     this.add.text(40, H - 28, 'Music: Kevin MacLeod (incompetech.com), CC BY 4.0   -   Sound: Freesound / Kenney (see Credits)', body(16, '#8a7350', { strokeThickness: 3 })).setOrigin(0, 0.5);
     this.muteText = this.add.text(W - 30, H - 30, '', body(20, CSS.sand)).setOrigin(1);
     this.refreshMute();
@@ -142,7 +149,9 @@ export default class MenuScene extends Phaser.Scene {
     this.starting = true;
     if (scene === 'Game') Sfx.play('gun_cock', { vol: 0.7 }); else uiSfx.select();
     this.cameras.main.fadeOut(scene === 'Game' ? 320 : 220, 13, 8, 6);
-    this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start(scene, data));
+    // CONTINUE into F4-F6: hold on black until that floor's lazy art is in (<= 8 s), so the first room never shows a placeholder floor
+    const ready = scene === 'Game' && data && data.continue ? Assets.ensure(`f${data.floor || 1}`, { timeoutMs: 8000 }) : Promise.resolve(true);
+    this.cameras.main.once('camerafadeoutcomplete', () => ready.then(() => { if (this.sys.isActive()) this.scene.start(scene, data); }));
   }
 
   // ---------------------------------------------------------------------------------------------- modals

@@ -2,7 +2,8 @@
 // doors lock, the bell tolls at 0.9 / 1.9 / 2.9 s, then DRAW! at 3.4 s + 0..1.2 s (seeded from the room seed). The ghost then fights (see types/duelist.js).
 // Reward on the duelist's death: a free wooden chest at the room centre, plus a treasure pedestal when the duel was flawless (run.flawlessDuel).
 // Persistent (state.data): { phase: 'idle' | 'duel' | 'done', flawless }. A duel torn down mid-way (debug jump / death) returns to 'idle'.
-import { EventBase, ROOM, DEPTH, tileToWorld, actorDepth } from './common.js';
+import { EventBase, ROOM, DEPTH, tileToWorld, actorDepth, eventLine } from './common.js';
+import { EVENT_LINES } from '../../../data/story/dialogue.js';
 import { DUEL, drawDelay } from './tables.js';
 import { Sfx } from '../../../core/Audio.js';
 import { bus } from '../../../core/events.js';
@@ -36,6 +37,7 @@ export default class QuickDraw extends EventBase {
       onDone: () => this.begin(),
     });
     this.on('player:hurt', () => { if (this.t >= 0 && !this.over) this.hurt = true; });
+    this.on('player:died', () => { if (this.t >= 0 && !this.over) this.speak('lose'); });
   }
 
   drawChalk(at) {
@@ -49,6 +51,7 @@ export default class QuickDraw extends EventBase {
 
   onEnter() {
     if (this.data.phase === 'done' || this.duelist) return;
+    if (!this.state.greeted) { this.state.greeted = true; this.speak('greet', { delay: 1500 }); }
     this.duelist = spawnEnemy(this.scene, 'duelist', this.foePos.x, this.foePos.y, { floor: this.room.floor || this.scene.floorNum || 1, instant: true });
     if (this.duelist) this.duelist.sprite.setFlipX(true);
   }
@@ -68,6 +71,7 @@ export default class QuickDraw extends EventBase {
     Sfx.play('duel_start');
     this.musicDip = true; bus.emit('duel:start');
     this.room.banner('THE DUEL', { color: '#e8e0d0', hold: 800 });
+    this.say(ROOM.cx, ROOM.cy - 40, EVENT_LINES.quick_draw.bell[0], '#e8e0d0', 30);
   }
 
   update(dt) {
@@ -87,7 +91,7 @@ export default class QuickDraw extends EventBase {
       this.drawn = true;
       const e = this.duelist;
       if (e && e.alive) e.draw();
-      scene.fx.text(ROOM.cx, ROOM.cy - 110, 'DRAW!', { size: 130, color: '#d63a2a', time: 900, rise: 10 });
+      scene.fx.text(ROOM.cx, ROOM.cy - 110, EVENT_LINES.quick_draw.bell[1], { size: 130, color: '#d63a2a', time: 900, rise: 10 });
       scene.fx.shake(0.008, 160);
       scene.fx.flash(0xd63a2a, 0.25);
       Sfx.play('duel_draw');
@@ -114,6 +118,7 @@ export default class QuickDraw extends EventBase {
       if (id) this.pedestal({ x: at.x, y: at.y, itemId: id });
       else this.pickup('heart_container', at.x, at.y, { pop: true });
     }
+    if (d.flawless) this.speak('win_flawless', { delay: 900 });
     this.finish(d.outcome);
   }
 
@@ -121,6 +126,12 @@ export default class QuickDraw extends EventBase {
 
   onLeave() {
     this.duelEnd();
+    // the player walks out without accepting: a parting line in the next room (the tag of this room goes with it)
+    if (this.data.phase === 'idle' && this.duelist && this.duelist.alive && !this.state.declined && !(this.player && this.player.dead)) {
+      this.state.declined = true;
+      const sc = this.scene, txt = eventLine('quick_draw', 'decline');
+      if (txt) sc.time.delayedCall(1100, () => { const p = sc.player; if (p && !p.dead && sc.room !== this.room) sc.fx.text(p.x, p.y - 110, txt, { color: '#e8e0d0', size: 22, time: 3200, rise: 14 }); });
+    }
     // torn down mid-duel: the next visit starts from the chalk mark again
     if (this.data.phase === 'duel') this.data.phase = 'idle';
     if (this.duelist && this.duelist.alive) this.duelist = null;

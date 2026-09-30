@@ -15,8 +15,12 @@ import { tierMult } from './baseStats.js';
 import { onRoomCleared, onFloorChanged } from './fx/synergyFx.js';
 import { bus } from '../core/events.js';
 import { Save } from '../core/Save.js';
-import { rng } from '../core/rng.js';
+import { rng, subRng, getSeed } from '../core/rng.js';
+import { generateFloor } from '../gen/FloorGen.js';
+import Templates from '../gen/Templates.js';
+import { MAX_FLOOR } from '../config.js';
 import { Assets } from '../core/Assets.js';
+import { installPeddler } from '../entities/Shop.js';
 import { DEPTH } from '../config.js';
 
 const FALLBACK_ORDER = ['treasure', 'shop', 'boss', 'secret']; // never crossroads
@@ -56,6 +60,7 @@ export default class ItemSystem {
     this.scene = scene;
     this.taken = new Set(); // ids rolled or picked this run
     this._hurt = false; // damage taken in the current room (roomClear `perfect`)
+    try { installPeddler(scene); } catch (e) { console.error('[items] peddler speech', e); } // STORY 11.1: the shop peddler talks
     bus.scoped(scene, 'player:hurt', () => { this._hurt = true; });
     bus.scoped(scene, 'player:stats', () => { if (scene.player && scene.player.stats.dowse > 0) this.syncMap(); }); // pickup / restore of a dowsing item on the current floor
     bus.scoped(scene, 'room:entered', (p) => { this._hurt = false; this.syncMap(); this._fire('roomEnter', p && p.room); });
@@ -98,24 +103,80 @@ export default class ItemSystem {
     return wouldComplete(ownedIds(player), id);
   }
 
-  /** Roll an unused item from a pool. Marks it as claimed. Returns id or null. opts: {type:'passive'|'active', floor, fallback:true} */
+  _isDaily() { const run = this.scene.run; return !!(run && (run.mode === 'daily' || run.daily)); }
+
+  /** Static candidate filter shared by every roll (no `taken`, no build bias). */
+  _cands(all, p, fl, type, player, gate) {
+    return all.filter((d) => d.pool.includes(p) && (!type || d.type === type)
+      && !(d.pool.includes('c2') && fl < 4) && fl >= (d.minFloor || 1) && (!d.charOnly || !player || d.charOnly === player.char) && gate(d.id));
+  }
+
+  /** Daily Ride plan (ARCH D15, QA4-030): every item roll key (room seed, slot) the run can make is resolved ONCE, up front, floor by floor and room by room in
+   *  fixed order, with no build bias and only earlier plan claims excluded. A pedestal therefore holds the same item for every seed-mate whatever the visit order
+   *  or build. Keys are subRng('item', room.seed, slot).s (the untouched stream state) + pool. Rolls not in the plan (events, chests, vault) still avoid every
+   *  planned item, so they cannot collide with a pedestal. */
+  _dailyPlan() {
+    if (this._plan) return this._plan;
+    const all = allItems(), player = this.scene.player;
+    const snap = new Map(all.map((d) => [d.id, unlocked(d.id)]));
+    const gate = (id) => snap.get(id) !== false;
+    const map = new Map(), claimed = new Set();
+    const resolve = (pool, room, slot, fl) => {
+      const r = subRng('item', room.seed, slot), key = r.s + '|' + pool;
+      if (map.has(key)) return;
+      let id = null;
+      for (const p of [pool, ...FALLBACK_ORDER.filter((q) => q !== pool)]) {
+        const c = this._cands(all, p, fl, null, player, gate).filter((d) => !claimed.has(d.id));
+        if (!c.length) continue;
+        id = r.weighted(c, (d) => (d.weight ?? 1) * tierMult(d.tier, fl)).id;
+        break;
+      }
+      if (id) claimed.add(id);
+      map.set(key, id);
+    };
+    try {
+      for (let f = 1; f <= MAX_FLOOR; f++) {
+        const fd = generateFloor(f, getSeed());
+        for (const room of fd.rooms) {
+          if (room.type === 'treasure') { const t = Templates.get(room.template); const n = t && t.slots && t.slots.I ? t.slots.I.length : 1; for (let i = 0; i < n; i++) resolve('treasure', room, i, f); }
+          else if (room.type === 'shop') resolve('shop', room, 0, f);
+          else if (room.type === 'boss') { if (f < MAX_FLOOR) { resolve('boss', room, 0, f); if (f === 3 || f === 5) resolve('boss', room, 1, f); } }
+          else if (room.type === 'champion' || room.mini) resolve('treasure', room, 0, f);
+          else if (room.type === 'secret' && (!room.variant || room.variant === 'stash')) resolve('secret', room, 0, f);
+        }
+      }
+    } catch (e) { console.error('[items] daily plan', e); }
+    this._plan = { map, claimed, gate };
+    return this._plan;
+  }
+
+  /** Roll an unused item from a pool. Marks it as claimed. Returns id or null. opts: {type:'passive'|'active', floor, fallback:true}
+   *  Daily Ride: planned keys are order-independent (see _dailyPlan); other rolls skip planned items and use no build bias. */
   roll(pool, r = rng.game, { type, floor, fallback = true } = {}) {
     const fl = floor ?? this.scene.floorNum ?? 1;
     const deals = pool === 'crossroads';
     const order = deals || !fallback ? [pool] : [pool, ...FALLBACK_ORDER.filter((p) => p !== pool)];
     const player = this.scene.player;
-    const owned = player ? ownedIds(player) : [];
+    const daily = !deals && this._isDaily();
+    let plan = null;
+    if (daily) {
+      plan = this._dailyPlan();
+      if (!type && fallback && floor == null && r && typeof r.s === 'number') {
+        const key = r.s + '|' + pool;
+        if (plan.map.has(key)) { const id = plan.map.get(key); if (id) this.taken.add(id); return id; }
+      }
+    }
+    const owned = player && !daily ? ownedIds(player) : [];
     const tags = player ? player.tagCounts || {} : {};
     const all = allItems();
     for (const p of order) {
-      const cands = all.filter((d) => d.pool.includes(p) && !this.taken.has(d.id) && (!type || d.type === type)
-        && !(d.pool.includes('c2') && fl < 4) && fl >= (d.minFloor || 1) && (!d.charOnly || !player || d.charOnly === player.char) && unlocked(d.id));
+      const cands = this._cands(all, p, fl, type, player, plan ? plan.gate : unlocked).filter((d) => !this.taken.has(d.id) && !(plan && plan.claimed.has(d.id)));
       if (!cands.length) continue;
       const def = r.weighted(cands, (d) => {
         let w = d.weight ?? 1;
         if (deals) return w;
         w *= tierMult(d.tier, fl);
-        if (player) {
+        if (player && !daily) {
           if (owned.length && this.wouldComplete(d.id, player)) w *= BIAS_SYN;
           else if (d.tags && d.tags.some((t) => tags[t] > 0 && !owned.includes(d.id))) w *= BIAS_TAG;
         }

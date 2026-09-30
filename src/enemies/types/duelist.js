@@ -11,6 +11,7 @@ import { Sfx } from '../../core/Audio.js';
 import { DEPTH, ROOM } from '../../config.js';
 import { subRng } from '../../core/rng.js';
 import { DUEL } from '../../rooms/special/events/tables.js';
+import { EVENT_LINES } from '../../data/story/dialogue.js';
 
 const TEAL = 0x9fe0d0;
 const STRAFE = 130;
@@ -144,7 +145,7 @@ class Duelist extends Enemy {
         this.busy = false; this.cool = DUEL.quickStun + 0.5;
         this.stop(); this.setPose('move');
         this.applyStatus('stun', { t: DUEL.quickStun });
-        this.scene.fx.text(this.x, this.y - 100, 'QUICK DRAW!', { color: '#f0d060', size: 36, time: 1200 });
+        this.scene.fx.text(this.x, this.y - 100, EVENT_LINES.quick_draw.bell[2], { color: '#f0d060', size: 36, time: 1200 });
         this.scene.fx.ringPulse(this.x, this.y, 0xf0d060, 90, 500, 0.8);
         Sfx.play('quick_draw_ding');
         this.quickHit = true;

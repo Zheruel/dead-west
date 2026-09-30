@@ -1,0 +1,13 @@
+import { boot } from './qa3v-lib.mjs';
+const g = await boot('?debug=1&seed=17&unlockall=1');
+const chk = async (l) => console.log(l, await g.api(() => { const p = window.__dw && window.__dw.player; return p ? JSON.stringify({ char: p.char, skin: p.skinBase, key: p.sprite.texture.key, run: window.__dw.scene.run && window.__dw.scene.run.char }) : 'no player'; }));
+await g.play('gunslinger'); await chk('run1');
+await g.api(() => window.__dw.scene.endRun('death')); await g.wait(6000);
+console.log(await g.api(() => window.__game.scene.getScenes(true).map((s) => s.sys.settings.key).join(',')));
+await g.tap('Enter', 80); await g.wait(2500);
+console.log(await g.api(() => window.__game.scene.getScenes(true).map((s) => s.sys.settings.key).join(',')));
+await g.go('CharSelect'); await g.tap('Digit2', 80); await g.wait(600); await g.tap('Enter', 80);
+await g.page.waitForFunction(() => window.__game.scene.isActive('Game') && window.__dw && window.__dw.player, { timeout: 30000 }).catch(() => console.log('no game'));
+await g.wait(2500); await chk('run2 preacher via CharSelect');
+await g.S('probe_run2');
+await g.close();

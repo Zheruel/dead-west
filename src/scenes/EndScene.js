@@ -98,7 +98,8 @@ export default class EndScene extends Phaser.Scene {
       poster.add(pic);
     } else poster.add(riderToken(this, px, py, this.char, ps - 30, { mask: false }));
     const cdef = charDef(this.char);
-    T(px, 702, `THE  ${String(cdef.name).replace(/^THE /i, '').toUpperCase()}`, title(26, '#2a1810', { strokeThickness: 0 }));
+    const nameT = T(px, 702, `THE  ${String(cdef.name).replace(/^THE /i, '').toUpperCase()}`, title(26, '#2a1810', { strokeThickness: 0 }));
+    if (nameT.width > 330) nameT.setScale(330 / nameT.width); // long rider names (Rev. Josiah Thorne, Maude Marlowe) stay inside the poster frame, centred under the photo (V-035)
     T(px, 728, Meta.titleLabel().toUpperCase(), inkText(17, '#6b4423', { fontStyle: 'italic' }));
     const reward = sum && sum.reward != null ? sum.reward : computeReward(run, { won: variant === 'complete', mode: this.mode });
     this.reward = reward;
@@ -149,7 +150,7 @@ export default class EndScene extends Phaser.Scene {
       if (n > 1) { const t = T(x + step * 0.36, y + 22, `x${n}`, inkText(16, red, { fontStyle: 'bold' }), 1, 0.5); t.setAlpha(0); im.badge = t; }
       this.relicIcons.push({ im, sc });
     });
-    T(rx1, 776, `seed ${this.code()}`, inkText(15, '#6b4423'), 1, 0.5).setAlpha(0.7);
+    T(rx1 - 6, 786, `seed ${this.code()}`, inkText(16, '#3a2418', { fontStyle: 'bold' }), 1, 0.5).setAlpha(0.85); // dark + off the ink stain (V-036)
 
     // stamp (slams in last)
     const stamp = this.add.container(px, py + 30).setAlpha(0).setAngle(-16);
@@ -355,7 +356,9 @@ export default class EndScene extends Phaser.Scene {
 
     y = 440;
     H2(lx, y, 'NEW ON THE BOARD'); y += 34;
-    const ul = sum.unlocked.slice(0, Math.max(0, 5 - Math.min(3, sum.achievements.length)));
+    // title unlocks share their deed's name (Ghost Rider, Quickdraw ...): listing both was a duplicate row (Q1-07)
+    const deedNames = new Set(sum.achievements.map((a) => String(a.name).toLowerCase()));
+    const ul = sum.unlocked.filter((u) => !deedNames.has(String(u.label).toLowerCase())).slice(0, Math.max(0, 5 - Math.min(3, sum.achievements.length)));
     if (!ul.length && !sum.achievements.length) T(lx, y, 'Nothing new this ride.', inkText(19, '#7a6a58', { fontStyle: 'italic' }), 0, 0.5);
     for (const a of sum.achievements.slice(0, 3)) { L.add(starIcon(this, lx + 16, y, 'tin', 0.24)); T(lx + 40, y, a.name, inkText(20, INK, { fontStyle: 'bold' }), 0, 0.5); T(lx + lw, y, `+${a.np} NP`, inkText(17, '#2a5a10'), 1, 0.5); y += 28; }
     for (const u of ul) { T(lx + 6, y, '+', inkText(22, red, { fontStyle: 'bold' }), 0, 0.5); T(lx + 40, y, `${u.label}`, inkText(20, INK), 0, 0.5); y += 28; }
@@ -412,7 +415,7 @@ export default class EndScene extends Phaser.Scene {
       });
     }
     // seed
-    T(cx + 500, 752, `${this.code()}    [C] copy`, inkText(16, '#6b4423'), 1, 0.5);
+    T(cx + 470, 764, `${this.code()}   [C] copy`, inkText(16, '#3a2418', { fontStyle: 'bold' }), 1, 0.5); // inside the frame (V-036)
     this.ledgerC.setDepth(1);
   }
 

@@ -53,7 +53,7 @@ export default class HUDScene extends Phaser.Scene {
 
     this.floorText = this.add.text(W - 28, H - 62, '', { fontFamily: FONT_BODY, fontSize: '20px', color: CSS.sand, stroke: '#120c0a', strokeThickness: 4 }).setOrigin(1, 0.5).setDepth(5).setAlpha(0.85);
     this.timeText = this.add.text(W - 28, H - 34, '', { fontFamily: FONT_BODY, fontSize: '20px', color: CSS.sand, stroke: '#120c0a', strokeThickness: 4 }).setOrigin(1, 0.5).setDepth(5).setAlpha(0.85);
-    this.toast = this.add.text(W / 2, 128, '', { fontFamily: FONT_TITLE, fontSize: '34px', color: CSS.amber, stroke: '#120c0a', strokeThickness: 7 }).setOrigin(0.5).setDepth(50).setAlpha(0);
+    this.toast = this.add.text(W / 2, 168, '', { fontFamily: FONT_TITLE, fontSize: '34px', color: CSS.amber, stroke: '#120c0a', strokeThickness: 7 }).setOrigin(0.5).setDepth(50).setAlpha(0);
     bus.scoped(this, 'ui:toast', (p) => this.showToast(p.text, p.color));
     if (flag('debug')) this.dbg = this.add.text(8, 100, '', { fontFamily: 'monospace', fontSize: '16px', color: '#8fc23f', backgroundColor: '#000000aa' }).setDepth(100);
     this.events.once('shutdown', () => { for (const w of this.widgets) if (w.destroy) w.destroy(); this.chips = null; });
@@ -77,9 +77,9 @@ export default class HUDScene extends Phaser.Scene {
   }
 
   showToast(text, color) {
-    this.toast.setText(text).setColor(color || CSS.amber).setAlpha(1).setY(120);
+    this.toast.setText(text).setColor(color || CSS.amber).setAlpha(1).setY(164);
     this.tweens.killTweensOf(this.toast);
-    this.tweens.add({ targets: this.toast, y: 140, alpha: 0, delay: 900, duration: 700 });
+    this.tweens.add({ targets: this.toast, y: 184, alpha: 0, delay: 900, duration: 700 });
   }
 
   update(time, delta) {
@@ -88,6 +88,11 @@ export default class HUDScene extends Phaser.Scene {
     for (const w of this.widgets) w.update(g, delta / 1000);
     const f = FLOORS[g.floorNum] || FLOORS[1];
     this.floorText.setText(`FLOOR ${f.n}  -  ${f.name}`);
+    // V-001/V-034/V-008/V-013: the floor label yields to the whisper caption and the boss/mini bar (both are centred, ~x 350-1090)
+    const cards = this.widgets.find((w) => w instanceof Cards), bar = this.widgets.find((w) => w instanceof BossBar);
+    const yield_ = (cards && cards.whisper && cards.whisper.alpha > 0.02) || (bar && bar.c.visible && bar.c.alpha > 0.02);
+    const lab = yield_ ? 0 : 0.85;
+    if (this.floorText.alpha !== lab) this.floorText.setAlpha(lab);
     if (!this.chips) this.buildChips(g.run);
     const showT = Save.settings().runTimer !== false;
     if (this.timeText.visible !== showT) this.timeText.setVisible(showT);

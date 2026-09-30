@@ -75,13 +75,16 @@ export default class Gravedigger extends EventBase {
       case 'loot':
         for (let k = 0; k < 2; k++) this.pickup(this.room.rollPickup(1.0, true), x + (k ? 28 : -28), y + 24, { pop: true });
         this.say(x, y - 60, 'BURIED LOOT', '#f0d060');
+        this.speak('loot');
         break;
       case 'chest':
         this.room.spawnChest('chest_wood', x, y + 30);
         this.say(x, y - 60, 'A COFFIN LID CREAKS OPEN', '#e0b878');
+        this.speak('chest');
         break;
       case 'bones':
         this.say(x, y - 60, 'JUST BONES', '#c8c0a8');
+        this.speak('bones');
         if (this.rng('bones', i).chance(BONES_KEY_CHANCE)) this.pickup('key', x, y + 24, { pop: true });
         break;
       default:
@@ -89,8 +92,11 @@ export default class Gravedigger extends EventBase {
         this.startAmbush(i);
         break;
     }
-    if (what !== 'ambush' && this.allSpent()) this.finish('looted');
+    if (what !== 'ambush' && this.allSpent()) { this.finish('looted'); this.speak('done', { delay: 2800 }); }
   }
+
+  /** Speech tag of the digger: above the warning sign. */
+  voicePos() { const k = this.spots('K', [[9, 1]])[0]; return { x: k.x, y: k.y - 40 }; }
 
   makeMound(at, dug) {
     const im = this.track(cellOr(this.scene, 'props_events', dug ? 'grave_open' : 'grave_mound', at.x, at.y + 40, {
@@ -112,6 +118,7 @@ export default class Gravedigger extends EventBase {
     room.lock();
     Sfx.play('grave_crack');
     room.banner('THE DEAD RISE', { color: '#d63a2a', hold: 1000 });
+    this.speak('ambush');
     const floor = room.floor || scene.floorNum || 1;
     const roster = ambushRoster(floor, this.rng('ambush', 0));
     // raise them from the other mounds, farthest from the player first; the dug one is under the player's feet
@@ -158,11 +165,12 @@ export default class Gravedigger extends EventBase {
     this.room.banner('THE GRAVES ARE QUIET', { color: '#8fc23f', hold: 1000 });
     Sfx.play('room_clear');
     this.room.spawnChest('chest_wood', ROOM.cx, ROOM.cy);
-    if (this.allSpent()) this.finish('looted');
+    if (this.allSpent()) { this.finish('looted'); this.speak('done', { delay: 2200 }); }
   }
 
   onEnter() {
     const d = this.data;
+    if (!this.state.greeted && !this.done) { this.state.greeted = true; this.speak('greet', { delay: 1500 }); }
     if (d.ambush === 'none' && d.dug && d.dug[d.ambushAt ?? -1] && d.graves[d.ambushAt] === 'ambush') this.startAmbush(d.ambushAt); // restart after a teardown
   }
 }

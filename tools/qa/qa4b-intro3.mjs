@@ -1,0 +1,13 @@
+import { open, sleep } from './qa4-lib.mjs';
+const g = await open('?debug=1&seed=79&char=gunslinger', { name: 'qa4b-intro3' });
+await g.startRun();
+await g.eval(() => { const a = window.__dw.api; a.godMode(true); a.setFloor(1); }); await sleep(1500);
+await g.eval(() => { const s = window.__dw.scene; window.__log = []; let v = s.cutscene; const hud = window.__game.scene.getScene('HUD');
+  Object.defineProperty(s, 'cutscene', { get() { return v; }, set(x) { window.__log.push({ t: Math.round(s.time.now), set: x, stack: new Error().stack.split('\n').slice(2, 5).map((l) => l.trim().replace(/http:\/\/[^/]+/, '')).join(' | ') }); v = x; }, configurable: true });
+  const orig = s.beginBossIntro.bind(s); s.beginBossIntro = (b) => { window.__log.push({ t: Math.round(s.time.now), intro: b.id }); return orig(b); }; });
+await g.eval(() => window.__dw.api.bossRoom()); await sleep(1500);
+await g.eval(() => window.__dw.api.teleport('r0')); await sleep(200);
+await g.eval(() => window.__dw.api.bossRoom()); await sleep(9000);
+console.log(JSON.stringify(await g.eval(() => window.__log), null, 1));
+console.log(await g.eval(() => { const s = window.__dw.scene; return { cut: s.cutscene, now: s.time.now, tim: s.time._active.length, ev: s.time._active.map((e) => Math.round(e.elapsed) + '/' + e.delay + (e.paused ? 'P' : '')) }; }));
+await g.close();

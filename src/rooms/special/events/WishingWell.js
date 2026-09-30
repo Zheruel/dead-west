@@ -75,19 +75,19 @@ export default class WishingWell extends EventBase {
         break;
       case 'heart_half': case 'heart_full': case 'heart_tin': case 'key': case 'dynamite': case 'coin_nickel':
         this.pickup(res, wx, wy + 24, { pop: true });
-        if (!quiet) this.say(wx, wy - 120, res === 'coin_nickel' ? 'THE WELL PAYS BACK' : 'A WISH GRANTED', '#f0d060');
+        if (!quiet) this.speak(res.startsWith('heart') ? 'heart' : res);
         break;
       case 'luck':
         if (d.luck < WELL.luckMax) {
           d.luck++;
           const stacks = d.luck;
           addFloorBuff(scene, p, 'well_luck', (s) => { s.luck += stacks; }, Infinity);
-          if (!quiet) this.say(wx, wy - 120, `LUCKY  +1 LUCK`, '#8fc23f');
+          if (!quiet) { this.say(wx, wy - 120, `LUCKY  +1 LUCK`, '#8fc23f'); this.speak('luck'); }
         } else if (!quiet) this.say(wx, wy - 120, 'THE WELL HUMS', '#8fc23f');
         break;
       case 'curse': {
         const id = Boons.gainCurse(p, this.rng('wish-curse', n));
-        if (!quiet) { this.say(wx, wy - 120, id ? 'A HAND DRAGS THE COIN DOWN' : 'THE WELL SHUDDERS', '#d63a2a'); if (id) { Sfx.play('curse_gain'); scene.fx.flash(0x6a1020, 0.2); } }
+        if (!quiet) { if (id) this.speak('curse'); else this.say(wx, wy - 120, 'THE WELL SHUDDERS', '#d63a2a'); if (id) { Sfx.play('curse_gain'); scene.fx.flash(0x6a1020, 0.2); } }
         break;
       }
       default: { // jackpot: the 12th coin brings up an item
@@ -96,12 +96,16 @@ export default class WishingWell extends EventBase {
         if (id) this.pedestal({ x: at.x + 192, y: at.y, itemId: id });
         else this.pickup('heart_full', wx, wy + 24, { pop: true });
         d.jackpot = true;
-        if (!quiet) { this.say(wx, wy - 120, 'THE WELL GIVES UP A TREASURE', '#f0d060', 30); scene.fx.flash(0xffe090, 0.25); }
+        if (!quiet) { this.say(wx, wy - 120, 'THE WELL GIVES UP A TREASURE', '#f0d060', 30); this.speak('pity'); scene.fx.flash(0xffe090, 0.25); }
         break;
       }
     }
     if (!quiet && p.coins === 0 && d.throws < WELL.maxThrows) this.say(p.x, p.y - 70, 'OUT OF COINS', '#e8c84a', 22);
     if (d.throws >= WELL.maxThrows) { this.ringObj.setVisible(false); this.finish(d.jackpot ? 'jackpot' : 'dry'); }
+  }
+
+  onEnter() {
+    if (!this.state.greeted && this.data.throws < WELL.maxThrows) { this.state.greeted = true; this.speak('greet', { delay: 1500 }); }
   }
 
   update(dt) {

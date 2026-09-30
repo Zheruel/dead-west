@@ -176,12 +176,23 @@ export function afterFloorIntro(scene, { from = 0, floor = scene.floorNum } = {}
   const info = FLOORS[floor];
   const descended = from > 0 && from < floor;
   const chapter = CHAPTER_OF(floor);
+  // CONTINUE re-enters with from 0: a checkpoint written before the welcome (quit during the chapter card) still gets it, once
+  // (RunState.fromJSON drops keys it does not declare, so hellsWelcome is read from the raw checkpoint)
+  let resumed = false;
+  if (from === 0 && floor > INTERLUDE_AFTER && scene.run && scene.startData && scene.startData.continue) {
+    let cp = null;
+    try { cp = Save.loadCheckpoint(); } catch (e) { cp = null; }
+    if (cp && cp.run && cp.run.hellsWelcome) scene.run.hellsWelcome = true; else resumed = true;
+  }
   const show = () => {
     if (!alive(scene)) return;
     bus.emit('floor:intro', { floor, name: info.name, subtitle: info.subtitle, chapter });
-    if (descended && floor === INTERLUDE_AFTER + 1) hellsWelcome(scene);
+    if ((descended && floor === INTERLUDE_AFTER + 1) || resumed) {
+      hellsWelcome(scene);
+      if (floor === INTERLUDE_AFTER + 1 || resumed) saveCheckpoint(scene, true); // re-save AFTER the welcome so a later CONTINUE keeps it (heal, dynamite, flag)
+    }
   };
-  if (descended && floor >= 4) saveCheckpoint(scene);
+  if (descended && floor >= 4) saveCheckpoint(scene); // written at once: quitting during the chapter card still leaves a place to resume
   if (descended && chapter > CHAPTER_OF(from)) {
     scene.cutscene = true;
     bus.emit('chapter:intro', { chapter, name: "HELL'S FRONTIER", tagline: "The Devil's Own Country", ms: CHAPTER_CARD_MS });
@@ -200,12 +211,12 @@ function hellsWelcome(scene) {
 }
 
 /** D10: normal / hell runs only (Save refuses the rest and debug runs). The floor regenerates from seed + floor on CONTINUE. */
-function saveCheckpoint(scene) {
+function saveCheckpoint(scene, silent = false) {
   const run = scene.run;
   let ok = false;
   try { ok = Save.saveCheckpoint(run, scene.player); } catch (e) { ok = false; }
   run.checkpointSaved = !!ok;
-  if (ok) bus.emit('checkpoint:saved', { floor: scene.floorNum });
+  if (ok && !silent) bus.emit('checkpoint:saved', { floor: scene.floorNum });
 }
 
 /** Current music track key (debug / QA). */

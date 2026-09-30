@@ -2,7 +2,8 @@
 //   node tools/qa/stress-enemies.mjs [floor=2] [id,id,...]   e.g.  stress-enemies.mjs 3 miner,bat,bat,mole,coffin,coffin
 import { launch } from './harness.mjs';
 const floor = +(process.argv[2] || 2);
-const DEFAULT = { 1: 'coyote,coyote,rattlesnake,tumbleweed,outlaw,buzzard', 2: 'ghost,ghost,skeleton,skeleton,possessed,possessed', 3: 'miner,bat,bat,mole,coffin,coffin' };
+const DEFAULT = { 1: 'coyote,coyote,rattlesnake,tumbleweed,outlaw,buzzard', 2: 'ghost,ghost,skeleton,skeleton,possessed,possessed', 3: 'miner,bat,bat,mole,coffin,coffin',
+  4: 'hellhound,hellsteer,cinder_skull,magma_eel,sulfur_preacher,magma_golem', 5: 'handcar_bandit,signalman,steam_stoker,crate_mimic,rail_rat,chain_gang', 6: 'card_shark,loaded_die,slot_fiend,waiter_imp,bouncer,joker' }; // QA-2: F4-F6 packs
 const ids = (process.argv[3] || DEFAULT[floor]).split(',');
 const g = await launch({ query: '?debug=1&seed=42', name: 'stress-enemies', width: 720, height: 480, quiet: true });
 await g.startRun();

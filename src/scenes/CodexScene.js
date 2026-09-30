@@ -33,7 +33,10 @@ try {
 } catch (e) { /* not present */ }
 
 const TAB_LIST = [{ id: 'bestiary', label: 'BESTIARY', count: '' }, { id: 'relics', label: 'RELICS', count: '' }, { id: 'outlaws', label: 'OUTLAWS', count: '' }, { id: 'lore', label: 'LORE', count: '' }, { id: 'deeds', label: 'DEEDS', count: '' }, { id: 'record', label: 'RECORD', count: '' }];
-const COLS = 6, ROWS = 4, PER = COLS * ROWS, CELL = 96, STEP = 116, STEPY = 130, GX = 118, GY = 226;
+const COLS = 6, ROWS = 4, PER = COLS * ROWS, CELL = 96, STEP = 108, STEPY = 130, GX = 124, GY = 240; // 6th column stays 30 px inside the page frame (V-020)
+const DEEDS_PER = 9; // CHARACTERS_META Codex DEEDS: 9 per page (5 + 4)
+const HIDDEN_ENEMIES = new Set(['contract_seal']); // summoned prop with no art / no bestiary entry (V-038)
+const enemyKey = (id) => (ENEMY_META[id] && ENEMY_META[id].sprite) || `enemy_${id}`; // duelist reuses the outlaw sheet
 const DX = 1110; // detail page centre
 const DW = 470;
 const money = (n) => `$${Math.round(n).toLocaleString('en-US')}`;
@@ -91,7 +94,7 @@ export default class CodexScene extends Phaser.Scene {
 
   bestiary() {
     const codex = Save.get().codex.enemies;
-    return Object.keys(ENEMY_META).map((id) => {
+    return Object.keys(ENEMY_META).filter((id) => !HIDDEN_ENEMIES.has(id)).map((id) => {
       const m = ENEMY_META[id];
       const st = Meta.enemyStage(id);
       const t = ENEMY_TEXT[id] || { name: prettyId(id), lore: '', tip: '' };
@@ -195,7 +198,7 @@ export default class CodexScene extends Phaser.Scene {
   cell(e, x, y, c) {
     let o = null;
     if (e.kind === 'enemy') {
-      o = Assets.makeSprite(this, x, y + 40, `enemy_${e.id}`, 0);
+      o = Assets.makeSprite(this, x, y + 40, enemyKey(e.id), 0);
       o.setOrigin(0.5, 1).setScale(Math.min(1.1, 84 / Math.max(o.width, o.height)));
     } else if (e.kind === 'item') {
       o = itemIcon(this, x, y, e.def, 0.84);
@@ -215,7 +218,7 @@ export default class CodexScene extends Phaser.Scene {
 
   /** Mini-boss picture: the champion's own art when a sprite exists, else a code-drawn initials badge. */
   miniArt(e, x, y, size) {
-    const key = ['mini_', 'boss_', 'enemy_'].map((p) => p + e.id).find((k) => Assets.has(k));
+    const key = [`mini_${e.id}`, `boss_${e.id}`, enemyKey(e.id)].find((k) => Assets.has(k));
     if (key) { const sp = Assets.makeSprite(this, x, y + size / 2, key, 0).setOrigin(0.5, 1); return sp.setScale(size / Math.max(sp.width, sp.height)); }
     return this.add.text(x, y, e.name.replace(/^(THE|OL') /i, '').split(' ').map((w) => w.charAt(0)).join('').slice(0, 2), { fontFamily: FONT_TITLE, fontSize: `${Math.round(size * 0.6)}px`, color: '#2a1810' }).setOrigin(0.5);
   }
@@ -264,7 +267,7 @@ export default class CodexScene extends Phaser.Scene {
   }
 
   detailEnemy(e, cx, top) {
-    const s = Assets.makeSprite(this, cx, top + 250, `enemy_${e.id}`, 0).setOrigin(0.5, 1);
+    const s = Assets.makeSprite(this, cx, top + 250, enemyKey(e.id), 0).setOrigin(0.5, 1);
     s.setScale(180 / Math.max(s.width, s.height));
     if (e.stage < 1) silhouette(s);
     this.detailC.add(s);
@@ -359,35 +362,35 @@ export default class CodexScene extends Phaser.Scene {
 
   // ------------------------------------------------------------------------------------------------ DEEDS
   renderDeeds() {
-    const c = this.content, per = 10, pages = Math.ceil(this.entries.length / per);
+    const c = this.content, per = DEEDS_PER, pages = Math.ceil(this.entries.length / per);
     this.page = Math.min(this.page, pages - 1);
     const start = this.page * per, save = Save.get();
     for (let k = 0; k < per; k++) {
       const e = this.entries[start + k];
       if (!e) break;
-      const a = e.a, earned = e.stage >= 1, col = k < 5 ? 0 : 1, row = k % 5;
-      const x = col ? 850 : 90, w = col ? 520 : 700, y = 176 + row * 130;
+      const a = e.a, earned = e.stage >= 1, col = k < 5 ? 0 : 1, row = k < 5 ? k : k - 5;
+      const x = col ? 872 : 122, w = col ? 478 : 664, y = 226 + row * 116; // below the torn page top, inside both frames (V-018)
       const g = this.add.graphics();
-      g.fillStyle(earned ? 0x5a3a12 : 0x2a1810, earned ? 0.22 : 0.14).fillRoundedRect(x, y, w, 118, 10).lineStyle(2, earned ? 0xa06a10 : 0x6b4423, 0.8).strokeRoundedRect(x, y, w, 118, 10);
+      g.fillStyle(earned ? 0x5a3a12 : 0x2a1810, earned ? 0.22 : 0.14).fillRoundedRect(x, y, w, 106, 10).lineStyle(2, earned ? 0xa06a10 : 0x6b4423, 0.8).strokeRoundedRect(x, y, w, 106, 10);
       c.add(g);
       const hide = a.hidden && !earned;
       const np = a.np || 0;
-      const badge = hide ? padlock(this, x + 52, y + 59, 0.6) : metaIcon(this, x + 52, y + 59, np >= 60 ? 'star_gold' : np >= 25 ? 'star_silver' : 'star_tin', 0.8);
+      const badge = hide ? padlock(this, x + 46, y + 53, 0.6) : metaIcon(this, x + 46, y + 53, np >= 60 ? 'star_gold' : np >= 25 ? 'star_silver' : 'star_tin', 0.8);
       if (!earned && !hide) badge.setTint(0x666666).setAlpha(0.6);
       c.add(badge);
-      c.add(this.add.text(x + 102, y + 12, hide ? '???' : a.name.toUpperCase(), title(22, earned ? '#2a1810' : '#5a4a3a', { strokeThickness: 0 })));
-      c.add(this.add.text(x + 102, y + 42, hide ? 'A secret deed' : a.desc, inkText(16, INK, { wordWrap: { width: w - 130 } })));
+      c.add(this.add.text(x + 92, y + 10, hide ? '???' : a.name.toUpperCase(), title(22, earned ? '#2a1810' : '#5a4a3a', { strokeThickness: 0 })));
+      c.add(this.add.text(x + 92, y + 38, hide ? 'A secret deed' : a.desc, inkText(16, INK, { wordWrap: { width: w - 108 }, lineSpacing: -2 })));
       const rew = [`+${np} NP`, ...a.reward.map((r) => { const u = UNLOCK_BY_ID[r]; return u ? u.label : r; })];
-      c.add(this.add.text(x + 102, y + 88, hide ? '' : rew.join('   '), inkText(14, '#8a1c14', { fontStyle: 'bold' })).setOrigin(0, 0.5));
+      c.add(this.add.text(x + 92, y + 72, hide ? '' : rew.join('   '), inkText(14, '#8a1c14', { fontStyle: 'bold' })).setOrigin(0, 0.5));
       if (earned) {
         const d = new Date(save.ach[a.id]);
-        const stamp = this.add.text(x + w - 16, y + 104, `EARNED ${Number.isFinite(d.getTime()) ? d.toISOString().slice(0, 10) : ''}`, inkText(13, '#2a5a10', { fontStyle: 'bold' })).setOrigin(1, 0.5);
+        const stamp = this.add.text(x + w - 14, y + 96, `EARNED ${Number.isFinite(d.getTime()) ? d.toISOString().slice(0, 10) : ''}`, inkText(13, '#2a5a10', { fontStyle: 'bold' })).setOrigin(1, 0.5);
         c.add(stamp);
       } else if (!hide) {
         let pr = null;
         try { pr = Meta.achProgress(a); } catch (er) { pr = null; }
         if (pr) {
-          const bw = 150, bx = x + w - 16 - bw, by = y + 106;
+          const bw = 130, bx = x + w - 14 - bw, by = y + 94;
           const bar = this.add.graphics();
           bar.fillStyle(0x120c0a, 0.7).fillRect(bx, by - 6, bw, 12).fillStyle(0xd63a2a, 1).fillRect(bx + 1, by - 5, (bw - 2) * (pr[1] ? pr[0] / pr[1] : 0), 10).lineStyle(2, 0x2a1810, 1).strokeRect(bx, by - 6, bw, 12);
           c.add(bar);
@@ -395,14 +398,14 @@ export default class CodexScene extends Phaser.Scene {
         }
       }
     }
-    c.add(this.add.text(W / 2, 892, `PAGE ${this.page + 1} / ${pages}   -   ${this.entries.filter((x) => x.stage >= 1).length} / ${this.entries.length} EARNED`, inkText(18, '#f0e0c0')).setOrigin(0.5));
+    c.add(this.add.text(W / 2, 876, `PAGE ${this.page + 1} / ${pages}   -   ${this.entries.filter((x) => x.stage >= 1).length} / ${this.entries.length} EARNED`, inkText(18, '#f0e0c0')).setOrigin(0.5));
   }
 
   // ------------------------------------------------------------------------------------------------ RECORD
   renderRecord() {
     const c = this.content, save = Save.get(), st = save.stats;
     const A = (o) => { c.add(o); return o; };
-    A(this.add.text(440, 168, 'THE LEDGER', title(34, '#2a1810', { strokeThickness: 0 }))).setOrigin(0.5, 0);
+    A(this.add.text(450, 204, 'THE LEDGER', title(34, '#2a1810', { strokeThickness: 0 }))).setOrigin(0.5, 0); // below the torn page top (V-018)
     const fastN = save.best.time.normal, fastH = save.best.time.hell;
     const rows = [
       ['Rides started', num(st.runs)], ['Rides ended', num(st.wins + st.deaths)], ['Rides won', num(st.wins)], ['Times hanged', num(st.deaths)],
@@ -411,43 +414,43 @@ export default class CodexScene extends Phaser.Scene {
       ['Coins collected', num(st.coinsCollected)], ['Coins spent', num(st.coinsSpent)], ['Secrets found', num(st.secrets)], ['Deals made', num(st.deals)],
       ['Contracts done', num(st.bountiesDone)], ['Dailies ridden', num(st.dailyRuns)], ['Best daily streak', num(save.daily.bestStreak)],
     ];
-    const x0 = 100, x1 = 780, y0 = 224, step = 39;
+    const x0 = 128, x1 = 758, y0 = 272, step = 32; // 16 rows fit above the bottom frame; values inset from the right ornament (V-019)
     rows.forEach(([k, v], i) => {
       const y = y0 + i * step;
-      const lab = A(this.add.text(x0, y, k, inkText(21, INK))).setOrigin(0, 0.5);
-      const val = A(this.add.text(x1, y, v, inkText(21, '#5a1a10', { fontStyle: 'bold' }))).setOrigin(1, 0.5);
+      const lab = A(this.add.text(x0, y, k, inkText(20, INK))).setOrigin(0, 0.5);
+      const val = A(this.add.text(x1, y, v, inkText(20, '#5a1a10', { fontStyle: 'bold' }))).setOrigin(1, 0.5);
       const dots = A(this.add.graphics());
       dots.fillStyle(0x2a1810, 0.45);
       for (let x = x0 + lab.width + 10; x < x1 - val.width - 10; x += 9) dots.fillRect(x, y + 8, 2.5, 2.5);
     });
     // right page: notoriety, riders, titles, history
-    const rx = 850, rw = 520;
+    const rx = 862, rw = 496;
     const np = Meta.np(), r = Meta.rank(), nx = nextRank(np);
-    A(this.add.text(DX, 168, r.title.toUpperCase(), title(30, '#2a1810', { strokeThickness: 0 }))).setOrigin(0.5, 0);
+    A(this.add.text(DX, 204, r.title.toUpperCase(), title(30, '#2a1810', { strokeThickness: 0 }))).setOrigin(0.5, 0);
     const bar = A(this.add.graphics());
-    bar.fillStyle(0x120c0a, 0.7).fillRect(rx + 20, 216, rw - 40, 12).fillStyle(0xd63a2a, 1).fillRect(rx + 21, 217, (rw - 42) * (nx ? (np - r.np) / (nx.np - r.np) : 1), 10).lineStyle(2, 0x2a1810, 1).strokeRect(rx + 20, 216, rw - 40, 12);
-    A(this.add.text(DX, 240, `NP ${num(np)}${nx ? ` / ${num(nx.np)}  -  next: ${nx.title}` : '  -  MAX RANK'}`, inkText(16, INK))).setOrigin(0.5, 0);
+    bar.fillStyle(0x120c0a, 0.7).fillRect(rx + 20, 250, rw - 40, 12).fillStyle(0xd63a2a, 1).fillRect(rx + 21, 251, (rw - 42) * (nx ? (np - r.np) / (nx.np - r.np) : 1), 10).lineStyle(2, 0x2a1810, 1).strokeRect(rx + 20, 250, rw - 40, 12);
+    A(this.add.text(DX, 268, `NP ${num(np)}${nx ? ` / ${num(nx.np)}  -  next: ${nx.title}` : '  -  MAX RANK'}`, inkText(16, INK))).setOrigin(0.5, 0);
     CHAR_ORDER.forEach((id, i) => {
-      const x = rx + 70 + i * 128, ch = save.chars[id], unlocked = Meta.isCharUnlocked(id);
-      A(riderToken(this, x, 316, id, 84, { locked: !unlocked }));
-      A(this.add.text(x, 368, unlocked ? `${ch.runs} runs / ${ch.wins} wins` : 'LOCKED', inkText(13, INK))).setOrigin(0.5, 0);
-      A(this.add.text(x, 384, unlocked ? `best floor ${ch.bestFloor}` : '', inkText(13, INK))).setOrigin(0.5, 0);
-      ['tin', 'silver', 'gold'].forEach((tier, j) => { const on = unlocked && ch.marks[['undertaker', 'final', 'hell'][j]]; const s = A(starIcon(this, x - 24 + j * 24, 414, tier, 0.24)); if (!on) s.setTint(0x555555).setAlpha(0.3); });
+      const x = rx + 62 + i * 124, ch = save.chars[id], unlocked = Meta.isCharUnlocked(id);
+      A(riderToken(this, x, 338, id, 80, { locked: !unlocked }));
+      A(this.add.text(x, 386, unlocked ? `${ch.runs} runs / ${ch.wins} wins` : 'LOCKED', inkText(13, INK))).setOrigin(0.5, 0);
+      A(this.add.text(x, 402, unlocked ? `best floor ${ch.bestFloor}` : '', inkText(13, INK))).setOrigin(0.5, 0);
+      ['tin', 'silver', 'gold'].forEach((tier, j) => { const on = unlocked && ch.marks[['undertaker', 'final', 'hell'][j]]; const s = A(starIcon(this, x - 24 + j * 24, 430, tier, 0.24)); if (!on) s.setTint(0x555555).setAlpha(0.3); });
     });
     // titles
-    A(this.add.text(rx + 20, 446, 'TITLE', title(20, '#5a1a10', { strokeThickness: 0 })));
+    A(this.add.text(rx + 20, 452, 'TITLE', title(20, '#5a1a10', { strokeThickness: 0 })));
     this.titles = [{ id: 'rank', label: `Rank: ${r.title}` }, ...UNLOCKS.filter((u) => u.type === 'title' && Save.unlocked(u.id)).map((u) => ({ id: u.id.slice(6), label: u.label }))];
     this.tsel = Math.max(0, this.titles.findIndex((t) => t.id === save.settings.title));
     this.titleObjs = [];
     this.titles.slice(0, 5).forEach((t, i) => {
-      const o = A(this.add.text(rx + 30, 474 + i * 26, '', inkText(18, INK)));
+      const o = A(this.add.text(rx + 30, 480 + i * 24, '', inkText(18, INK)));
       this.titleObjs.push(o);
     });
     this.drawTitles();
     // history
-    A(this.add.text(rx + 20, 612, 'LAST RIDES', title(20, '#5a1a10', { strokeThickness: 0 })));
-    const hist = [...save.history].reverse().slice(0, 9);
-    if (!hist.length) A(this.add.text(rx + 30, 646, 'No rides yet.', inkText(17, '#7a6a58', { fontStyle: 'italic' })));
+    A(this.add.text(rx + 20, 610, 'LAST RIDES', title(20, '#5a1a10', { strokeThickness: 0 })));
+    const hist = [...save.history].reverse().slice(0, 7);
+    if (!hist.length) A(this.add.text(rx + 30, 644, 'No rides yet.', inkText(17, '#7a6a58', { fontStyle: 'italic' })));
     hist.forEach((h, i) => {
       const y = 646 + i * 22, d = new Date(h.t);
       const t = (x, s, ox = 0) => A(this.add.text(x, y, s, inkText(14, h.won ? '#2a5a10' : INK))).setOrigin(ox, 0.5);
@@ -479,7 +482,7 @@ export default class CodexScene extends Phaser.Scene {
       this.sel = Math.min(this.entries.length - 1, pg * PER + (this.sel % PER));
       this.render();
     } else if (this.mode === 'deeds') {
-      const pages = Math.ceil(this.entries.length / 10), pg = Math.max(0, Math.min(pages - 1, this.page + d));
+      const pages = Math.ceil(this.entries.length / DEEDS_PER), pg = Math.max(0, Math.min(pages - 1, this.page + d));
       if (pg === this.page) return;
       uiSfx.move();
       this.page = pg;

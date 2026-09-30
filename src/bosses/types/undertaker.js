@@ -16,6 +16,7 @@ import { Sfx, Music } from '../../core/Audio.js';
 import { bus } from '../../core/events.js';
 import { ROOM, TILE, COLS, ROWS, DEPTH, actorDepth, tileToWorld } from '../../config.js';
 import { angleDiff, clamp, rad } from '../../core/util.js';
+import { subRng } from '../../core/rng.js';
 
 const RED = 0xd63a2a, AMBER = 0xe0c060;
 const TOP_LIMIT = 352; // min ground y of the boss (sprite is 256 px tall, the HUD strip covers y < 136)
@@ -32,6 +33,8 @@ function rayLen(x, y, a, m = 0) {
 }
 
 class Undertaker extends Boss {
+  /** Seeded stream for attack / strafe geometry (QA4-020: fights reproducible per seed; the pick stream is Boss.brng). Cosmetics stay on Math.random. */
+  get geo() { return this._geo || (this._geo = subRng('bossgeo', this.id, this.floor)); }
   setup() {
     const s = this.scene;
     this.tags = [];
@@ -43,7 +46,7 @@ class Undertaker extends Boss {
     this.stunFx = 0;
     this.sinkT = 0; this.sinkDir = 0; // burrow animation (0 = surfaced, 1 = underground)
     this.bonk = false;
-    this.strafeDir = Math.random() < 0.5 ? -1 : 1;
+    this.strafeDir = this.geo.chance(0.5) ? -1 : 1;
     this.strafeT = 1.5;
     this.arcFlash = 0;
     this.dtLast = 1 / 60;
@@ -129,7 +132,7 @@ class Undertaker extends Boss {
     const ph = this.phase;
     if (ph >= 2) { this.shield = true; if (this.pose !== 'atk3') this.atkFrame(3); }
     this.strafeT -= dt;
-    if (this.strafeT <= 0) { this.strafeDir *= -1; this.strafeT = rnd(1.4, 2.6); }
+    if (this.strafeT <= 0) { this.strafeDir *= -1; this.strafeT = this.geo.float(1.4, 2.6); }
     this.keepDistance(ph >= 2 ? 240 : ph >= 1 ? 340 : 300, ph >= 2 ? 0 : 0.35 * this.strafeDir, ph >= 2 ? 105 : 85, 50);
   }
   onWallHit() { this.bonk = true; }
@@ -278,7 +281,7 @@ class Undertaker extends Boss {
   rockField(n, warn0, step = 0.14) {
     const p = this.player, pts = [{ x: p.x, y: p.y }];
     for (let tries = 0; pts.length < n && tries < 60; tries++) {
-      const a = Math.random() * Math.PI * 2, d = rnd(110, 380);
+      const a = this.geo.float(0, Math.PI * 2), d = this.geo.float(110, 380);
       const x = clamp(p.x + Math.cos(a) * d, ROOM.x + 60, ROOM.right - 60), y = clamp(p.y + Math.sin(a) * d, ROOM.y + 60, ROOM.bottom - 60);
       if (pts.every((q) => Math.hypot(q.x - x, q.y - y) > 130)) pts.push({ x, y });
     }
@@ -375,11 +378,11 @@ class Undertaker extends Boss {
     this.scene.fx.shake(0.006, 900);
     if (!fromRoar) yield 0.6;
     const p = this.player;
-    const spots = [
+    const spots = this.geo.shuffle([
       { x: ROOM.x + 80, y: ROOM.y + 120 }, { x: ROOM.x + 80, y: ROOM.bottom - 120 }, { x: ROOM.right - 80, y: ROOM.y + 120 },
       { x: ROOM.right - 80, y: ROOM.bottom - 120 }, { x: ROOM.cx - 300, y: ROOM.y + 80 }, { x: ROOM.cx + 300, y: ROOM.y + 80 },
       { x: ROOM.cx - 300, y: ROOM.bottom - 80 }, { x: ROOM.cx + 300, y: ROOM.bottom - 80 },
-    ].filter((q) => Math.hypot(q.x - p.x, q.y - p.y) > 280).sort(() => Math.random() - 0.5);
+    ].filter((q) => Math.hypot(q.x - p.x, q.y - p.y) > 280));
     const n = Math.min(spots.length, 3);
     for (let i = 0; i < n; i++) {
       const q = spots[i];
@@ -406,7 +409,7 @@ class Undertaker extends Boss {
     for (let i = 0; i < 4; i++) { fx.burst(this.x, this.y + 30, { color: [0x6b4423, 0x8a5a2a], count: 8, speed: [60, 200], gravity: 300 }); yield 0.1; }
     yield 0.2;
     // alternating bone-spike checkerboard: the safe cells swap each wave
-    let par = Math.random() < 0.5 ? 0 : 1;
+    let par = this.geo.chance(0.5) ? 0 : 1;
     const waves = this.phase >= 2 ? 3 : 2;
     for (let i = 0; i < waves; i++) {
       const warn = (i === 0 ? 1.15 : 1.0) * k;
@@ -483,8 +486,8 @@ class Undertaker extends Boss {
     fx.burst(this.x, this.y - 100, { color: [0x6fe0d0, 0x8fc23f], count: 20, speed: [40, 200], life: [500, 900], scale: [2, 3.5], blend: 'ADD' });
     yield 0.8;
     const B = this.scene.bullets.enemy;
-    let dir = Math.random() < 0.5 ? 1 : -1;
-    const N = 36, base = Math.random() * 6.28;
+    let dir = this.geo.chance(0.5) ? 1 : -1;
+    const N = 36, base = this.geo.float(0, 6.28);
     let a = base;
     for (let i = 0; i < N; i++) {
       if (i === Math.floor(N / 2)) dir = -dir; // reverse the swirl halfway

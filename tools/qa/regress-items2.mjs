@@ -245,6 +245,30 @@ ok('normal pools never return crossroads items', out.crossLeak.length === 0, out
 ok('floor 4 boss pool can return c2 items', out.c2Floor4);
 ok('crossroads roll never falls back to other pools', out.crossNoneOk);
 
+// ---------------------------------------------------------------------------------------------- Daily Ride: order-independent pedestal rolls (QA4-030)
+out = await ev(async () => {
+  const dw = window.__dw, p = dw.player, items = dw.scene.items, run = dw.scene.run;
+  const { subRng } = await import('/src/core/rng.js');
+  const { generateFloor } = await import('/src/gen/FloorGen.js');
+  const { getSeed } = await import('/src/core/rng.js');
+  const keep = { mode: run.mode, taken: new Set(items.taken), plan: items._plan };
+  run.mode = 'daily'; items._plan = null;
+  const rooms = generateFloor(2, getSeed()).rooms.filter((r) => ['treasure', 'shop', 'boss'].includes(r.type));
+  const pool = (r) => (r.type === 'boss' ? 'boss' : r.type);
+  const roll = () => rooms.map((r) => items.roll(pool(r), subRng('item', r.seed, 0)));
+  p.restore({ items: [], hp: 99 }); items.taken = new Set();
+  const a = roll();
+  // other visit order, other build, polluted claimed set
+  items.taken = new Set(['spurs', 'holy_water', 'blast_caps', 'hush_money']); p.restore({ items: ['spurs', 'lit_cigar', 'blue_norther'].filter((i) => window.__dw.player.items || true), hp: 99 });
+  const b = rooms.map((r) => r).reverse().map((r) => items.roll(pool(r), subRng('item', r.seed, 0))).reverse();
+  const uniq = new Set(a.filter(Boolean));
+  const res = { n: rooms.length, same: JSON.stringify(a) === JSON.stringify(b), uniq: uniq.size === a.filter(Boolean).length, a: a.join(','), b: b.join(',') };
+  run.mode = keep.mode; items.taken = keep.taken; items._plan = keep.plan;
+  return res;
+});
+ok('daily: pedestal rolls ignore claimed set, visit order and build', out.n > 0 && out.same, `${out.a} | ${out.b}`);
+ok('daily: planned pedestal items are unique', out.uniq, out.a);
+
 // ---------------------------------------------------------------------------------------------- generic runtime pass (registered new items)
 const present = await ev(async (ids) => { const { getItem } = await import('/src/items/index.js'); return ids.filter((i) => getItem(i)); }, NEW_ITEMS.map((m) => m.id));
 let generic = 0;

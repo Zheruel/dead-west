@@ -77,7 +77,7 @@ export default class GameScene extends Phaser.Scene {
     this.input.keyboard.on('keydown-TAB', (e) => e.preventDefault());
 
     // pause when the window loses focus (alt-tab must never get you killed)
-    this._onBlur = () => { if (!this.ended && this.player && !this.player.dead) this.pauseGame(); };
+    this._onBlur = () => { if (Save.settings().autoPause === false) return; if (!this.ended && this.player && !this.player.dead) this.pauseGame(); };
     this.game.events.on('blur', this._onBlur);
 
     this.applyRunSetup();
@@ -107,7 +107,13 @@ export default class GameScene extends Phaser.Scene {
     return Number.isFinite(n) ? clamp(n, 1, MAX_FLOOR) : 1;
   }
 
+  /** Story overlays (Cutscene launched over the game) never outlive the run: stop them before End / shutdown (Q1-08). */
+  stopOverlays() {
+    try { if (this.scene.manager.isActive('Cutscene')) this.scene.stop('Cutscene'); } catch (e) { /* */ }
+  }
+
   onShutdown() {
+    this.stopOverlays();
     Audio.heartbeat(false);
     for (const d of [...(this.dynamites || [])]) d.destroy(); // stops looping fuse sounds (they are game-level, not scene-level)
     if (this.dynamites) this.dynamites.length = 0;
@@ -223,6 +229,7 @@ export default class GameScene extends Phaser.Scene {
     this.cameras.main.fadeOut(600, 13, 8, 6);
     this.cameras.main.once('camerafadeoutcomplete', () => {
       this.scene.stop('HUD');
+      this.stopOverlays();
       this.scene.start('End', payload);
     });
   }

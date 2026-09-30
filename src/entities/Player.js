@@ -28,8 +28,10 @@ import { nova } from '../items/fx/Nova.js';
 import { explode } from '../systems/Explosions.js';
 
 const clampN = (v, a, b) => Math.max(a, Math.min(b, v));
+const finite = (v, d) => (typeof v === 'number' && Number.isFinite(v) ? v : d); // checkpoint fields may come from a hand-edited / imported save (QA4-022)
 const DIRS = { left: { x: -1, y: 0 }, right: { x: 1, y: 0 }, up: { x: 0, y: -1 }, down: { x: 0, y: 1 } };
 const REVIVE_ORDER = ['black_cat_bone', 'ace_in_hole', 'lazarus_pact'];
+const SHOT_SFX = { preacher: 'shoot_scatter', hunter: 'shoot_rifle', queen: 'shoot_twin' }; // gunslinger keeps plain `shoot`
 const FORCE_SIXTH_LIFE = 10; // seconds a queued forced Sixth Bullet stays loaded
 const baseCache = new Map(); // char id -> merged base stats (never mutated)
 
@@ -353,7 +355,7 @@ export default class Player extends Actor {
     const saved = snap.itemState || {};
     if (snap.active && getItem(snap.active.id)) {
       const d = getItem(snap.active.id);
-      this.active = { id: d.id, charge: Math.min(snap.active.charge | 0, d.charges ?? 3), max: d.charges ?? 3 };
+      this.active = { id: d.id, charge: Math.max(0, Math.min(finite(snap.active.charge, 0) | 0, d.charges ?? 3)), max: d.charges ?? 3 };
     }
     for (const id of new Set([...this.items, ...(this.active ? [this.active.id] : [])])) {
       const d = getItem(id);
@@ -361,18 +363,18 @@ export default class Player extends Actor {
       if (this.itemState[id] === undefined) delete this.itemState[id];
     }
     for (const k of Object.keys(saved)) if (k.startsWith('syn:')) this.itemState[k] = saved[k];
-    this.curses = Array.isArray(snap.curses) ? [...snap.curses] : [];
-    this.blessings = Array.isArray(snap.blessings) ? [...snap.blessings] : [];
+    this.curses = Array.isArray(snap.curses) ? snap.curses.filter((c) => typeof c === 'string') : [];
+    this.blessings = Array.isArray(snap.blessings) ? snap.blessings.filter((c) => typeof c === 'string') : [];
     this.heartDebt = Math.max(0, snap.heartDebt | 0);
     this.extraHearts = Math.max(0, snap.extraHearts | 0);
     this.reviveCharges = snap.revive ? 1 : 0;
-    this.coins = snap.coins ?? this.coins; this.keys = snap.keys ?? this.keys; this.dynamite = snap.dyn ?? this.dynamite;
+    this.coins = Math.max(0, finite(snap.coins, this.coins) | 0); this.keys = Math.max(0, finite(snap.keys, this.keys) | 0); this.dynamite = Math.max(0, finite(snap.dyn, this.dynamite) | 0);
     this.buffs.length = 0;
     this.cyl.pos = 0; this.forceSixth = 0;
     this._synDirty = true;
     this.recomputeStats(true);
-    this.hp = clampN(snap.hp ?? this.maxHp, 1, this.maxHp);
-    this.tin = clampN(snap.tin ?? 0, 0, this._tinCap());
+    this.hp = clampN(finite(snap.hp, this.maxHp), 1, this.maxHp);
+    this.tin = clampN(finite(snap.tin, 0), 0, this._tinCap());
     this._coinsSeen = this.coins;
     this.haloLeft = this.stats.haloCharges || 0;
     this.shieldLeft = this.stats.roomShield || 0; this.shieldRest = 0; // a restored build starts with its own room shield (never a stale one from the previous build)
@@ -864,7 +866,7 @@ export default class Player extends Actor {
     scene.fx.muzzle(mzx, mzy, base, sixth ? 1.5 : 1);
     scene.fx.smoke(mzx + aim.x * 10, mzy + aim.y * 6, sixth ? 3 : 1, sixth);
     scene.fx.casing(this.x + aim.x * 22, this.y + 12 + aim.y * 10, aim.x, aim.y);
-    Sfx.play(sixth ? 'shoot_crit' : 'shoot', { vol: sixth ? 1 : 0.8, detune: (cr.next() - 0.5) * 200 });
+    Sfx.play(sixth ? 'shoot_crit' : (SHOT_SFX[this.char] || 'shoot'), { vol: sixth ? 1 : 0.8, detune: (cr.next() - 0.5) * 200 }); // per-rider report (AUDIO s2); the Sixth Bullet always cracks
     if (dead) { scene.fx.shake(0.006, 120); Sfx.play('shoot_crit', { vol: 0.7, rate: 0.85 }); }
     if (sixth) { scene.fx.shake(0.007, 120); this.knock.x -= aim.x * 120; this.knock.y -= aim.y * 120; }
     else { this.knock.x -= aim.x * 16; this.knock.y -= aim.y * 16; }

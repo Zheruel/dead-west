@@ -1,0 +1,13 @@
+import { freshSave } from '../../src/core/Save.js';
+import { open } from './qa1-lib.mjs';
+const g = await open('', { save: freshSave() });
+await g.eval(() => window.__game.scene.getScene('Menu').list.select(4, true));
+await g.wait(100); await g.tap('Enter', 80); await g.wait(600);
+const S = () => g.eval(() => { const o = window.__game.scene.getScene('Menu').opt; return { open: o.isOpen, page: o.page, sel: o.list.sel, n: o.list.rows ? o.list.rows.length : null, listOpen: o.list.live && o.list.live() }; });
+console.log('after open', await S());
+await g.tap('KeyE', 60); await g.wait(400); console.log('after E', await S());
+await g.tap('ArrowDown', 40); await g.wait(200); console.log('after Down', await S());
+await g.tap('KeyS', 40); await g.wait(200); console.log('after S', await S());
+console.log(g.errors);
+await g.shot('qa1-probe-opt');
+await g.close();

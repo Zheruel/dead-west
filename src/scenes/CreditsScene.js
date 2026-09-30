@@ -40,14 +40,19 @@ export default class CreditsScene extends Phaser.Scene {
 
     // backdrop: the last ending panel, darkened 55 %, slow push-in
     this.add.rectangle(W / 2, H / 2, W, H, 0x000000).setDepth(0);
-    if (this.textures.exists(key)) {
-      this.bg = this.add.image(W / 2, H / 2, key).setDepth(1);
-      const s0 = Math.max(W / this.bg.width, H / this.bg.height);
-      this.bg.setScale(s0);
-      this.tweens.add({ targets: this.bg, scale: s0 * 1.06, duration: 90000, ease: 'Linear' });
-    } else {
-      this.bg = this.add.rectangle(W / 2, H / 2, W, H, 0x1a0f0b).setDepth(1);
-    }
+    const mkBg = () => {
+      if (this.bg) this.bg.destroy();
+      if (this.textures.exists(key)) {
+        this.bg = this.add.image(W / 2, H / 2, key).setDepth(1);
+        const s0 = Math.max(W / this.bg.width, H / this.bg.height);
+        this.bg.setScale(s0);
+        this.tweens.add({ targets: this.bg, scale: s0 * 1.06, duration: 90000, ease: 'Linear' });
+      } else {
+        this.bg = this.add.rectangle(W / 2, H / 2, W, H, 0x1a0f0b).setDepth(1);
+      }
+    };
+    mkBg();
+    if (!this.textures.exists(key) && Assets.pending(key).length) Assets.ensure(key, { timeoutMs: 10000 }).then((ok) => { if (ok && this.sys && this.sys.isActive() && this.textures.exists(key)) mkBg(); }); // lazy ending art
     this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.55).setDepth(2);
 
     this.buildRoll();

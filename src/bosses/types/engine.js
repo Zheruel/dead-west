@@ -10,7 +10,7 @@
 // Every damage zone is telegraphed >= 0.9 s (coal 0.9, lanes 0.9-1.4, rings 0.9 windup). Phase changes interrupt the running attack
 // (`interrupt` -> `resetState`): runs, tells, ghost lanes and coal markers are cancelled and the engine returns to the parked spot.
 // Tuning vs CHAPTER2 s4 (bot 8-seed win rate 60-80 %, median 70-115 s): coal shards live 1.5 s (2.4 s left ~30 slow bullets in the arena after a barrage), the
-// two Ghost Train handcar bandits have 0.6x hp and drop no loot (floor-5 hp scaling made them tankier than the boss window allows). Everything else is as designed.
+// two Ghost Train handcar bandits have 0.6x hp and drop normal loot (CHAPTER2 s4; floor-5 hp scaling made them tankier than the boss window allows). Everything else is as designed.
 // The engine drives its own position (no wall/obstacle resolve): x/y are set directly, `moveBy` is a no-op.
 import Boss from '../Boss.js';
 import { registerBoss } from '../registry.js';
@@ -561,7 +561,7 @@ class Engine extends Boss {
     const s = this.scene;
     for (const x of [ROOM.x + 170, ROOM.right - 170]) {
       s.fx.spawn(x, ROOM.y + 100);
-      const e = spawnEnemy(s, 'handcar_bandit', x, ROOM.y + 100, { instant: true, floor: this.floor, hpMult: 0.6, noLoot: true });
+      const e = spawnEnemy(s, 'handcar_bandit', x, ROOM.y + 100, { instant: true, floor: this.floor, hpMult: 0.6 });
       if (e) e.fromBoss = true;
     }
   }

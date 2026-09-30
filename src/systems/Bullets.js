@@ -36,11 +36,11 @@ const ENEMY_KINDS = {
   venom: { frame: 'bullet_venom', r: 12, glow: 0x8fc23f, rotate: false },
   nail: { frame: 'bullet_nail', r: 10, glow: 0xffa060, rotate: true },
   ghostfire: { frame: 'bullet_ghostfire', r: 13, glow: 0x6fe0d0, rotate: false },
-  rock: { frame: 'rock_debris', r: 16, glow: 0xb09070, rotate: true },
+  rock: { frame: 'rock_debris', r: 16, glow: 0xe0c090, rotate: true, hi: true }, // hi: brighter, larger halo + always-on dark rim (QA V-042: grey on brown F4 floors)
   stick: { frame: 'dynamite_stick', r: 14, glow: 0xff5a2a, rotate: true },
   // chapter 2 (ITEMS/CHAPTER2 s2): real art from projectiles_c2, tinted base cells when the sheet is missing
   ember: { frame: 'bullet_enemy', c2: 'bullet_ember', r: 12, glow: 0xff8a2a, rotate: false, tint: 0xffa040 },
-  coal: { frame: 'rock_debris', c2: 'bullet_coal', r: 14, glow: 0xff9a2a, rotate: true, tint: 0x9a6a3a },
+  coal: { frame: 'rock_debris', c2: 'bullet_coal', r: 14, glow: 0xffb040, rotate: true, tint: 0x9a6a3a, hi: true },
   steam: { frame: 'bullet_enemy', c2: 'bullet_steam', r: 15, glow: 0xdde4e8, rotate: false, tint: 0xdde4e8 },
   card: { frame: 'bullet_nail', c2: 'bullet_card', r: 12, glow: 0xffffff, rotate: true, tint: 0xf8f0e0 },
   chip: { frame: 'bullet_enemy', c2: 'bullet_chip', r: 13, glow: 0xe8dcc0, rotate: false, tint: 0xe8dcc0 },
@@ -109,8 +109,8 @@ class Pool {
   }
 
   /** bulletOutline setting: a dark, slightly larger copy of the sprite behind it (accessibility; off by default). */
-  _outline(b) {
-    if (!Save.settings().bulletOutline) { if (b.ol) b.ol.setVisible(false); return; }
+  _outline(b, force = false) {
+    if (!force && !Save.settings().bulletOutline) { if (b.ol) b.ol.setVisible(false); return; }
     if (!b.ol) b.ol = this.scene.add.image(0, 0, b.texKey, 0).setDepth(DEPTH.bullets - 0.5).setTint(OUTLINE_COL).setAlpha(0.9);
     const sp = b.sprite;
     b.ol.setTexture(b.texKey, sp.frame.name).setScale(sp.scaleX * 1.28, sp.scaleY * 1.28).setRotation(sp.rotation).setPosition(sp.x, sp.y).setVisible(true);
@@ -200,14 +200,14 @@ class Pool {
     b.shadow.setVisible(true);
     b.glow.setVisible(true);
     const gc = isEnemy ? kind.glow : fb ? fb.glow : b.sixth ? 0xffc040 : 0xfff2c0;
-    b.glow.setTint(gc).setScale(isEnemy ? 0.55 : (b.sixth ? 0.85 : 0.5) * Math.min(1.6, b.size)).setAlpha(isEnemy ? 0.65 : b.sixth ? 0.55 : 0.4);
+    b.glow.setTint(gc).setScale(isEnemy ? (kind.hi ? 0.8 : 0.55) : (b.sixth ? 0.85 : 0.5) * Math.min(1.6, b.size)).setAlpha(isEnemy ? (kind.hi ? 0.9 : 0.65) : b.sixth ? 0.55 : 0.4);
     if (!isEnemy) {
       // brass streak behind the slug (gold + longer for the Sixth Bullet); tinted per shot below via b.glow tint
       const len = Math.max(18, Math.hypot(vx, vy) * FEEL.streakLen * (b.sixth ? 1.7 : 1));
       b.streak.setVisible(true).setTint(gc).setAlpha(b.sixth ? 0.7 : 0.42).setDisplaySize(len, (b.sixth ? 11 : 7) * Math.min(1.6, b.size));
     }
     this._place(b);
-    this._outline(b);
+    this._outline(b, isEnemy && !!kind.hi);
     this.list.push(b);
     if (bus.listenerCount('bullet:fired') > 0) bus.emit('bullet:fired', { bullet: b, sixth: b.sixth, owner: this.owner }); // skip the per-shot allocation when nobody listens
     return b;

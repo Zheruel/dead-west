@@ -8,6 +8,79 @@ await g.startRun();
 await g.eval(() => { window.__dw.api.godMode(true); });
 await g.wait(600);
 
+// FIX-1 regressions -------------------------------------------------------------------------------------------------------------------
+// V-028: first-visit controls hint sits in the bottom-left corner (not on the spawn point) and fades on the first input
+const h = await g.eval(() => {
+  const r = window.__dw.scene.room, gi = window.__dw.scene.gameInput;
+  r.state.hinted = false; r.hintText();
+  const list = r._hint || [];
+  const info = { n: list.length, xs: list.map((t) => Math.round(t.x)), ys: list.map((t) => Math.round(t.y)) };
+  gi.override = { move: { x: 0, y: 0 }, aim: null }; r.updateHint(); info.idle = !!r._hint;
+  gi.override = { move: { x: 1, y: 0 }, aim: null }; r.updateHint(); info.after = !!r._hint;
+  gi.override = null;
+  return info;
+});
+ok(h.n === 4 && h.xs.every((x) => x < 400) && h.ys.every((y) => y > 700) && h.idle && !h.after, `controls hint bottom-left, fades on first input ${JSON.stringify(h)}`);
+// V-005: a big enemy is never left against a door
+const sp = await g.eval(async () => {
+  const { DOORS, tileToWorld } = await import('/src/config.js');
+  const r = window.__dw.scene.room; const p = tileToWorld(5, 0);
+  const out = r.safeSpawns([{ id: 'magma_golem', x: p.x, y: p.y }, { id: 'outlaw', x: tileToWorld(7, 0).x, y: tileToWorld(7, 0).y }]);
+  const doors = Object.keys(r.doors).map((d) => tileToWorld(DOORS[d].tile[0], DOORS[d].tile[1]));
+  return out.map((o, i) => ({ id: o.id, d: Math.min(...doors.map((c) => Math.hypot(c.x - o.x, c.y - o.y))) }));
+});
+ok(sp[0].d >= 48 + 90 && sp[1].d >= 30 + 90, `door spawn margin ${JSON.stringify(sp)}`);
+// Q1-01: the checkpoint is (re)written AFTER Hell's Welcome; CONTINUE gives the welcome once when the saved run lacks it
+const hw = await g.eval(async () => {
+  const flow = await import('/src/scenes/flow.js'); const { Save } = await import('/src/core/Save.js');
+  const s = window.__dw.scene, p = s.player; const calls = [];
+  const orig = Save.saveCheckpoint, origLoad = Save.loadCheckpoint;
+  Save.saveCheckpoint = (run, pl) => { calls.push({ hp: pl.hp, dyn: pl.dynamite, hw: !!run.hellsWelcome }); return true; };
+  p.hp = 1; p.dynamite = 3; s.run.hellsWelcome = false;
+  s.roomMgr.loadFloor(4); flow.afterFloorIntro(s, { from: 3, floor: 4 });
+  for (let i = 0; i < 120 && calls.length < 2; i++) await new Promise((r) => setTimeout(r, 500)); // chapter card is game-clock time (slow on a loaded box)
+  const desc = { calls: [...calls], hp: p.hp, dyn: p.dynamite };
+  calls.length = 0; p.hp = 1; p.dynamite = 3; s.run.hellsWelcome = false;
+  s.startData = { continue: true, floor: 4 }; Save.loadCheckpoint = () => ({ v: 1, floor: 4, run: {} });
+  flow.afterFloorIntro(s, { from: 0, floor: 4 });
+  await new Promise((r) => setTimeout(r, 800));
+  const cont = { calls: [...calls], hp: p.hp, dyn: p.dynamite, hw: s.run.hellsWelcome };
+  Save.loadCheckpoint = () => ({ v: 1, floor: 4, run: { hellsWelcome: true } }); p.hp = 1; p.dynamite = 3; s.run.hellsWelcome = false; calls.length = 0;
+  flow.afterFloorIntro(s, { from: 0, floor: 4 });
+  await new Promise((r) => setTimeout(r, 800));
+  const cont2 = { hp: p.hp, dyn: p.dynamite, hw: s.run.hellsWelcome, calls: calls.length };
+  Save.saveCheckpoint = orig; Save.loadCheckpoint = origLoad; s.startData = {};
+  return { desc, cont, cont2 };
+});
+ok(hw.desc.calls.length === 2 && hw.desc.calls[0].dyn === 3 && hw.desc.calls[1].hw && hw.desc.calls[1].dyn === 5 && hw.desc.calls[1].hp > 1, `checkpoint re-saved after the welcome ${JSON.stringify(hw.desc)}`);
+ok(hw.cont.hw && hw.cont.dyn === 5 && hw.cont.hp > 1 && hw.cont2.dyn === 3 && hw.cont2.hp === 1 && hw.cont2.hw, `CONTINUE: welcome once, not when saved ${JSON.stringify([hw.cont, hw.cont2])}`);
+// Q1-08: story overlays never outlive the run
+const ov = await g.eval(async () => {
+  const s = window.__dw.scene; const mgr = s.scene.manager;
+  s.scene.launch('Cutscene', { id: 'intro_hell', ctx: { char: 'gunslinger', hell: true, clean: true }, overlay: true, next: { callback() {} } });
+  await new Promise((r) => setTimeout(r, 400));
+  const was = mgr.isActive('Cutscene'); s.stopOverlays();
+  await new Promise((r) => setTimeout(r, 600));
+  return { was, now: mgr.isActive('Cutscene') };
+});
+ok(!ov.now, `stopOverlays stops a live Cutscene overlay ${JSON.stringify(ov)}`);
+// V-033: event decor is one themed prop kind, vaults / secret rooms stay clean
+await g.eval(() => window.__dw.api.setFloor(2));
+await g.wait(1200);
+const dc = await g.eval(() => {
+  const m = window.__dw.scene.roomMgr, out = {};
+  const defs = m.floor.rooms.filter((r) => (r._orig || r.type) === 'normal' && r.dist >= 2);
+  const mk = (type, extra, k) => { const def = defs[k % defs.length]; def._orig = def._orig || 'normal'; for (const key of ['template', 'mini', 'event', 'variant', 'pocket']) delete def[key]; Object.assign(def, { type, ...extra }); delete m.states[def.id]; m.jump(def.id, null); return m.room; };
+  const kinds = (room) => [...new Set(room.tiles.flat().filter((t) => t.ch === 'd').map((t) => (t.type === 'decor' ? t.decorName : 'none')))];
+  out.card = kinds(mk('event', { event: 'card_sharp', template: 'event_card_sharp' }, 0));
+  out.grave = kinds(mk('event', { event: 'gravedigger', template: 'event_gravedigger' }, 1));
+  out.vault = kinds(mk('supersecret', { template: 'vault_a' }, 2));
+  return out;
+});
+ok(dc.card.join() === 'decor_b' && dc.grave.join() === 'decor_a' && dc.vault.every((k) => k === 'none'), `themed decor ${JSON.stringify(dc)}`);
+await g.eval(() => window.__dw.api.setFloor(1));
+await g.wait(800);
+
 // boss intro: cutscene holds ~2.9 s, then the fight starts
 await g.eval(() => window.__dw.api.bossRoom(1));
 await g.wait(900);

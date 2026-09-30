@@ -6,6 +6,7 @@ import HoldRing from '../../../entities/HoldRing.js';
 import { ROOM, DEPTH, FONT_TITLE, FONT_BODY, tileToWorld, actorDepth } from '../../../config.js';
 import { Assets } from '../../../core/Assets.js';
 import { bus } from '../../../core/events.js';
+import { EVENT_LINES } from '../../../data/story/dialogue.js';
 
 export const CARD_W = 88;
 export const CARD_H = 124;
@@ -16,6 +17,39 @@ export function slotPoints(room, key, fallback = []) {
   const list = ((room.tpl && room.tpl.slots && room.tpl.slots[key]) || []).slice().sort((a, b) => a.c - b.c || a.r - b.r);
   const src = list.length ? list.map((s) => [s.c, s.r]) : fallback;
   return src.map(([c, r]) => tileToWorld(c, r));
+}
+
+// ---------------------------------------------------------------------------------------------------------------- spoken lines (STORY 11.3)
+/** Spoken / caption line `key` of event `ev` (EVENT_LINES); arrays are variants (`r` = rng picks one, else the first). '' when missing. */
+export function eventLine(ev, key, r = null) {
+  const v = EVENT_LINES[ev] && EVENT_LINES[ev][key];
+  if (Array.isArray(v)) return r ? r.pick(v) : v[0];
+  return v || '';
+}
+
+/**
+ * Parchment speech tag (code-drawn, no art): wrapped text on a tag whose bottom-centre sits at (x, y), clamped to the play area, held `hold` ms
+ * then faded. Tracked by the room (destroyed with it). Returns the container (caller may destroy a previous one).
+ */
+export function speechTag(scene, room, x, y, text, { color = '#2a1a10', hold = 3200, size = 20, wrap = 440 } = {}) {
+  const t = scene.add.text(0, 0, text, { fontFamily: FONT_BODY, fontSize: `${size}px`, color, wordWrap: { width: wrap }, align: 'left', lineSpacing: 2 }).setOrigin(0, 0);
+  const PX = 14, PY = 9;
+  const w = Math.ceil(t.width) + PX * 2, h = Math.ceil(t.height) + PY * 2;
+  const left = Math.max(ROOM.x + 8, Math.min(ROOM.right - w - 8, x - w / 2));
+  const top = Math.max(ROOM.y + 8, y - h);
+  const tail = Math.max(left + 14, Math.min(left + w - 14, x));
+  const g = scene.add.graphics();
+  g.fillStyle(0x120c0a, 0.35); g.fillRoundedRect(left + 3, top + 4, w, h, 6);
+  g.fillStyle(0xe6d2a0, 1); g.fillRoundedRect(left, top, w, h, 6);
+  g.lineStyle(2, 0x6b4423, 1); g.strokeRoundedRect(left, top, w, h, 6);
+  g.fillStyle(0xe6d2a0, 1); g.fillTriangle(tail - 8, top + h - 1, tail + 8, top + h - 1, tail, top + h + 9);
+  g.lineStyle(2, 0x6b4423, 1); g.beginPath(); g.moveTo(tail - 8, top + h); g.lineTo(tail, top + h + 9); g.lineTo(tail + 8, top + h); g.strokePath();
+  t.setPosition(left + PX, top + PY);
+  const box = scene.add.container(0, 0, [g, t]).setDepth(DEPTH.fx + 30).setAlpha(0);
+  box.once('destroy', () => scene.tweens.killTweensOf(box));
+  scene.tweens.add({ targets: box, alpha: 1, duration: 140 });
+  scene.tweens.add({ targets: box, alpha: 0, delay: hold, duration: 300, onComplete: () => { if (box.scene) box.destroy(); } });
+  return room.track(box);
 }
 
 // ---------------------------------------------------------------------------------------------------------------- placeholders
@@ -139,6 +173,28 @@ export class EventBase extends Controller {
   ring(o) { const r = new HoldRing(this.room, o); (this.rings || (this.rings = [])).push(r); return r; }
   /** Persistent world label. */
   label(x, y, text, o) { return label(this.scene, this.room, x, y, text, o); }
+  /** World point of the NPC's speech tag (bottom-centre): above the K prop. */
+  voicePos() { const k = this.spots('K', [[6, 2]])[0]; return { x: k.x, y: k.y - 150 }; }
+  /**
+   * Speak STORY line `key` of this event (or of `o.ev`) in a parchment tag; `o.text` overrides the lookup, `o.delay` ms defers it, `o.at` = {x, y}.
+   * One tag per controller at a time (a new line replaces the previous one). No-op while the room is being torn down.
+   */
+  speak(key, o = {}) {
+    const stamp = this._spoke || 0;
+    const go = () => {
+      if (this.tearing || this.destroyed || this.room.destroyed) return null;
+      if (key === 'greet' && (this._spoke || 0) !== stamp) return null; // a greeting never talks over a line spoken meanwhile (player rushed the event)
+      this._spoke = (this._spoke || 0) + 1;
+      const text = o.text || eventLine(o.ev || this.eventId, key, this.rng(`line-${key}`, o.n || 0));
+      if (!text) return null;
+      if (this.voice && this.voice.scene) this.voice.destroy();
+      const at = o.at || this.voicePos();
+      this.voice = speechTag(this.scene, this.room, at.x, at.y, text, { color: o.color, hold: o.hold });
+      return this.voice;
+    };
+    if (o.delay) { this.later(o.delay, go); return null; }
+    return go();
+  }
   /** Short floating text. */
   say(x, y, text, color = '#e8dcc0', size = 26) { this.scene.fx.text(x, y, text, { color, size }); }
 

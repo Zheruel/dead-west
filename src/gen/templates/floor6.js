@@ -111,10 +111,10 @@ export default [
       '......1......',
       '..RR.....RR..',
       '.............',
-      '..2.......2..',
+      '..2.2.....2..',
       '.............',
     ],
-    waves: { 1: ['skeleton', 'skeleton', 'possessed'], 2: ['joker', 'card_shark'] },
+    waves: { 1: ['skeleton', 'skeleton', 'possessed'], 2: ['joker', 'card_shark', 'waiter_imp'] }, // sum 10 = tier 2 budget (was 8.5)
   },
   { // roulette floor: the whole middle is a 9x3 wheel, dice roll across the colours
     id: 'f6_n09', kind: 'normal', floors: [6], weight: 1, tier: 2, roulette: true, modBias: READABLE,

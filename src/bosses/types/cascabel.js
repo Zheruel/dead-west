@@ -10,6 +10,7 @@ import Boss from '../Boss.js';
 import { registerBoss } from '../registry.js';
 import { Sfx } from '../../core/Audio.js';
 import { ROOM } from '../../config.js';
+import { subRng } from '../../core/rng.js';
 
 const TOP_Y = 356; // min ground y: the 320 px sprite's horns would otherwise slide under the HUD strip
 const MARGIN = 145; // boss centre stays this far from the walls (keeps the player from being pinned inside the body)
@@ -17,6 +18,8 @@ const BONES = [0xe8dcc0, 0xc9b98f, 0x8a7a55];
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
 class Cascabel extends Boss {
+  /** Seeded stream for attack / strafe geometry (QA4-020: fights reproducible per seed; the pick stream is Boss.brng). Cosmetics stay on Math.random. */
+  get geo() { return this._geo || (this._geo = subRng('bossgeo', this.id, this.floor)); }
   setup() {
     this.addAttack('venomFan', this.atkVenomFan, { weight: 3 });
     this.addAttack('rattleRing', this.atkRattleRing, { weight: 2 });
@@ -201,7 +204,7 @@ class Cascabel extends Boss {
     if (d < 156) p.damage(1, { x: tx, y: ty, enemy: this, enemyName: this.id, kind: 'dive' });
     const body = this.radius * 0.85 + p.hurtRadius + 14;
     if (d < body) { // shove out of the body
-      const a = d > 1 ? Math.atan2(p.y - ty, p.x - tx) : Math.random() * Math.PI * 2;
+      const a = d > 1 ? Math.atan2(p.y - ty, p.x - tx) : this.geo.float(0, Math.PI * 2);
       p.x = tx + Math.cos(a) * body; p.y = ty + Math.sin(a) * body;
       if (s.room) s.room.resolve(p);
     }

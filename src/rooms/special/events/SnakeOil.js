@@ -8,8 +8,8 @@ import { Sfx } from '../../../core/Audio.js';
 import { bus } from '../../../core/events.js';
 import { subRng } from '../../../core/rng.js';
 import Dynamite from '../../../entities/Dynamite.js';
+import { POTION_NAMES } from '../../../data/story/dialogue.js';
 
-const LINES = ['FINEST TONIC IN THE TERRITORY.', 'CURES WHAT AILS YOU. MOSTLY.', 'NO REFUNDS. NO RETURNS. NO WITNESSES.'];
 
 /** Apply the effect of potion `effect` to the player (also used by tests). */
 export function drink(scene, p, effect) {
@@ -88,21 +88,23 @@ export default class SnakeOil extends EventBase {
     scene.fx.burst(s.at.x, s.at.y - 30, { color: [POTION_HEX[s.color], 0xffffff], count: 12, speed: [50, 200], gravity: 200 });
     if (this.rng('water', n).chance(WATER_CHANCE)) {
       this.say(s.at.x, s.at.y - 90, 'TASTES LIKE WATER', '#a8c8e0');
+      this.speak('watered_line', { delay: 700 });
     } else {
       const effect = this.map[s.color];
       const run = scene.run;
       if (run && run.potionKnown) run.potionKnown[s.color] = true;
       Sfx.play('potion_gulp');
       drink(scene, p, effect);
-      this.say(s.at.x, s.at.y - 90, POTION_NAME[effect], '#f0d060', 30);
+      this.say(s.at.x, s.at.y - 90, (POTION_NAMES[effect] || POTION_NAME[effect]).toUpperCase(), '#f0d060', 26); // STORY 11.3 potion name once identified
       bus.emit('potion:drunk', { color: s.color, effect });
+      this.speak('buy', { delay: 700 });
     }
     this.refreshLabels();
-    if (d.bought.every(Boolean)) this.finish('bought_out');
+    if (d.bought.every(Boolean)) { this.finish('bought_out'); this.speak('done', { delay: 3400 }); }
   }
 
   onEnter() {
-    if (!this.state.greeted) { this.state.greeted = true; const k = this.spots('K', [[6, 2]])[0]; this.later(500, () => this.say(k.x, k.y - 160, LINES[this.rng('line', 0).int(0, LINES.length - 1)], '#e8dcc0', 22)); }
+    if (!this.state.greeted && !this.data.bought.every(Boolean)) { this.state.greeted = true; this.speak('greet', { delay: 1500 }); }
   }
 
   update(dt) { super.update(dt); this.refreshLabels(); }

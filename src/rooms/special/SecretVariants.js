@@ -93,6 +93,8 @@ class DeadMansHand extends Variant {
       }
     }
     room.banner(text, { color: card.reward === 'devil' ? '#d63a2a' : '#c8a8f0', hold: 1600 });
+    // STORY 11.3 card_sharp.dead_mans_hand: aces and eights spoken over the reward (the devil's fifth card keeps its own banner)
+    if (card.reward !== 'devil') this.speak('dead_mans_hand', { ev: 'card_sharp', at: { x: ROOM.cx, y: ROOM.y + 130 }, delay: 1900 });
     scene.fx.ringPulse(at.x, at.y, card.reward === 'devil' ? 0xd63a2a : 0xf0d060, 90, 600, 0.8);
     scene.fx.flash(0x6a3aa0, 0.15);
   }

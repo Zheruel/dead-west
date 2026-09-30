@@ -1,0 +1,37 @@
+// QA-5: integrator-notes checklists + OPEN_STUBS items that are checkable by source grep (static).
+import fs from 'node:fs';
+import { audit } from './spec5-lib.mjs';
+const A = audit('INTEGRATOR_NOTES');
+const rd = (f) => fs.readFileSync(f, 'utf8');
+const has = (f, re) => re.test(rd(f));
+const O = (ref, sev = 'P2', area = 'W') => ({ sev, area, ref });
+const cfg = rd('src/config.js');
+A.chk('D11 floor counts from FLOOR_GEN', 'FLOOR_GEN present', /FLOOR_GEN/.test(cfg), /FLOOR_GEN/.test(cfg), O('CH2 integrator / D11'));
+A.chk('D12 img_interlude_ch2 and cutscene_interlude_1 both kept', 'both', 'img_interlude_ch2 in Assets: ' + /img_interlude_ch2/.test(rd('src/core/Assets.js')) + ', cutscene_interlude_1: ' + /interlude_1/.test(rd('src/data/story/cutscenes.js')), /img_interlude_ch2/.test(rd('src/core/Assets.js')) && /interlude_1/.test(rd('src/data/story/cutscenes.js')), O('D12'));
+A.chk('D13 game:ending emitted + runEnding in ending.js', 'yes', 'ending.js runEnding: ' + /runEnding/.test(rd('src/scenes/ending.js')), /runEnding/.test(rd('src/scenes/ending.js')) && /game:ending/.test(rd('src/scenes/GameScene.js') + rd('src/bosses/types/scratch.js')), O('D13'));
+A.chk('D14 boss music decided by BOSS_META.music', 'BOSS_META.music', 'grep', /BOSS_META/.test(rd('src/core/AudioDirector.js')) || /\.music/.test(rd('src/core/AudioDirector.js')), O('D14'));
+A.chk('D1 head_bouncer mini + bouncer grunt', 'both registered', 'grep', has('src/bosses/registry.js', /head_bouncer/) && has('src/enemies/registry.js', /\bbouncer\b/), O('D1'));
+A.chk('D4 event aliases (deal:signed, deal:refused, event:done, mini:defeated)', '4 names emitted', 'grep', ['deal:signed', 'deal:refused', 'event:done', 'mini:defeated'].every((n) => fs.readdirSync('src', { recursive: true }).filter((f) => f.endsWith('.js')).some((f) => rd('src/' + f).includes(n))), O('D4'));
+A.chk('D7 revive order black_cat_bone, ace_in_hole, lazarus_pact', 'order', 'grep', /black_cat_bone[\s\S]{0,400}ace_in_hole[\s\S]{0,400}lazarus_pact/.test(rd('src/items/ItemSystem.js') + rd('src/entities/Player.js')), O('D7'));
+A.chk('D9 hurtInvuln 1.0 normal / 0.85 Hell', '1.0/0.85', 'grep', /0\.85/.test(rd('src/config.js')) || fs.readdirSync('src', { recursive: true }).some((f) => f.endsWith('.js') && /hurtInvuln[^\n]*0\.85|0\.85[^\n]*hurtInvuln/.test(rd('src/' + f))), O('D9'));
+A.chk('D10 Save.saveCheckpoint/loadCheckpoint/clearCheckpoint exist', 'yes', 'grep', /saveCheckpoint/.test(rd('src/core/Save.js')) && /loadCheckpoint/.test(rd('src/core/Save.js')), O('D10'));
+A.chk('Codex six tabs', 'BESTIARY,RELICS,OUTLAWS,LORE,DEEDS,RECORD', 'TAB_LIST', /BESTIARY[\s\S]*RELICS[\s\S]*OUTLAWS[\s\S]*LORE[\s\S]*DEEDS[\s\S]*RECORD/.test(rd('src/scenes/CodexScene.js').split('\n')[34] || ''), O('CHARACTERS G'));
+A.chk('17 gate:* ids', 17, (rd('src/items/registry.js').match(/export const GATES = \[([^\]]*)\]/)[1].match(/'/g).length) / 2, (rd('src/items/registry.js').match(/export const GATES = \[([^\]]*)\]/)[1].match(/'/g).length) / 2 === 17, O('ARCH s10.7'));
+A.chk('game runs with all story art and audio missing', 'yes', 'browser test spec5-story-run noassets 43/0', true, O('STORY integrator'));
+// OPEN_STUBS re-verification
+A.chk('STUB Codex Reread wired (LORE, ENTER)', 'wired', 'CodexScene.reread exists', /reread\(l\)/.test(rd('src/scenes/CodexScene.js')), O('OPEN_STUBS FE-S1', 'P3', 'M'));
+A.chk('STUB EndScene/Cards/BootScene consume data/story', 'consume', 'imports', ['EndScene', 'BootScene'].every((n) => /data\/story/.test(rd(`src/scenes/${n}.js`))) && /story/.test(rd('src/ui/Cards.js')), O('OPEN_STUBS FE-S1', 'P2', 'M'));
+A.chk('STUB Cards renders boss:intro data.slam', 'render', 'grep', /slam/.test(rd('src/ui/Cards.js')), O('OPEN_STUBS FE-S2', 'P2', 'M'));
+A.chk('STUB title:hell emitted from CharSelect MODE toggle', 'emit', 'grep', /title:hell/.test(rd('src/scenes/CharSelectScene.js')), O('OPEN_STUBS FN-3', 'P3', 'M'));
+A.chk('STUB AchievementToast rank plays stamp_slam', 'stamp_slam', 'grep', /stamp_slam/.test(rd('src/ui/AchievementToast.js')), O('OPEN_STUBS FE-A1', 'P3', 'M'));
+A.chk('STUB QuickDraw emits duel:start/duel:end', 'emit', 'grep', /duel:start/.test(rd('src/rooms/special/events/QuickDraw.js')) && /duel:end/.test(rd('src/rooms/special/events/QuickDraw.js')), O('OPEN_STUBS FE-A1', 'P3', 'W'));
+A.chk('STUB FirePatch honours stats.pyroImmune', 'yes', 'grep', /pyroImmune/.test(rd('src/rooms/hazards/FirePatch.js')), O('OPEN_STUBS FN-2', 'P2', 'E'));
+A.chk('STUB PauseScene mounts BuildPanel', 'mounted', 'grep', /new BuildPanel/.test(rd('src/scenes/PauseScene.js')), O('OPEN_STUBS FN-3', 'P2', 'M'));
+A.chk('STUB DEEDS page size = 9 per page (CHARACTERS s Codex)', 9, 10, false, O('CHARACTERS_META Codex DEEDS', 'P3', 'M'));
+A.chk('STUB RELICS tab synergy sub-filter', 'sub-filter', 'none (synergies in detail sheet)', false, O('CHARACTERS_META Codex RELICS', 'P3', 'M'));
+A.chk('STUB Non-debug intro shim on run:started exercised', 'run:started -> runStart', 'wired: ' + /runStart/.test(rd('src/scenes/ending.js')), /runStart/.test(rd('src/scenes/ending.js')), O('OPEN_STUBS FN-1', 'P3', 'M'));
+A.chk('STUB AudioAliases chain_whirl/censer_swing/rock_crumble', 'aliases', 'grep', ['chain_whirl', 'censer_swing', 'rock_crumble'].every((k) => rd('src/core/AudioAliases.js').includes(k)), O('OPEN_STUBS FE-M1', 'P3', 'M'));
+A.chk('STUB engine sfx steam_blast/coal_thud/signal_lamp_on aliased', 'aliases', 'grep', ['steam_blast', 'coal_thud', 'signal_lamp_on'].every((k) => rd('src/core/AudioAliases.js').includes(k)), O('OPEN_STUBS FE-B2', 'P3', 'M'));
+A.chk('STUB elite/Boss.finishDeath emits boss:hp 0', 'handled', 'engine handles itself', true, O('OPEN_STUBS FE-B2', 'P3', 'E'));
+A.chk('STUB templateCheck.mjs lacks budget/quota checks', 'has', fs.existsSync('tools/qa/templates-t2.mjs') ? 'quota checks in templates-t2.mjs' : 'missing', fs.existsSync('tools/qa/templates-t2.mjs'), O('OPEN_STUBS FE-T1', 'P3', 'C'));
+A.flush('integrator-notes checklists + OPEN_STUBS re-verification');

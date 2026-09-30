@@ -33,35 +33,35 @@ export default class DailyScene extends Phaser.Scene {
 
     // ---- left poster
     const px = 380;
-    panel(this, px, 500, 560, 760);
-    this.add.text(px, 166, 'DAILY RIDE', title(52, '#2a1810', { stroke: '#e8d9b0', strokeThickness: 2 })).setOrigin(0.5);
-    this.add.text(px, 205, this.today, inkText(30, '#5a1a10', { fontStyle: 'bold' })).setOrigin(0.5);
+    panel(this, px, 496, 560, 800); // taller poster: heading and last line clear of the torn edges (Q1-06, V-021)
+    this.add.text(px, 212, 'DAILY RIDE', title(52, '#2a1810', { stroke: '#e8d9b0', strokeThickness: 2 })).setOrigin(0.5);
+    this.add.text(px, 256, this.today, inkText(30, '#5a1a10', { fontStyle: 'bold' })).setOrigin(0.5);
     if (day.hell) {
       const rb = this.add.graphics();
-      rb.fillStyle(0x8a1c1c, 1).fillRect(px - 190, 232, 380, 34).lineStyle(3, 0x2a1810, 1).strokeRect(px - 190, 232, 380, 34);
-      this.add.text(px, 249, 'HELL SUNDAY  -  x1.5 REWARD', title(20, CSS.bone, { strokeThickness: 3 })).setOrigin(0.5);
+      rb.fillStyle(0x8a1c1c, 1).fillRect(px - 190, 282, 380, 34).lineStyle(3, 0x2a1810, 1).strokeRect(px - 190, 282, 380, 34);
+      this.add.text(px, 299, 'HELL SUNDAY  -  x1.5 REWARD', title(20, CSS.bone, { strokeThickness: 3 })).setOrigin(0.5);
     }
-    const pic = riderToken(this, px, 380, day.char, 200);
+    const pic = riderToken(this, px, 402, day.char, 180);
     pic.highlight(true);
-    this.add.text(px, 500, c.name.toUpperCase(), title(28, '#2a1810', { strokeThickness: 0 })).setOrigin(0.5);
-    this.add.text(px, 530, `borrowed for the day${Meta.isCharUnlocked(day.char) ? '' : ' (locked rider)'}`, inkText(17, INK, { fontStyle: 'italic' })).setOrigin(0.5);
-    const mc = chip(this, px, 584, mut.name.toUpperCase(), { size: 24, pad: 20, fill: 0x2a1a12, stroke: 0x8a1c1c, font: FONT_TITLE });
-    this.add.text(px, 626, mut.desc, inkText(19, INK, { align: 'center', wordWrap: { width: 470 } })).setOrigin(0.5, 0);
-    this.add.text(px, 736, `SEED CODE   ${day.code}`, inkText(22, '#5a1a10', { fontStyle: 'bold' })).setOrigin(0.5);
+    this.add.text(px, 518, c.name.toUpperCase(), title(28, '#2a1810', { strokeThickness: 0 })).setOrigin(0.5);
+    this.add.text(px, 548, Meta.isCharUnlocked(day.char) ? 'your rider for the day' : 'borrowed for the day (locked rider)', inkText(17, INK, { fontStyle: 'italic' })).setOrigin(0.5);
+    const mc = chip(this, px, 596, mut.name.toUpperCase(), { size: 24, pad: 20, fill: 0x2a1a12, stroke: 0x8a1c1c, font: FONT_TITLE });
+    this.add.text(px, 634, mut.desc, inkText(19, INK, { align: 'center', wordWrap: { width: 470 } })).setOrigin(0.5, 0);
+    this.add.text(px, 730, `SEED CODE   ${day.code}`, inkText(22, '#5a1a10', { fontStyle: 'bold' })).setOrigin(0.5);
     const d = Save.get().daily;
     const streak = d.lastDate === this.today || d.lastDate === addDays(this.today, -1) ? d.streak : 0;
-    this.add.text(px, 776, `STREAK  ${streak}   (best ${d.bestStreak || 0})`, inkText(21, INK)).setOrigin(0.5);
-    this.resetT = this.add.text(px, 812, '', inkText(18, '#6b4423')).setOrigin(0.5);
+    this.add.text(px, 766, `STREAK  ${streak}   (best ${d.bestStreak || 0})`, inkText(21, INK)).setOrigin(0.5);
+    this.resetT = this.add.text(px, 798, '', inkText(18, '#6b4423')).setOrigin(0.5);
     this.time.addEvent({ delay: 1000, loop: true, callback: () => this.tickReset() });
     this.tickReset();
 
     // ---- right board
     const bx = 1050;
-    panel(this, bx, 500, 640, 760, { dark: true });
-    this.add.text(bx, 166, 'THE LOCAL BOARD', title(36, CSS.bone)).setOrigin(0.5);
+    panel(this, bx, 496, 640, 800, { dark: true });
+    this.add.text(bx, 200, 'THE LOCAL BOARD', title(36, CSS.bone)).setOrigin(0.5);
     this.rowObjs = [];
     this.empty = this.add.text(bx, 500, 'No rides yet - be the first', body(24, CSS.sand)).setOrigin(0.5).setVisible(false);
-    this.tabs = new TabBar(this, { x: bx, y: 214, w: 560, tabs: TABS, onChange: (id) => this.fill(id), size: 22, depth: 20 });
+    this.tabs = new TabBar(this, { x: bx, y: 252, w: 560, tabs: TABS, onChange: (id) => this.fill(id), size: 22, depth: 20 });
     this.key = (e) => {
       if (this.leaving || e.repeat) return;
       if (e.code === 'KeyA' || e.code === 'ArrowLeft') this.tabs.step(-1);
@@ -93,7 +93,7 @@ export default class DailyScene extends Phaser.Scene {
     this.rowObjs = [];
     const rows = Meta.dailyBoard(scope, this.today).slice(0, ROWS);
     this.empty.setVisible(!rows.length);
-    const bx = 1050, x0 = bx - 290, y0 = 290, step = 50;
+    const bx = 1050, x0 = bx - 290, y0 = 334, step = 46;
     const hdr = (x, s, ox = 0) => this.rowObjs.push(this.add.text(x, y0 - 30, s, body(14, '#a48a5c')).setOrigin(ox, 0.5));
     if (rows.length) { hdr(x0 + 8, '#'); hdr(x0 + 50, 'DATE'); hdr(x0 + 190, 'RIDER'); hdr(x0 + 300, 'REWARD', 1); hdr(x0 + 400, 'TIME', 1); hdr(x0 + 578, 'RESULT', 1); }
     const best = new Map();

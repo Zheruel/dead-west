@@ -130,7 +130,7 @@ export function chip(scene, x, y, text, { size = 18, fill = 0x2a1a12, stroke = 0
 /** Full-screen backdrop: the real art `key` when loaded, else the (placeholder or real) title art darkened, else a code-drawn dusk gradient. */
 export function backdrop(scene, key, { dim = 0.35, tint = null } = {}) {
   const out = [];
-  if (Assets.has(key)) out.push(scene.add.image(720, 480, key).setDisplaySize(1440, 960));
+  if (Assets.has(key)) out.push(Assets.makeImage(scene, 720, 480, key).setDisplaySize(1440, 960)); // lazy art (codex book): placeholder, swapped when loaded
   else if (Assets.has('title_bg')) out.push(scene.add.image(720, 480, 'title_bg').setDisplaySize(1440, 960).setTint(tint ?? 0x6a5a5a));
   else {
     const g = scene.add.graphics();

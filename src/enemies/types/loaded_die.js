@@ -25,6 +25,8 @@ class LoadedDie extends Enemy {
     this.shown = 0;
     this.gfx = null;
     this.dustT = 0;
+    // V-006: a red die on red/black checker had the weakest silhouette of the roster: a pale additive rim glow behind it
+    this.rim = this.scene.add.image(this.x, this.y, 'glow').setTint(0xfff0d0).setAlpha(0.3).setBlendMode(1).setScale((this.radius * 3.4) / 128).setDepth(DEPTH.shadows + 6);
   }
 
   ai(dt) {
@@ -121,10 +123,12 @@ class LoadedDie extends Enemy {
 
   syncVisual() {
     super.syncVisual();
+    if (this.rim && this.sprite) this.rim.setPosition(this.x, this.footY - this.sprite.displayHeight * 0.4).setVisible(this.sprite.visible);
     if (this.gfx && this.sprite && this.state === 'land') this.gfx.setPosition(this.x, this.footY - this.sprite.displayHeight * 0.4);
   }
 
   destroy() {
+    if (this.rim) { this.rim.destroy(); this.rim = null; }
     if (this.gfx) { this.gfx.destroy(); this.gfx = null; }
     super.destroy();
   }

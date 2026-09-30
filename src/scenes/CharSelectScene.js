@@ -6,7 +6,7 @@ import { Assets } from '../core/Assets.js';
 import { Sfx } from '../core/Audio.js';
 import { Save } from '../core/Save.js';
 import { bus } from '../core/events.js';
-import { UI } from '../data/story/text.js';
+import { UI, CHAR_TAGLINES } from '../data/story/text.js';
 import { Meta } from '../meta/index.js';
 import { nextRank } from '../meta/ranks.js';
 import { CHAR_ORDER, CHARACTERS, charDef } from '../data/characters.js';
@@ -45,18 +45,19 @@ export default class CharSelectScene extends Phaser.Scene {
     // left poster
     this.posterCx = 400;
     this.poster = this.add.container(0, 0);
-    this.poster.add(panel(this, this.posterCx, 430, 720, 540));
+    this.poster.add(panel(this, this.posterCx, 440, 720, 580)); // tall enough that the torn bottom edge stays clear of the star row (V-022)
     this.pic = null;
     this.picHolder = this.add.container(0, 0);
     this.poster.add(this.picHolder);
-    this.nameT = this.add.text(this.posterCx, 548, '', title(38, '#2a1810', { stroke: '#e8d9b0', strokeThickness: 1 })).setOrigin(0.5);
-    this.aliasT = this.add.text(this.posterCx, 590, '', inkText(24, INK, { fontStyle: 'italic' })).setOrigin(0.5);
-    this.poster.add([this.nameT, this.aliasT]);
+    this.nameT = this.add.text(this.posterCx, 540, '', title(38, '#2a1810', { stroke: '#e8d9b0', strokeThickness: 1 })).setOrigin(0.5);
+    this.aliasT = this.add.text(this.posterCx, 576, '', inkText(24, INK, { fontStyle: 'italic' })).setOrigin(0.5);
+    this.taglineT = this.add.text(this.posterCx, 606, '', inkText(19, '#5a1a10', { align: 'center', wordWrap: { width: 600 } })).setOrigin(0.5); // STORY s6.3 CHAR_TAGLINES
+    this.poster.add([this.nameT, this.aliasT, this.taglineT]);
     this.starObjs = [];
     MARK_TIERS.forEach(([key, tier, lab], i) => {
       const x = this.posterCx - 150 + i * 150;
-      const s = starIcon(this, x, 624, tier, 0.5);
-      const t = this.add.text(x, 652, lab, inkText(14, '#5a1a10')).setOrigin(0.5);
+      const s = starIcon(this, x, 636, tier, 0.44);
+      const t = this.add.text(x, 679, lab, inkText(14, '#5a1a10')).setOrigin(0.5);
       this.poster.add([s, t]);
       this.starObjs.push({ s, key });
     });
@@ -64,7 +65,7 @@ export default class CharSelectScene extends Phaser.Scene {
     // right sheet
     const rx = 1050;
     this.poster2 = this.add.container(0, 0);
-    this.poster2.add(panel(this, rx, 430, 640, 540, { dark: true }));
+    this.poster2.add(panel(this, rx, 440, 640, 580, { dark: true }));
     this.roleT = this.add.text(rx, 232, '', title(40, CSS.amber)).setOrigin(0.5);
     this.tagT = this.add.text(rx, 278, '', body(20, CSS.sand, { align: 'center', wordWrap: { width: 560 } })).setOrigin(0.5);
     this.bars = new StatBars(this, { x: rx - 290, y: 328, w: 580, gap: 38 });
@@ -73,20 +74,21 @@ export default class CharSelectScene extends Phaser.Scene {
     this.relicName = this.add.text(rx - 215, 556, '', title(24, CSS.bone)).setOrigin(0, 0.5);
     this.relicDesc = this.add.text(rx - 215, 580, '', body(17, CSS.sand, { wordWrap: { width: 470 } })).setOrigin(0, 0);
     this.kitT = this.add.text(rx - 290, 646, '', body(18, CSS.sand)).setOrigin(0, 0.5);
-    this.lockT = this.add.text(rx, 440, '', title(30, CSS.amber, { align: 'center', wordWrap: { width: 520 } })).setOrigin(0.5).setVisible(false);
+    this.lockT = this.add.text(rx, 470, '', title(30, CSS.amber, { align: 'center', wordWrap: { width: 520 } })).setOrigin(0.5).setVisible(false);
+    this.lockIcon = padlock(this, rx, 360, 1.5).setVisible(false); // a locked rider shows the lock + hint instead of the (meaningless) empty bars (Q1-04)
     this.kitIcons = [];
 
     // roster
     this.tokens = [];
     const n = CHAR_ORDER.length;
     CHAR_ORDER.forEach((id, i) => {
-      const x = W / 2 + (i - (n - 1) / 2) * 170, y = 790;
+      const x = W / 2 + (i - (n - 1) / 2) * 170, y = 784;
       const locked = !Meta.isCharUnlocked(id);
-      const tok = riderToken(this, x, y, id, 108, { locked });
-      const hit = this.add.zone(x, y, 116, 116).setInteractive({ useHandCursor: true });
+      const tok = riderToken(this, x, y, id, 100, { locked });
+      const hit = this.add.zone(x, y, 110, 110).setInteractive({ useHandCursor: true });
       hit.on('pointerdown', () => this.pick(i));
-      const key = this.add.text(x, y + 68, String(i + 1), body(16, '#a48a5c')).setOrigin(0.5);
-      const pips = MARK_TIERS.map(([k], j) => this.add.circle(x - 16 + j * 16, y + 90, 5, Save.get().chars[id] && Save.get().chars[id].marks[k] ? 0xf0a640 : 0x3a2a20).setStrokeStyle(1, 0x120c0a));
+      const key = this.add.text(x, y + 62, String(i + 1), body(16, '#a48a5c')).setOrigin(0.5);
+      const pips = MARK_TIERS.map(([k], j) => this.add.circle(x - 16 + j * 16, y + 82, 5, Save.get().chars[id] && Save.get().chars[id].marks[k] ? 0xf0a640 : 0x3a2a20).setStrokeStyle(1, 0x120c0a));
       this.tokens.push({ tok, x, y, locked, id, key, pips });
     });
 
@@ -100,7 +102,7 @@ export default class CharSelectScene extends Phaser.Scene {
 
     // mode chips
     this.chips = MODES.map(([id, label], i) => {
-      const x = i ? W - 200 : 200, y = 790;
+      const x = i ? W - 200 : 200, y = 784;
       const lock = !Meta.isModeUnlocked(id);
       const c = chip(this, x, y, lock ? `${label}` : label, { size: 24, pad: 24, fill: 0x1c130e, stroke: 0x6b4423, color: CSS.sand, font: FONT_TITLE });
       const zone = this.add.zone(x, y, c.w + 8, c.h + 8).setInteractive({ useHandCursor: true });
@@ -108,10 +110,10 @@ export default class CharSelectScene extends Phaser.Scene {
       const pl = lock ? padlock(this, x - c.w / 2 - 22, y, 0.36) : null;
       return { id, c, lock, pl, x, y };
     });
-    this.modeHint = this.add.text(W / 2, 906, '', body(18, CSS.amber)).setOrigin(0.5);
+    this.modeHint = this.add.text(W / 2, 884, '', body(18, CSS.amber)).setOrigin(0.5);
 
     // ride-out plaque + footer
-    const plq = this.add.container(W / 2, 934);
+    const plq = this.add.container(W / 2, 906);
     const pg = this.add.graphics();
     pg.fillStyle(0x8a1c1c, 1).fillRoundedRect(-130, -22, 260, 44, 10).lineStyle(3, 0xf0a640, 1).strokeRoundedRect(-130, -22, 260, 44, 10);
     const pt = this.add.text(0, 0, 'RIDE OUT', title(26, CSS.bone)).setOrigin(0.5);
@@ -119,7 +121,7 @@ export default class CharSelectScene extends Phaser.Scene {
     plq.setSize(260, 44).setInteractive({ useHandCursor: true });
     plq.on('pointerdown', () => this.go());
     this.plaque = plq;
-    this.add.text(30, H - 24, 'A / D  rider     W / S  mode     ENTER  ride out     ESC  back', body(15, '#8a7350', { strokeThickness: 3 })).setOrigin(0, 0.5);
+    this.add.text(W / 2, H - 14, 'A / D  rider     W / S  mode     ENTER  ride out     ESC  back', body(15, '#8a7350', { strokeThickness: 3 })).setOrigin(0.5);
 
     // input
     const kb = this.input.keyboard;
@@ -167,11 +169,11 @@ export default class CharSelectScene extends Phaser.Scene {
     // portrait
     if (this.pic) { this.pic.destroy(); this.pic = null; }
     const key = PORTRAIT(id);
-    const im = Assets.makeImage(this, this.posterCx, 340, key).setDisplaySize(300, 300).setAngle(-2);
+    const im = Assets.makeImage(this, this.posterCx, 350, key).setDisplaySize(300, 300).setAngle(-2);
     if (locked) silhouette(im, 1);
     else if (!Assets.has(key)) im.setAlpha(0.9);
     const frame = this.add.graphics();
-    frame.fillStyle(0x6b4423, 0.25).fillRect(this.posterCx - 158, 340 - 158, 316, 316).lineStyle(5, 0x2a1810, 1).strokeRect(this.posterCx - 158, 340 - 158, 316, 316);
+    frame.fillStyle(0x6b4423, 0.25).fillRect(this.posterCx - 158, 350 - 158, 316, 316).lineStyle(5, 0x2a1810, 1).strokeRect(this.posterCx - 158, 350 - 158, 316, 316);
     this.picHolder.removeAll(true);
     this.picHolder.add([frame, im]);
     this.pic = null;
@@ -179,13 +181,16 @@ export default class CharSelectScene extends Phaser.Scene {
     if (!first) { this.picHolder.setAlpha(0.2); this.tweens.add({ targets: this.picHolder, alpha: 1, duration: 180 }); }
     this.nameT.setText(locked ? '???' : c.name.toUpperCase());
     this.aliasT.setText(locked ? '' : `"${c.alias}"`);
+    this.taglineT.setText(locked ? '' : CHAR_TAGLINES[id] || '');
     const save = Save.get().chars[id];
     this.starObjs.forEach((s) => { const on = !locked && save && save.marks[s.key]; s.s.setAlpha(on ? 1 : 0.25); if (!on) s.s.setTint(0x555555); else s.s.clearTint(); });
     // right sheet
     this.roleT.setText(locked ? 'LOCKED' : c.role);
     this.tagT.setText(locked ? '' : c.tagline);
     this.lockT.setVisible(locked).setText(locked ? c.hint : '');
+    this.lockIcon.setVisible(locked);
     this.bars.set(locked ? null : id);
+    this.bars.setVisible(!locked);
     this.relicHolder.removeAll(true);
     for (const o of this.kitIcons) o.destroy();
     this.kitIcons = [];

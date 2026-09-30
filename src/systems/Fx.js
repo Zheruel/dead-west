@@ -4,6 +4,7 @@ import { DEPTH, ROOM, FONT_BODY, FEEL } from '../config.js';
 import { Assets } from '../core/Assets.js';
 import { Save } from '../core/Save.js';
 import { bus } from '../core/events.js';
+import { Sfx } from '../core/Audio.js';
 
 export default class Fx {
   constructor(scene) {
@@ -170,6 +171,7 @@ export default class Fx {
 
   /** Code-drawn jagged lightning line (ITEMS 2.3 chain). Pooled Graphics, fades over `ms`. */
   arc(x1, y1, x2, y2, o = {}) {
+    Sfx.play('shock_zap', { vol: 0.6 }); // lightning rod / roulette / scratch arcs (mix.js rate-limits it)
     let a = null;
     for (let i = 0; i < this.arcs.length; i++) if (!this.arcs[i].on && this.arcs[i].g.scene) { a = this.arcs[i]; break; }
     if (!a) {

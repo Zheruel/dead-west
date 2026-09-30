@@ -170,8 +170,8 @@ export default class Cards {
     pic.setScale(230 / Math.max(pic.width, pic.height, 1));
     const crime = p.wantedFor || (miniLines(id) && miniLines(id).wantedFor) || WANTED_FALLBACK;
     const small = h.add.text(0, 96, `WANTED FOR: ${crime}`, { fontFamily: FONT_BODY, fontSize: '20px', color: '#3a1c10', align: 'center', wordWrap: { width: 318 } }).setOrigin(0.5, 0);
-    const foot = h.add.text(0, 190, 'DEAD OR ALIVE', { fontFamily: FONT_BODY, fontSize: '24px', color: '#3a1c10' }).setOrigin(0.5);
-    const rew = h.add.text(0, 220, `BOUNTY $${p.bounty || 0}`, { fontFamily: FONT_TITLE, fontSize: '22px', color: '#6b1a12' }).setOrigin(0.5);
+    const foot = h.add.text(0, 178, 'DEAD OR ALIVE', { fontFamily: FONT_BODY, fontSize: '24px', color: '#3a1c10' }).setOrigin(0.5);
+    const rew = h.add.text(0, 206, `BOUNTY $${p.bounty || 0}`, { fontFamily: FONT_TITLE, fontSize: '22px', color: '#6b1a12' }).setOrigin(0.5);
     c.add([paper, inner, head, pic, small, foot, rew]);
     return c;
   }
@@ -441,7 +441,7 @@ export default class Cards {
     this.pBanner = h.add.text(W / 2, 262, '', { fontFamily: FONT_TITLE, fontSize: '44px', color: CSS.bone, stroke: '#120c0a', strokeThickness: 8, align: 'center' }).setOrigin(0.5).setDepth(84).setAlpha(0);
     this.quip = txt(32, CSS.bone, { fontStyle: 'italic', wordWrap: { width: 720 }, strokeThickness: 6 }).setDepth(85);
     this.quipTimer = null;
-    this.whisper = txt(26, CSS.sand, { fontStyle: 'italic', wordWrap: { width: 1000 } }).setDepth(60).setPosition(W / 2, 900);
+    this.whisper = txt(26, CSS.sand, { fontStyle: 'italic', wordWrap: { width: 720 } }).setDepth(60).setPosition(W / 2, 880); // V-001/V-034: wrapped + HUDScene hides the floor label while it shows
     this.cpToast = txt(26, '#d8c39a').setDepth(61).setPosition(W / 2, 176);
     this.whispered = new Set(); // floors that already whispered this ride
     this.lastRoom = null;

@@ -14,6 +14,7 @@ import Dynamite from '../../entities/Dynamite.js';
 import { Sfx } from '../../core/Audio.js';
 import { DEPTH, ROOM } from '../../config.js';
 import { rad } from '../../core/util.js';
+import { subRng } from '../../core/rng.js';
 
 const NOOSE_R = 30; // noose head radius (hit test = NOOSE_R + 0.6*player.hurtRadius)
 const NOOSE_SPEED = 1250;
@@ -23,10 +24,12 @@ const STICK_R = 112;
 const rv = (a, b) => a + Math.random() * (b - a);
 
 class Grimm extends Boss {
+  /** Seeded stream for attack / strafe geometry (QA4-020: fights reproducible per seed; the pick stream is Boss.brng). Cosmetics stay on Math.random. */
+  get geo() { return this._geo || (this._geo = subRng('bossgeo', this.id, this.floor)); }
   setup() {
     const s = this.scene;
     this.dt = 1 / 60;
-    this.strafe = Math.random() < 0.5 ? -1 : 1;
+    this.strafe = this.geo.chance(0.5) ? -1 : 1;
     this.strafeT = 1.5;
     this.enraged = false;
     this.pulling = false;
@@ -105,7 +108,7 @@ class Grimm extends Boss {
   /** Keep ~`want` px from the player, circling, drifting off walls. `k` scales speed. */
   walk(dt, want, k) {
     this.strafeT -= dt;
-    if (this.strafeT <= 0) { this.strafe = -this.strafe; this.strafeT = rv(1.4, 3); }
+    if (this.strafeT <= 0) { this.strafe = -this.strafe; this.strafeT = this.geo.float(1.4, 3); }
     const a = this.angleToPlayer(), d = this.distToPlayer();
     let fx = 0, fy = 0;
     if (d > want + 50) { fx = Math.cos(a); fy = Math.sin(a); } else if (d < want - 90) { fx = -Math.cos(a); fy = -Math.sin(a); }
@@ -271,7 +274,7 @@ class Grimm extends Boss {
     const clampX = (x) => Math.max(ROOM.x + 80, Math.min(ROOM.right - 80, x));
     const clampY = (y) => Math.max(ROOM.y + 80, Math.min(ROOM.bottom - 80, y));
     const spots = [{ x: clampX(p.x + p.vx * 0.3), y: clampY(p.y + p.vy * 0.3) }];
-    const a0 = Math.random() * Math.PI * 2;
+    const a0 = this.geo.float(0, Math.PI * 2);
     for (let i = 0; i < n - 1 && spots.length < n; i++) {
       const a = a0 + (i / (n - 1)) * Math.PI * 2;
       const c = { x: clampX(spots[0].x + Math.cos(a) * 280), y: clampY(spots[0].y + Math.sin(a) * 250) };
@@ -305,7 +308,7 @@ class Grimm extends Boss {
     yield 0.55;
     const rings = this.enraged ? 6 : 5;
     const gap = this.enraged ? 0.55 : 0.6;
-    let off = Math.random() * 45;
+    let off = this.geo.float(0, 45);
     for (let i = 0; i < rings; i++) {
       this.atkFrame(i % 2 ? 0 : 1);
       this.faceP();

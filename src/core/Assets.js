@@ -5,6 +5,8 @@
 import Phaser from 'phaser';
 import { FLOORS } from '../config.js';
 import { isLazyAudio } from './mix.js';
+import { lazyGroup, groupsAfter, isGroupId } from './lazyAssets.js';
+import { bus } from './events.js';
 
 const strip = (fw, fh, n, a = 'bottom') => ({ fw, fh, cols: n, n, a });
 const grid = (fw, fh, cols, rows, names, a = 'center') => ({ fw, fh, cols, n: cols * rows, a, names });
@@ -346,6 +348,160 @@ export const Assets = {
   realAudio: new Set(),
   loaded: false,
 
+  // -------------------------------------------------------------------------------------------------- lazy loading (QA4-001)
+  // Boot only loads what the Menu + floor 1 need. Everything in `lazy` (see lazyAssets.js) loads later, one floor ahead (prefetch) or on first use
+  // (Assets.tex): the consumer gets a same-size placeholder immediately and `_install` swaps the real texture in place (game objects, animation
+  // frames), so no caller has to wait. Callers that CAN wait (cutscenes, Continue) use `ensure`.
+  lazy: new Map(), // key -> {kind:'sprite'|'image', group, d}
+  game: null,
+  _lz: new Map(), // key -> Promise<boolean> (in flight)
+  _fg: 0, // foreground loads in flight (prefetch yields)
+  _pf: [], // prefetch queue (keys)
+  _pfActive: 0,
+  _hooked: false,
+  LAZY_STATS: { bytes: 0, loaded: [], failed: [] },
+
+  _indexLazy() {
+    this.lazy = new Map();
+    this._lz = new Map();
+    this._pf = [];
+    for (const [sec, kind] of [['sprites', 'sprite'], ['images', 'image']]) {
+      for (const [key, d] of Object.entries(this.manifest[sec])) {
+        const group = d.file ? lazyGroup(key, kind) : null;
+        if (!group) continue;
+        if (kind === 'sprite' && !((d.frameWidth || (SPEC[key] || {}).fw) && (d.frameHeight || (SPEC[key] || {}).fh))) continue;
+        this.lazy.set(key, { kind, group, d });
+      }
+    }
+  },
+  isLazy(key) { return this.lazy.has(key); },
+  groupKeys(group) { const out = []; for (const [k, v] of this.lazy) if (v.group === group) out.push(k); return out; },
+  /** Placeholder spec for a not-yet-loaded lazy sprite that has no SPEC row (frame size + count from the manifest). */
+  _lazySpec(key) {
+    const sp = this.spec(key);
+    if (!sp || !sp.fw || !sp.fh) return null;
+    const n = sp.n || 1;
+    const meta = this.manifest.sprites[key] || {};
+    const cols = sp.cols && sp.cols > 1 ? sp.cols : (meta.mode === 'grid' && n >= 8 ? 4 : n);
+    return { fw: sp.fw, fh: sp.fh, cols: Math.min(cols, n), n, a: sp.anchor, names: sp.names && sp.names.length ? sp.names : null };
+  },
+
+  /** Load one lazy key now (idempotent). Resolves true when the real art is installed. */
+  _loadLazy(key, background = false) {
+    if (this.real.has(key)) return Promise.resolve(true);
+    const inflight = this._lz.get(key);
+    if (inflight) return inflight;
+    const lz = this.lazy.get(key);
+    if (!lz || STAT.failed.has(key) || !this.game || typeof Image === 'undefined') return Promise.resolve(false);
+    if (!background) this._fg++;
+    const p = new Promise((res) => {
+      const img = new Image();
+      img.onload = () => {
+        try { this._install(key, img); res(true); } catch (e) { STAT.failed.add(key); this.LAZY_STATS.failed.push(key); console.warn('[Assets] lazy install failed', key, e && e.message); res(false); }
+      };
+      img.onerror = () => { STAT.failed.add(key); this.LAZY_STATS.failed.push(key); console.warn('[Assets] failed to load', key, lz.d.file); res(false); };
+      img.src = this._url(lz.d.file, lz.kind === 'sprite' ? 'sprites' : 'images');
+    }).finally(() => { this._lz.delete(key); if (!background) { this._fg--; this._pump(); } });
+    this._lz.set(key, p);
+    return p;
+  },
+
+  /** Foreground: resolves true when every key (or group) is real. Never rejects; `timeoutMs` resolves false early (callers fall back to placeholders). */
+  ensure(what, { timeoutMs = 0 } = {}) {
+    const list = (Array.isArray(what) ? what : [what]).flatMap((k) => (isGroupId(k) && !this.lazy.has(k) ? this.groupKeys(k) : [k]));
+    const need = list.filter((k) => this.lazy.has(k) && !this.real.has(k) && !STAT.failed.has(k));
+    if (!need.length) return Promise.resolve(true);
+    const all = Promise.all(need.map((k) => this._loadLazy(k))).then((r) => r.every(Boolean));
+    if (!timeoutMs) return all;
+    return Promise.race([all, new Promise((r) => setTimeout(() => r(false), timeoutMs))]);
+  },
+  /** Keys of `what` that are lazy and not loaded yet. */
+  pending(what) {
+    const list = Array.isArray(what) ? what : [what];
+    return list.filter((k) => this.lazy.has(k) && !this.real.has(k) && !STAT.failed.has(k));
+  },
+
+  /** Background: keys / group ids load two at a time while no foreground load is running. */
+  prefetch(what) {
+    const list = (Array.isArray(what) ? what : [what]).flatMap((k) => (isGroupId(k) && !this.lazy.has(k) ? this.groupKeys(k) : [k]));
+    for (const k of list) if (this.lazy.has(k) && !this.real.has(k) && !STAT.failed.has(k) && !this._pf.includes(k)) this._pf.push(k);
+    this._pump();
+  },
+  _pump() {
+    while (this._pfActive < 2 && this._pf.length && this._fg === 0) {
+      const k = this._pf.shift();
+      if (this.real.has(k)) continue;
+      this._pfActive++;
+      this._loadLazy(k, true).finally(() => { this._pfActive--; this._pump(); });
+    }
+  },
+
+  _installLazyHooks() {
+    if (this._hooked) return;
+    this._hooked = true;
+    if (!this.lazy.size) return;
+    const ahead = (n) => { for (const g of groupsAfter(n)) this.prefetch(g); };
+    // the running floor's own group is (re)requested first so a Continue / debug jump into F4-F6 gets its art within a moment
+    bus.on('floor:changed', (p) => { const n = (p && p.floor) || 1; this.ensure(`f${n}`); ahead(n); });
+    bus.on('run:started', () => { this.prefetch('f1'); ahead(1); });
+  },
+
+  /** Swap a freshly loaded image into the texture manager, replacing a placeholder and re-pointing everything that used it. */
+  _install(key, img) {
+    const lz = this.lazy.get(key);
+    const tm = this.game.textures;
+    let hits = null;
+    if (tm.exists(key)) {
+      if (!this.placeholders.has(key) && this.real.has(key)) return;
+      hits = this._collectUsers(key);
+      tm.remove(key);
+    }
+    if (lz.kind === 'image') tm.addImage(key, img);
+    else tm.addSpriteSheet(key, img, { frameWidth: lz.d.frameWidth || (SPEC[key] || {}).fw, frameHeight: lz.d.frameHeight || (SPEC[key] || {}).fh });
+    this.real.add(key);
+    this.placeholders.delete(key);
+    STAT.failed.delete(key);
+    const bytes = img.naturalWidth * img.naturalHeight * 4;
+    this.LAZY_STATS.bytes += bytes; this.LAZY_STATS.loaded.push(key);
+    if (hits) this._repoint(key, hits);
+    bus.emit('asset:loaded', { key });
+  },
+
+  _collectUsers(key) {
+    const out = [];
+    const walk = (list) => {
+      for (const o of list) {
+        if (!o) continue;
+        if (o.texture && o.texture.key === key && typeof o.setTexture === 'function') {
+          out.push({ o, frame: o.frame ? o.frame.name : 0, dw: o.displayWidth, dh: o.displayHeight, fw: o.frame ? o.frame.width : 0 });
+        }
+        if (Array.isArray(o.list)) walk(o.list);
+      }
+    };
+    for (const sc of this.game.scene.scenes) { try { if (sc.children && sc.children.list) walk(sc.children.list); } catch (e) { /* scene not built */ } }
+    return out;
+  },
+  _repoint(key, hits) {
+    const tm = this.game.textures;
+    const tex = tm.get(key);
+    for (const h of hits) {
+      try {
+        const o = h.o;
+        if (!o.scene) continue; // destroyed meanwhile
+        const fr = tex.has(h.frame) ? h.frame : (tex.has(0) ? 0 : '__BASE');
+        o.setTexture(key, fr);
+        if (o.frame && o.frame.width !== h.fw && h.fw) o.setDisplaySize(h.dw, h.dh); // placeholder had another size: keep the on-screen size
+      } catch (e) { /* object mid-destroy */ }
+    }
+    // animation frames hold Frame objects of the destroyed placeholder: re-resolve them
+    const entries = this.game.anims && this.game.anims.anims && this.game.anims.anims.entries;
+    if (entries) {
+      for (const a of Object.values(entries)) {
+        for (const af of a.frames || []) if (af.textureKey === key) { const f = tm.getFrame(key, af.textureFrame); if (f) af.frame = f; }
+      }
+    }
+  },
+
   async fetchManifest() {
     try {
       const res = await fetch(`assets/manifest.json?t=${Date.now()}`, { cache: 'no-store' });
@@ -364,6 +520,7 @@ export const Assets = {
       console.warn('[Assets] manifest unavailable, using placeholders only', e.message || e);
       this.manifest = { sprites: {}, images: {}, audio: {} };
     }
+    this._indexLazy();
     return this.manifest;
   },
 
@@ -382,11 +539,11 @@ export const Assets = {
     for (const [key, d] of Object.entries(m.sprites)) {
       const spec = SPEC[key] || {};
       const fw = d.frameWidth || spec.fw, fh = d.frameHeight || spec.fh;
-      if (!d.file || !fw || !fh) continue;
+      if (!d.file || !fw || !fh || this.lazy.has(key)) continue; // lazy: see _loadLazy
       L.spritesheet(key, this._url(d.file, 'sprites'), { frameWidth: fw, frameHeight: fh });
     }
     for (const [key, d] of Object.entries(m.images)) {
-      if (!d.file) continue;
+      if (!d.file || this.lazy.has(key)) continue;
       L.image(key, this._url(d.file, 'images'));
     }
     for (const [key, d] of Object.entries(m.audio)) {
@@ -407,11 +564,16 @@ export const Assets = {
       if (!STAT.failed.has(key) && scene.cache.audio.exists(key)) this.realAudio.add(key);
     }
     this.loaded = true;
+    this.game = scene.game;
+    this._installLazyHooks();
     this.makeGenerated(scene);
-    console.info(`[Assets] real: ${this.real.size} textures, ${this.realAudio.size} sounds`);
+    console.info(`[Assets] real: ${this.real.size} textures, ${this.realAudio.size} sounds, ${this.lazy.size} lazy`);
   },
 
-  has(key) { return this.real.has(key); },
+  /** True when the art exists: loaded, or declared in the manifest as lazy (Assets.tex then gives a placeholder and swaps the real art in when it arrives). */
+  has(key) { return this.real.has(key) || (this.lazy.has(key) && !STAT.failed.has(key)); },
+  /** True only when the real texture is loaded right now. */
+  hasReal(key) { return this.real.has(key); },
   hasAudio(key) { return this.realAudio.has(key); },
   audioMeta(key) { return this.manifest.audio[key] || {}; },
 
@@ -451,7 +613,9 @@ export const Assets = {
   /** Makes sure a texture exists for `key` (real or placeholder) and returns the key. */
   tex(scene, key) {
     if (scene.textures.exists(key)) return key;
-    const s = SPEC[key];
+    const lz = this.lazy.get(key);
+    const s = SPEC[key] || (lz && lz.kind === 'sprite' ? this._lazySpec(key) : null);
+    if (lz) this._loadLazy(key); // foreground request: the placeholder below is swapped for the real art when it lands
     if (s) {
       const rows = Math.ceil(s.n / s.cols);
       const tex = scene.textures.createCanvas(key, s.fw * s.cols, s.fh * rows);
@@ -471,7 +635,8 @@ export const Assets = {
       return key;
     }
     const is = IMAGE_SPEC[key];
-    drawImagePlaceholder(scene, key, is ? is[0] : 128, is ? is[1] : 128);
+    const mi = this.manifest.images[key];
+    drawImagePlaceholder(scene, key, is ? is[0] : (mi && mi.width) || 128, is ? is[1] : (mi && mi.height) || 128);
     this.placeholders.add(key);
     return key;
   },

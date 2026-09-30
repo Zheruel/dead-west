@@ -5,9 +5,12 @@
 //   persist()/persistSoon() | export()/import(str) | resetProgress() | saveCheckpoint(run, player)/loadCheckpoint()/clearCheckpoint()
 import { migrateV1 } from '../meta/migrate.js';
 import { getItem } from '../items/registry.js';
+import RunState from './RunState.js';
+import { MAX_FLOOR } from '../config.js';
 
 export const KEY = 'deadwest.save.v2';
 export const KEY_V1 = 'deadwest.save.v1';
+export const KEY_CORRUPT = 'deadwest.save.v2.corrupt'; // raw text of an unreadable v2 save (QA4-021), kept until the next unreadable one
 
 const DEFAULT_SETTINGS = {
   mute: false, volume: 0.8, music: 0.5, sfx: 1, shake: true, shakeAmt: 1, flash: true, bulletOutline: false, dmgNumbers: false,
@@ -104,8 +107,63 @@ export function repair(data) {
   }
   if (Array.isArray(d.history)) s.history = d.history.filter(isObj).slice(-HISTORY_MAX).map((e) => ({ ...e }));
   if (isObj(d.flags)) for (const id of Object.keys(d.flags)) { const v = d.flags[id]; if (typeof v === 'boolean' || typeof v === 'number' || typeof v === 'string') s.flags[id] = v; }
-  if (isObj(d.checkpoint) && d.checkpoint.v === 1 && typeof d.checkpoint.floor === 'number') s.checkpoint = JSON.parse(JSON.stringify(d.checkpoint));
+  s.checkpoint = repairCheckpoint(d.checkpoint);
   return s;
+}
+
+const fin = (v) => typeof v === 'number' && Number.isFinite(v);
+const clampInt = (v, lo, hi, d) => (fin(v) ? Math.max(lo, Math.min(hi, Math.round(v))) : d);
+const strList = (a, max = 200) => (Array.isArray(a) ? a.filter((x) => typeof x === 'string' && x.length <= 64).slice(0, max) : []);
+/** RunState.toJSON shape: every key of a fresh RunState keeps its type (numbers finite, arrays arrays, objects plain), unknown keys are dropped. */
+function repairRun(o) {
+  const base = new RunState(0).toJSON();
+  const out = JSON.parse(JSON.stringify(base));
+  if (!isObj(o)) return out;
+  for (const k of Object.keys(base)) {
+    const b = base[k], v = o[k];
+    if (v === undefined) continue;
+    if (typeof b === 'number') { if (fin(v)) out[k] = v; }
+    else if (typeof b === 'boolean') { if (typeof v === 'boolean') out[k] = v; }
+    else if (Array.isArray(b)) { if (Array.isArray(v)) { try { out[k] = JSON.parse(JSON.stringify(v)).slice(0, 300); } catch (e) { /* keep default */ } } }
+    else if (b && typeof b === 'object') { if (isObj(v)) { try { out[k] = JSON.parse(JSON.stringify(v)); } catch (e) { /* keep default */ } } }
+    else if (typeof v === 'string' || fin(v) || isObj(v) || v === null) { try { out[k] = JSON.parse(JSON.stringify(v)); } catch (e) { /* keep default */ } } // null-default fields (killedBy, daily, ending ...)
+  }
+  return out;
+}
+/**
+ * Validate an untrusted checkpoint (hand-edited / imported save, QA4-022): floor 1..MAX_FLOOR, seed number, every numeric field finite and clamped,
+ * item / curse / blessing lists arrays of strings, char / mode known ids. Returns a clean copy, or null when it cannot be a checkpoint.
+ */
+export function repairCheckpoint(cp) {
+  if (!isObj(cp) || cp.v !== 1 || !fin(cp.floor)) return null;
+  const maxHp = clampInt(cp.maxHp, 1, 40, undefined);
+  const out = {
+    v: 1,
+    seed: fin(cp.seed) ? Math.trunc(cp.seed) : (typeof cp.seed === 'string' && cp.seed.trim() !== '' && fin(+cp.seed) ? Math.trunc(+cp.seed) : 0),
+    floor: clampInt(cp.floor, 1, MAX_FLOOR, 1),
+    char: CHAR_IDS.includes(cp.char) ? cp.char : 'gunslinger',
+    mode: cp.mode === 'hell' ? 'hell' : 'normal',
+    items: strList(cp.items),
+    active: isObj(cp.active) && typeof cp.active.id === 'string' ? { id: cp.active.id, charge: clampInt(cp.active.charge, 0, 99, 0) } : null,
+    hp: clampInt(cp.hp, 1, maxHp || 40, maxHp || 6),
+    tin: clampInt(cp.tin, 0, 40, 0),
+    coins: clampInt(cp.coins, 0, 99999, 0),
+    keys: clampInt(cp.keys, 0, 99, 0),
+    dyn: clampInt(cp.dyn, 0, 99, 0),
+    curses: strList(cp.curses, 40),
+    blessings: strList(cp.blessings, 40),
+    heartDebt: clampInt(cp.heartDebt, 0, 40, 0),
+    extraHearts: clampInt(cp.extraHearts, 0, 40, 0),
+    revive: cp.revive ? 1 : 0,
+    itemState: {},
+    time: fin(cp.time) ? Math.max(0, cp.time) : 0,
+    kills: clampInt(cp.kills, 0, 1e7, 0),
+    run: repairRun(cp.run),
+  };
+  if (maxHp !== undefined) out.maxHp = maxHp;
+  if (isObj(cp.itemState)) { try { out.itemState = JSON.parse(JSON.stringify(cp.itemState)); } catch (e) { /* keep {} */ } }
+  out.run.floor = out.floor; out.run.char = out.char; out.run.mode = out.mode; out.run.seed = out.seed;
+  return out;
 }
 
 /** Non-enumerable v1-shaped accessors (bestFloor, runs, ...) so code written against the v1 save keeps working (not serialised). */
@@ -132,12 +190,21 @@ function store() {
 function read(key) {
   try { const st = store(); const raw = st && st.getItem(key); return raw ? JSON.parse(raw) : null; } catch (e) { return null; }
 }
+/** Unreadable / non-v2 text in the v2 key: keep a copy under KEY_CORRUPT before the next persist overwrites it (QA4-021, Q1-09). Never throws. */
+function backupUnreadable(key) {
+  try {
+    const st = store(); const raw = st && st.getItem(key);
+    if (!raw || raw === 'null') return;
+    st.setItem(KEY_CORRUPT, String(raw).slice(0, 4000000));
+  } catch (e) { /* storage full / blocked: nothing to do */ }
+}
 function load() {
   if (cache) return cache;
   let data = read(KEY);
   let s;
   if (data && data.v === 2) s = repair(data);
   else {
+    backupUnreadable(KEY); // truncated JSON, wrong shape or a future version: keep the raw text
     const v1 = read(KEY_V1);
     s = v1 ? repair(migrateV1(v1, freshSave())) : freshSave();
     if (v1) { try { const st = store(); if (st) st.setItem(KEY, JSON.stringify(s)); } catch (e) { /* ignore */ } }

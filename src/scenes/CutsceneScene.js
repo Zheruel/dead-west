@@ -40,6 +40,7 @@ export default class CutsceneScene extends Phaser.Scene {
     this.ctx = { char: c.char || 'gunslinger', clean: !!c.clean, hell: !!c.hell };
     this.overlay = !!d.overlay;
     this.finished = false;
+    this.started = false;
     this.handed = false;
     this.doneCalled = false;
     this.ledger = false;
@@ -67,6 +68,15 @@ export default class CutsceneScene extends Phaser.Scene {
     if (!this.cs || (this.overlay && this.blockedMode())) { this.abort(); return; }
     bus.emit('story:cutscene', { id: this.id });
 
+    // Cutscene art is lazy-loaded (QA4-001): if a panel's image is still in flight, hold on black for it (<= 9 s, then placeholder panels).
+    const need = Assets.pending((this.cs.panels || []).map((p) => p && p.image).filter(Boolean));
+    if (need.length) Assets.ensure(need, { timeoutMs: 9000 }).then(() => { if (this.sys && this.sys.isActive() && !this.started) this.begin(); });
+    else this.begin();
+  }
+
+  begin() {
+    if (this.started) return;
+    this.started = true;
     this.build();
     this.bindInput();
     this.time.delayedCall((estimateSeconds(this.cs, this.ctx) + 10) * 1000, () => this.finish(true)); // fail-safe: the handoff always happens
@@ -524,7 +534,7 @@ export default class CutsceneScene extends Phaser.Scene {
     let total = 0;
     const lines = cs.lines;
     for (let i = 0; i < lines.length; i++) {
-      const t = this.add.text(640, 250 + i * 150, '', st).setDepth(D.img + 3);
+      const t = this.add.text(640, Math.max(200, 470 - ((lines.length - 1) * 150 + 80) / 2) + i * 150, '', st).setDepth(D.img + 3);
       t.setWordWrapWidth(700);
       const wrapped = t.getWrappedText(lines[i]).join('\n');
       t.setWordWrapWidth(null);
@@ -533,7 +543,7 @@ export default class CutsceneScene extends Phaser.Scene {
     }
     this.lt_total = total;
     this.lt_done = false;
-    this.lt_hint = this.add.text(W / 2, H - 60, 'CLICK to continue', { fontFamily: FONT_BODY, fontSize: '22px', color: '#d9b071', stroke: INK, strokeThickness: 4 }).setOrigin(0.5).setDepth(D.hint).setAlpha(0);
+    this.lt_hint = this.add.text(W / 2, H - 60, 'CLICK to continue', { fontFamily: FONT_BODY, fontSize: '28px', color: '#d9b071', stroke: INK, strokeThickness: 4 }).setOrigin(0.5).setDepth(D.hint).setAlpha(0);
     Sfx.play('page_flip', { vol: 0.6, gap: 0 });
     this.tweens.add({ targets: this.fader, alpha: 0, duration: 350 });
   }
@@ -555,7 +565,7 @@ export default class CutsceneScene extends Phaser.Scene {
     }
     this.lt_total = total;
     this.lt_done = false;
-    this.lt_hint = this.add.text(W / 2, H - 60, 'CLICK to continue', { fontFamily: FONT_BODY, fontSize: '22px', color: '#d9b071', stroke: INK, strokeThickness: 4 }).setOrigin(0.5).setDepth(D.hint).setAlpha(0);
+    this.lt_hint = this.add.text(W / 2, H - 60, 'CLICK to continue', { fontFamily: FONT_BODY, fontSize: '28px', color: '#d9b071', stroke: INK, strokeThickness: 4 }).setOrigin(0.5).setDepth(D.hint).setAlpha(0);
     this.tweens.add({ targets: this.fader, alpha: 0, duration: 350 });
   }
 
@@ -588,6 +598,7 @@ export default class CutsceneScene extends Phaser.Scene {
   finish(skipped, blackAlready = false) {
     if (this.finished) return;
     this.finished = true;
+    if (!this.started) { this.started = true; this.handoff(skipped); return; } // skipped while the lazy art was still loading
     if (this.cameras && this.cameras.main) this.cameras.main.resetFX();
     this.drawRing(0);
     if (this.stampT) this.stampT.destroy();

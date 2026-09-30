@@ -1,0 +1,103 @@
+// QA-5 boss / mini attack tables + phase thresholds vs CHAPTER2 s3-5 and EVENTS s4.3 (static: regex over src/bosses/types/*.js + registry meta).
+import fs from 'node:fs';
+import { audit } from './spec5-lib.mjs';
+import { BOSS_META } from '../../src/bosses/registry.js';
+const A = audit('BOSSES');
+const src = (id) => fs.readFileSync(`src/bosses/types/${id}.js`, 'utf8');
+const T = {};
+const R = (ref, sev = 'P2') => ({ sev, area: 'engine+items/content', ref });
+/** row(boss, description, regex|[regex...]) : expected per doc = description, actual = regex found in source */
+const row = (id, ref, desc, re, sev) => { T[id] ??= src(id); const list = [].concat(re); const ok = list.every((r) => r.test(T[id])); A.chk(`${id}: ${desc}`, 'per doc', ok ? 'matches source' : 'NOT FOUND in source (' + list.filter((r) => !r.test(T[id])).map(String).join(' ') + ')', ok, R(ref, sev)); };
+// ---- Toro (CHAPTER2 s3)
+const toro = 'CH2 s3 Toro';
+row('toro', toro, 'phase thresholds 0.66 / 0.33', [/at: 0\.66/, /at: 0\.33/]);
+row('toro', toro, 'weights P0 charge4 breath3 stomp2', /charge: 4, fire_breath: 3, magma_stomp: 2 \}/);
+row('toro', toro, 'weights P1 + herd 2', /herd_stampede: 2 \}/);
+row('toro', toro, 'weights P2 breath2 stomp2 herd3 leap3', /charge: 4, fire_breath: 2, magma_stomp: 2, herd_stampede: 3, hellfire_leap: 3/);
+row('toro', toro, 'attack delays [1.4,1.1,0.85]', /DELAYS = \[1\.4, 1\.1, 0\.85\]/);
+row('toro', toro, 'charge speed 720, paw windup 0.8', [/CHARGE_SPEED = 720/, /chargeWindup\(0\.8/]);
+row('toro', toro, 'charge contact 2 dmg', /contactDamage = 2/);
+row('toro', toro, 'wall crash stun 2.0 x1.4; pillar stun 1.0 x1.25', [/stunned = 2\.0; this\.stunMult = 1\.4/, /stunned = 1\.0; this\.stunMult = 1\.25/]);
+row('toro', toro, 'wall crash: 4 fire patches r50 2 s', /r: 50, life: 2, count: 4/);
+row('toro', toro, 'pillar shatter: 8 rock bullets speed 260', [/i < 8/, /speed: 260, damage: 1, kind: 'rock'/]);
+row('toro', toro, 'fire trail patch r48, step 110, 2 s (P2 4 s)', [/TRAIL_STEP = 110/, /addFire\(this\.x, this\.y \+ 24, 48, dur/, /phase >= 2 \? 4 : 2/]);
+row('toro', toro, 'chained charges 2 (P1) / 3 (P2)', /phase >= 2 \? 3 : this\.phase >= 1 \? 2 : 1/);
+row('toro', toro, 'breath wedge 70 deg (+-35) x 380 px', [/BREATH_HALF = rad\(35\)/, /showWedge\([^)]*380/]);
+row('toro', toro, 'breath: ~11-12 embers, 0.09 s apart, speed 400, life 0.9, jitter +-3', [/N = 12/, /speed: 400, damage: 1, kind: 'ember', life: 0\.9/, /yield 0\.09/, /\* 6\)/]);
+row('toro', toro, 'breath P1 two sweeps 0.4 s pause', [/sweeps = this\.phase >= 1 \? 2 : 1/, /yield 0\.4/]);
+row('toro', toro, 'stomp disc r260, eruptions r70 tell 0.9 (3, P2 5) fire patch 2 s', [/r: 260, tell: 0\.9/, /this\.phase >= 2 \? 5 : 3/, /r: 70, tell: 0\.9[^\n]*fire: \{ r: 70, dur: 2 \}/]);
+row('toro', toro, 'herd 3 lanes (P2 4), tell 1.2 s', [/this\.phase >= 2 \? 4 : 3/, /yield 1\.2/]);
+row('toro', toro, 'leap: 0.6 s up, shadow 300 px/s x 1.0 s, lock disc r190 tell 0.9 dmg 2', [/t < 0\.6/, /300 \* this\.dtLast/, /r: 190, tell: 0\.9[^\n]*dmg: 2/]);
+row('toro', toro, 'leap landing: 14 embers speed 280, 5 fire patches r60 2.5 s, stun 1.0 x1.3', [/i < 14/, /speed: 280/, /r: 60, life: 2\.5, count: 5/, /stunned = 1\.0; this\.stunMult = 1\.3/]);
+row('toro', toro, 'phase roar clears bullets, 2 hellhounds once, banners', [/bullets\.enemy\.clear\(\)/, /made < 2/, /THE FURNACE ROARS/, /HELLFIRE!/]);
+row('toro', toro, 'registry hp 800 r 92', /hp: 800, r: 92/);
+// documented deviations (P3): breath rear 0.85 vs 0.7; warn cone 0.5 vs 0.35; chain pause 0.6/0.55 vs 0.5/0.45; charge lane visible 0.4 (doc 0.55); non-last charge does not stun
+A.chk('toro: fire-breath rear 0.7 s', 0.7, 0.85, false, R(toro, 'P3'));
+A.chk('toro: breath warn wedge visible last 0.35 s', 0.35, 0.5, false, R(toro, 'P3'));
+A.chk('toro: chained charge re-lock pause 0.5 s (P2 0.45)', '0.5 / 0.45', '0.6 / 0.55', false, R(toro, 'P3'));
+A.chk('toro: charge lane 110 px wide, visible from 0.55 s of 0.8 s windup', '110 px / 0.25 s', 'body-width (~2*0.85*92+30) / 0.4 s', false, R(toro, 'P3'));
+A.chk('toro: a wall crash on a non-final chained charge stuns (then skips the 2nd charge)', 'stun', 'only the last charge stuns (chain always completes)', false, R(toro, 'P3'));
+// ---- Engine (CHAPTER2 s4)
+const eng = 'CH2 s4 Engine';
+row('engine', eng, 'phase thresholds 0.66 / 0.33', [/at: 0\.66/, /at: 0\.33/]);
+row('engine', eng, 'weights coal3 steam3 lane4 phantom3 derail4', [/coal_barrage', this\.atkCoal, \{ weight: 3/, /steam_rings', this\.atkSteam, \{ weight: 3/, /lane_charge', this\.atkLane, \{ weight: 4/, /phantom_express', this\.atkPhantom, \{ weight: 3, minPhase: 1/, /derail_run', this\.atkDerail, \{ weight: 4, minPhase: 2/]);
+row('engine', eng, 'registry hp 980 r 100', /hp: 980, r: 100/);
+row('engine', eng, 'coal: windup 0.7, 3 volleys 0.6 apart, 3/4 lumps, tell 0.9, r64, fire r48 2 s, 3 shards speed 200', [/lumps = this\.phase >= 1 \? 4 : 3/, /this\.pulse\(0\.7\)/, /v < 3/, /yield 0\.6/, /r: 64/, /fire: \{ r: 48, dur: 2\.0 \}/, /speed: 200/, /k < 3/]);
+row('engine', eng, 'coal volleys 2-3 lead 120 px, scatter +-140', [/\* 120/, /rng\.float\(80, 140\)/]);
+row('engine', eng, 'steam rings 3 (P2 4), 0.65 (P2 0.55) apart, 16 bullets, 3-gap, speed 250, life 2.6, gap >= 60 deg', [/rings = this\.phase >= 2 \? 4 : 3, gapT = this\.phase >= 2 \? 0\.55 : 0\.65/, /i < 16/, /speed: 250/, /life: 2\.6/, /60 \* Math\.PI\) \/ 180/]);
+row('engine', eng, 'steam windup 0.9', /this\.pulse\(0\.9\)/);
+row('engine', eng, 'lane_charge lanes [1,2,3], tell 1.1 then 0.9, run 900 px/s, gone 1.0', [/\[1, 2, 3\]/, /1\.1, 4, false/, /0\.9, 4, false/, /startRun\(row, dir, 900\)/, /yield 1\.0; \/\/ gone/]);
+row('engine', eng, 'phantom: 2 ghost lanes, dmg 1, 560 px/s, tell 1.2, non-adjacent rows', [/tell: 1\.2, dmg: 1, speed: 560/, /rowB === rowA/]);
+row('engine', eng, 'derail: tell 1.4, bells x6, 1100 px/s, stun 2.2 x1.5, 6 coal markers r64 tell 0.9', [/1\.4, 6, true/, /startRun\(row, dir, 1100/, /stunned = 2\.2/, /damageMultiplier\(\) \{ return this\.stunned > 0 \? 1\.5 : 1/, /pts\.length < 6/]);
+row('engine', eng, 'phase roar clears bullets; 2 handcar bandits once', [/bullets\.enemy\.clear\(\)/, /banditsDone/]);
+A.chk('engine: ghost handcar bandits full HP + loot', 'normal', '0.6x hp, no loot (header note: tuning)', false, R(eng, 'P3'));
+A.chk('engine: coal shards life (unspecified, ring speed 200)', 'default', 'life 1.5 s', true, R(eng, 'P3'));
+// ---- Scratch (CHAPTER2 s5)
+const scr = 'CH2 s5 Scratch';
+row('scratch', scr, 'phase thresholds 0.7 / 0.4 / 0.15', [/at: 0\.7/, /at: 0\.4/, /at: 0\.15/]);
+row('scratch', scr, 'weights table per phase', [/deal_fan: \[3, 3, 2, 3\]/, /card_ring: \[2, 2, 2, 0\]/, /chip_toss: \[2, 2, 0, 0\]/, /roulette_call: \[2, 2, 0, 0\]/, /chandelier_rain: \[0, 2, 2, 1\]/, /royal_flush: \[0, 3, 3, 0\]/, /hold_em: \[0, 2, 0, 0\]/, /hellfire_spiral: \[0, 0, 3, 2\]/, /brimstone_grid: \[0, 0, 2, 0\]/]);
+row('scratch', scr, 'vanish spots (720,380)(400,420)(1040,420)', /\{ x: 720, y: 380 \}, \{ x: 400, y: 420 \}, \{ x: 1040, y: 420 \}/);
+row('scratch', scr, 'forms r 62 / 76', [/r: 62/, /r: 76/]);
+row('scratch', scr, 'deal_fan: 5 cards, 60 deg, speed 340, 2 volleys (P2 3), aim line 0.25', [/5, 60, a\)/, /speed: 340/, /this\.phase === 2 \? 3 : 2/, /aimLines\(a, 0\.25\)/]);
+row('scratch', scr, 'card_ring: windup 1.0, warn r280, 3 rings (P2 4) x14, speed 250/290, 0.55 apart, +12 deg', [/280, 1\.0/, /rings = fast \? 4 : 3/, /speed = fast \? 290 : 250/, /14, i \* 12/, /yield 0\.55/]);
+row('scratch', scr, 'chip_toss: 5 chips 0.25 apart, marker r70 tell 1.0, 6 shards speed 240', [/i < 5/, /yield 0\.25/, /r: 70, tell: 1\.0/, /speed: 240[^\n]*6, a0/]);
+row('scratch', scr, 'roulette_call: arms wide 0.8, never same colour twice, 1 deal_fan volley', [/pulse\(0\.8\)/, /lastCol/, /fanVolley/]);
+row('scratch', scr, 'chandelier_rain: 3 (P2 4) drops 0.7 apart, predicted +150 px', [/this\.phase === 2 \? 4 : 3/, /yield 0\.7/, /\* 150/]);
+row('scratch', scr, 'royal_flush: 5 beams 25 deg (P2 7 at 20 deg), tell 0.9 active 1.6 rotate 40 deg/s tick 0.5', [/devil \? 7 : 5/, /devil \? 20 : 25/, /tell: 0\.9, active: 1\.6/, /40 \* DEG/, /tick: 0\.5/]);
+row('scratch', scr, 'hold_em: 2 cards, tell 1.0 (in HoldEm), suits never repeat in one cast', /slice\(0, 2\)/);
+row('scratch', scr, 'hellfire_spiral: 3 arms (P3 1), 4.0 s, step 11 deg, speed 240, reverse at 2.0 s with 0.4 s pause', [/phase >= 3 \? 1 : 3/, /sp\.step = \(half \? -11 : 11\)/, /sp\.speed = 240/, /yield 0\.4/]);
+row('scratch', scr, 'brimstone_grid: 3x3 lattice spacing 200, A (5) tell 1.0, B (4) tell 0.8, r70 fire 2 s', [/\* 200/, /, 1\.0\); \/\/ A/, /, 0\.8\); \/\/ B/, /r: 70[^\n]*/, /dur: 2\.0/]);
+row('scratch', scr, 'P1 roar + 2 card_shark adds; P2 transformation + 4 corner fires', [/addSharks\(2\)/, /swapForm\(true\)/, /cornerFires/]);
+row('scratch', scr, 'P3 contract: 3 seals, 60 HP (45 back), stun 7.0 x1.5', [/stunned = 7\.0/, /new ContractSeal/, /count: 3/]);
+A.chk('scratch: royal_flush beam width 56 (P1) - P2 width', '56 / (unspecified)', '56 / 48', true, R(scr, 'P3'));
+A.chk('scratch: P2 royal_flush beams alternate direction beam-by-beam', 'alternating', 'two halves opposite (header note: alternating leaves no safe gap)', false, R(scr, 'P3'));
+// contract seal / P3
+{ const cs = fs.readFileSync('src/bosses/parts/scratch/ContractSeal.js', 'utf8'); const ok = /hp: 60/.test(cs) && /hpBack: 45/.test(cs) && /r: 150/.test(cs) && /90/.test(cs); A.chk('ContractSeal: hp 60 / back 45, orbit r150 90 deg/s, aimed ember 1.6 s speed 200', 'per doc', ok ? 'matches' : cs.match(/SEAL = \{[^}]*\}/)?.[0], ok, R(scr)); }
+// ---- minis (EVENTS s4.3)
+const mini = 'EVENTS s4.3';
+const hpr = { ol_fury: [120, 62], hangman: [190, 56], motherlode: [280, 70], ash_deacon: [340, 54], stoker: [400, 66], head_bouncer: [480, 64] };
+for (const [id, [hp, r]] of Object.entries(hpr)) A.chk(`${id}: BOSS_META hp/r/mini`, `${hp}/${r}/mini`, `${BOSS_META[id]?.hp}/${BOSS_META[id]?.r}/${BOSS_META[id]?.mini}`, BOSS_META[id]?.hp === hp && BOSS_META[id]?.r === r && BOSS_META[id]?.mini === true, R(mini));
+const base = fs.readFileSync('src/bosses/MiniBoss.js', 'utf8');
+A.chk('MiniBoss: phase at 50 %, roar 0.9 s, bullets cleared, gap 1.4 / 1.0', 'per doc', /at: 0\.5/.test(base) && /enemy\.clear\(\)/.test(base) && /this\.phase > 0 \? 1\.0 : 1\.4/.test(base) && /0\.9 \+ 1\.0/.test(base) ? 'matches' : 'differs', /at: 0\.5/.test(base) && /enemy\.clear\(\)/.test(base) && /this\.phase > 0 \? 1\.0 : 1\.4/.test(base), R(mini));
+row('ol_fury', mini, 'charge w3 stomp w2; 640 px/s; contact 2; stun 1.1 (x1.2); windup >= 0.45+0.25', [/'charge', this\.atkCharge, \{ weight: 3/, /'stomp', this\.atkStomp, \{ weight: 2/, /CHARGE_SPEED = 640/, /dmg: 2/, /STUN = 1\.1/, /run\(0\.45, 0\.25\)/]);
+row('ol_fury', mini, 'stomp: rear 0.6, r150, 1 dmg, 10 dust bullets speed 260', [/r|150/, /this\.pulse\(0\.6\)/, /speed: 260[^\n]*10/]);
+row('ol_fury', mini, 'P2: chains twice (0.5 gap, re-aimed), each wall impact spawns 2 tumbleweed_mini (max 4)', [/this\.stun\(0\.5\)/, /Math\.min\(2, 4 - alive\)/, /tumbleweed_mini/]);
+row('hangman', mini, 'flail w3: windup 0.7, 2.0 s spiral 2 arms (3 P2), 12/s, speed 250 ghostfire, walks 60', [/weight: 3/, /pulse\(0\.7\)/, /arms = this\.p2 \? 3 : 2/, /TICK = 1 \/ 12/, /speed: 250[^\n]*ghostfire/, /hold\(2\.0/, /moveToward\(p\.x, p\.y, 60\)/]);
+row('hangman', mini, 'gallows_drop w2: 3 discs r90, tell 1.1, snag x0.4 for 1.2', [/tell: 1\.1/, /r|90/, /SNAG = 1\.2/, /\*= 0\.4/]);
+row('hangman', mini, 'P2: 2 ghost deputies', /spawnAdds\('ghost', n/);
+row('motherlode', mini, 'rock_lob w3: windup 0.5, 4 (P2 6) rocks r70 tell 1.0; + 2 bats/volley max 4', [/pulse\(0\.5\)/, /p2 \? 6 : 4/, /tell: 1\.0/, /Math\.min\(2, 4 - bats\)/]);
+row('motherlode', mini, 'cart_ram w2: warn 96 px 1.0 s, 900 px/s, 2 dmg, breaks; front cone x0.6 P2 (explosions ignore)', [/speed: 900, w: 96/, /dmg: 2/, /breaks: true/, /m \*= 0\.6/, /info\.explosion/]);
+row('ash_deacon', mini, 'censer w3 windup 0.6 ring 12 (16 P2) speed 280 r~200 + 4 fire patches', [/weight: 3/, /pulse\(0\.6\)/, /this\.p2 \? 16 : 12/, /speed: 280/, /RING_R = 200/, /i < 4/]);
+row('ash_deacon', mini, 'brimstone_rain w2: 5 discs r80, 1.0 s, pillar 1 dmg + patch 3.5 s', [/weight: 2/, /i < 5/, /r: 80|zone\(x, y, 80/, /dur: 3\.5/]);
+row('ash_deacon', mini, 'ash_step w1: invulnerable 0.6, mark 0.7, 300 px behind, ring of 8', [/weight: 1/, /\* 300/, /hold\(0\.7/, /, 8, /]);
+row('ash_deacon', mini, 'P2: wall fire pillar every 6 s', /pillarT = 6/);
+row('stoker', mini, 'coal_toss w3: windup 0.5, 3 coals 0.9 s r60 fire 3 s', [/weight: 3/, /pulse\(0\.5\)/, /tell: 0\.9/, /zone\(q\.x, q\.y, 60/, /dur: 3 \}/]);
+row('stoker', mini, 'steam_vent w2: cone 70 deg x 420, warn 0.8, jet 1.0, tick 0.5, slow 40 %', [/CONE_HALF = \(35/, /CONE_LEN = 420/, /hold\(0\.8/, /hold\(1\.0/, /tick \+= 0\.5/, /speedMult > 0\.6/]);
+row('stoker', mini, 'boiler_charge w2: windup 0.8 (0.5+0.3), 450 px/s up to 700, 2 dmg, vent 0.9 (+20 %)', [/weight: 2/, /dash\(a, 450, 700/, /dmg: 2/, /stun\(0\.9\)/]);
+row('stoker', mini, 'P2 Overpressure: speed +30 %, grate every 2.5 s, warn 0.7, r80', [/\* 1\.3/, /grateT = 2\.5/, /tell: 0\.7/, /zone\(g\.x, g\.y, 80/]);
+row('head_bouncer', mini, 'stool_throw w3: windup 0.5, 3 stools 0.9 s r60, 4 fragments speed 300', [/weight: 3/, /pulse\(0\.5\)/, /tell: 0\.9/, /zone\(q\.x, q\.y, 60/, /speed: 300/, /, 4, o/]);
+row('head_bouncer', mini, 'mug_slide w2: 3 rows 0.9 s, 700 px/s, 1 dmg, breaks', [/rows\.length < 3/, /speed: 700/, /tell: 0\.9/, /breaks: true/]);
+row('head_bouncer', mini, 'bum_rush w2: windup 0.7, dash 500, 2 dmg + heavy knockback, recovery 0.8', [/pulse\(0\.7\)/, /dash\(a, 500/, /dmg: 2/, /knock\.x = Math\.cos\(a\) \* 700/, /stun\(0\.8\)/]);
+row('head_bouncer', mini, 'P2 Last Call: chug invulnerable 1.0, speed x1.3, 2 possessed', [/invulnerable = true/, /\* 1\.3/, /spawnAdds\('possessed', n/]);
+A.chk('mini attack first-damage-frame >= 0.4 s after telegraph (all six)', '>= 0.4 s', 'min tell in source = 0.6 s (censer swing windup) / ol_fury lock 0.25 s band after 0.45 s track (0.7 total)', true, R('EVENTS s4.6', 'P3'));
+A.flush('attack tables and phase thresholds (CH2 s3-5, EVENTS s4.3)');
